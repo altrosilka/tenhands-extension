@@ -1,2 +1,2 @@
-App
-  .constant('q', 123)
+angular.module('config',[])
+  .constant('__vkAppId', 4639658)

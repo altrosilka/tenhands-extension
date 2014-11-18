@@ -1,1 +1,437 @@
-function displayeAnError(e,n){"use strict";alert(e+"\n"+n)}function getUrlParameterValue(e,n){"use strict";var t,o,r=e.substr(e.indexOf("#")+1),a="";for(r=r.split("&"),t=0;t<r.length;t+=1)if(o=r[t].split("="),o[0]===n)return o[1];return a}function listenerHandler(e,n){"use strict";return function t(o,r){var a,i;if(o===e&&void 0!==r.url&&"loading"===r.status&&r.url.indexOf("oauth.vk.com/blank.html")>-1){if(e=null,chrome.tabs.onUpdated.removeListener(t),a=getUrlParameterValue(r.url,"access_token"),void 0===a||void 0===a.length)return void displayeAnError("vk auth response problem","access_token length = 0 or vkAccessToken == undefined");if(i=Number(getUrlParameterValue(r.url,"expires_in")),0!==i)return void displayeAnError("vk auth response problem","vkAccessTokenExpiredFlag != 0"+a);chrome.storage.local.set({vkaccess_token:a},function(){chrome.tabs.update(o,{url:"upload.html#"+n+"&"+a,active:!0},function(){})})}}}function getClickHandler(){"use strict";return function(e){var n=e.srcUrl,t="upload.html#",o="3315996",r="docs,offline",a="https://oauth.vk.com/authorize?client_id="+o+"&scope="+r+"&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token";chrome.storage.local.get({vkaccess_token:{}},function(e){return void 0===e.vkaccess_token.length?void chrome.tabs.create({url:a,selected:!0},function(e){chrome.tabs.onUpdated.addListener(listenerHandler(e.id,n))}):(t+=n+"&"+e.vkaccess_token,void chrome.tabs.create({url:t,selected:!0}))})}}function thereIsAnError(e,n,t){"use strict";document.getElementById("wrap").innerHTML="<p></p><br/><br/><center><h1>Wow! Some error arrived!</h1></center><br/><br/><p>"+e+"</p><br/><br/><p>"+n+"</p><p>"+t+"</p>"}function upload(e,n,t){"use strict";var o=new XMLHttpRequest;o.onload=function(){var r,a,i=new XMLHttpRequest;i.open("GET","https://api.vk.com/method/docs.getUploadServer?access_token="+t),i.onload=function(){var s=JSON.parse(i.response);return void 0!==s.error?(chrome.storage.local.remove("vkaccess_token"),document.getElementById("wrap").innerHTML="<p></p><br/><br/><center><h1>Ops. Something went wrong. Please try again.</h1></center><br/>",void setTimeout(function(){window.close()},3e3)):void 0===s.response.upload_url?void thereIsAnError("documentUploadServer response problem",s,e):(r=new FormData,a=new XMLHttpRequest,r.append("file",o.response,n),a.open("POST",s.response.upload_url,!0),a.onload=function(){var n,o=JSON.parse(a.response);return void 0===o.file?void thereIsAnError("Upload blob problem response problem",o,e):(n=new XMLHttpRequest,n.open("GET","https://api.vk.com/method/docs.save?file="+o.file+"&access_token="+t),n.onload=function(){var t=JSON.parse(n.response);return void 0===t.response[0].url?void thereIsAnError("documentSaveRequest - no file in response",t,e):(document.getElementById("wrap").innerHTML="<p></p><br/><br/><center><h1>Successfully uploaded!</h1></center><br/>",void setTimeout(function(){window.close()},3e3))},void n.send())},void a.send(r))},i.send()},o.responseType="blob",o.open("GET",e),o.send()}chrome.contextMenus.create({title:"Rehost on vk.com",type:"normal",contexts:["image"],onclick:getClickHandler()}),document.addEventListener("DOMContentLoaded",function(){"use strict";var e,n,t=window.location.hash.substring(1).split("&"),o=null;return void 0===t||void 0===t.length||2!==t.length?void thereIsAnError("Parsing image url","params || params.length != 2",o):(e=t[0].split("/"),void 0===e.length||0===e.length?void thereIsAnError("Getting image filename","filename.length <= 0",o):(o=t[0],n=e[e.length-1],n.indexOf("?")>-1&&(n=n.slice(0,n.indexOf("?"))),n.indexOf("#")>-1&&(n=n.slice(0,n.indexOf("#"))),n.indexOf("&")>-1&&(n=n.slice(0,n.indexOf("&"))),void upload(o,n,t[1])))});var App=angular.module("App",["ngSanitize","ui.bootstrap","templates"]);App.config(["$httpProvider",function(e){e.defaults.useXDomain=!0,delete e.defaults.headers.common["X-Requested-With"],e.defaults.headers.post["Content-Type"]="application/x-www-form-urlencoded; charset=utf8"}]),App.constant("q",123),App.run([function(){VK.init({apiId:4631234,onlyWidgets:!0}),VK.Widgets.Comments("vk_comments",{limit:10,width:"800",attach:"photo,video,link"})}]),angular.module("App").controller("C_background",["$state","$scope","PS_lastfm",function(e,n){var t=this,o="/images/background/intro.jpg";return t.image=o,n.$on("artistInfoRecievedFromLF",function(e,n){t.image=n.image}),n.$on("$stateChangeStart",function(e,n,r,a){"artistpage"!==a.name&&"artistpage.section"!==a.name||"artistpage"===n.name||"artistpage.section"===n.name||(t.image=o)}),t}]),angular.module("App").controller("C_main",["$scope","S_mapping",function(e,n){var t=this;t.mainHero={},t.neededImages=["/images/intro/header.jpg","/images/intro/header-blurred.jpg"],t.showHero=function(e,o,r,a){t.mainHero={src:e,roleTxt:n.getHumanRole(o),role:o,name:r,"short":a}},t.hideHero=function(){t.mainHero={}};var o=!1;return $(window).on("scroll",function(){o||(o=!0,e.$apply(function(){t.hideScrollAnimation=!0}))}),t}]),angular.module("App").directive("autoHeight",[function(){return{link:function(e,n){var t=$(window).height()-90,o=600;o>t&&(t=o),n.height(t)}}}]),angular.module("App").directive("backgroundOnLoad",[function(){return{link:{pre:function(e,n,t){var o=t.backgroundOnLoad;"static"===n.css("position")&&n.addClass("relative"),n.children().addClass("up");var r=$(document.createElement("div")).addClass("backgroundOnLoadLayer").css({"background-image":"url("+o+")"}).appendTo(n),a=new Image;a.src=o,a.onload=function(){r.addClass("active")}}}}}]),angular.module("App").directive("mainHeroImage",["$timeout",function(e){return{scope:{hero:"="},link:function(){},controller:["$scope","$element",function(n,t){var o=!0;n.$watch("hero",function(n){if(t.find(".layer").removeClass("active"),!n||!n.src)return void(o=!0);o=!1;var r=600,a=new Image;a.src=n.src;var i=(new Date).getTime();a.onload=function(){var a=t.find(".layer"),s=$(document.createElement("div")).addClass("layer").addClass("hero-"+n.short).css({"background-image":"url("+this.src+")"}).html('<div class="info"><div class="overlay"><h2 class="text">'+n.name+'</h2><span class="role"><label>Роль:</label><i class="icon role-'+n.role+'"></i><p>'+n.roleTxt+"</p></span></div></div>").appendTo(t),l=(new Date).getTime();if(r>l-i)e(function(){a.remove(),o||s.addClass("active")},r-(l-i));else{if(a.remove(),o)return;s.addClass("active")}}},!0)}]}}]),angular.module("App").directive("preloadingIntro",["$timeout",function(e){return{scope:{src:"="},link:function(n,t){var o=n.src,r=1,a=0,i=function(n){var o=new Image;o.src=n,o.onload=function(){a++,a===r&&(t.addClass("loaded"),e(function(){t.find(".fullSizeIntro").remove(),t.find(".hero").each(function(n){var t=$(this);e(function(){t.addClass("fake")},100*n),e(function(){t.removeClass("fake")},100*n+120)})},3550))}};o.length&&"object"==typeof o?(r=o.length,angular.forEach(o,function(e){i(e)})):i(o)}}}]),angular.module("App").directive("videoOpener",[function(){return{link:function(e,n,t){n.on("click",function(){$.fancybox({content:'<video width="960" height="520" class="masked" controls="controls" loop="loop" autoplay="autoplay" poster="'+t.poster+'"><source type="video/webm" src="'+t.webmSrc+'" /><source type="video/mp4" src="'+t.mp4Src+'" /></video>',title:t.modalTitle||"Title",type:"html",overlayShow:!0,padding:0,openEffect:"none",closeEffect:"none",width:960,height:520,helpers:{overlay:{locked:!1}}})})}}}]),angular.module("App").directive("ybOpener",[function(){return{link:function(e,n,t){n.on("click",function(){$.fancybox({href:"https://www.youtube.com/embed/"+t.ybOpener+"?autoplay=1&vq=hd720&rel=0&modestbranding=0&showinfo=0&egm=1",title:t.modalTitle||"Title",type:"iframe",overlayShow:!0,padding:0,openEffect:"none",closeEffect:"none",width:720,height:480,helpers:{overlay:{locked:!1}}})})}}}]),angular.module("App").filter("lastfmDateToLocal",["localization",function(e){return function(n){if(n){var t=moment(n,"DD MMM YYYY HH:mm");return t.format("DD")+" "+e.months[t.month()]+" "+t.format("YYYY")}}}]),angular.module("App").service("S_mapping",[function(){var e={};return e.getHumanRole=function(e){var n={tank:"танк",offense:"штурм",defense:"защита",support:"поддержка"};return n[e]?n[e]:void 0},e}]),angular.module("App").service("S_utils",[function(){var e={};return e}]),angular.module("App").controller("C_heroes",[function(){var e=this;return e.selectedSpecObject={},e.selectSpec=function(){},e}]);
+var App = angular.module('App', [
+  'config',
+  'vkTools',
+  'chromeTools',
+  'utilsTools',
+  'ui.bootstrap',
+  'templates'
+]); 
+  
+App.config([
+  '$httpProvider',
+  function($httpProvider) {
+    $httpProvider.defaults.useXDomain = true;
+    delete $httpProvider.defaults.headers.common['X-Requested-With'];
+    $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf8';
+  }
+]);
+  
+angular.module('config',[])
+  .constant('__vkAppId', 4639658)
+App.run([
+  '__vkAppId',
+  'S_chrome',
+  'S_vk',
+  function(__vkAppId, S_chrome, S_vk) {
+    S_chrome.pageDataWatch();
+
+    S_chrome.getVkToken().then(function(token) {
+
+      S_vk.setToken(token);
+      S_vk.testRequest(function() {
+        console.log(1);
+      }, function() {
+        console.log(2);
+
+      })
+    }, function() {
+
+
+      chrome.runtime.sendMessage({
+        vk_auth: true
+      }, function(response) {
+        console.log(response.farewell);
+      });
+
+      
+    })
+
+
+  }
+]);
+
+angular.module('App').controller('C_main', ['$scope', function($scope) {
+  var ctr = this;
+
+  $scope.$on('loadedDataFromTab', function(event, data) {
+    $scope.$apply(function() {
+
+      ctr.data = data;
+      ctr.dataIsLoaded = true;
+    });
+
+  });
+
+  return ctr;
+}]);
+
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('chromeTools', [])
+  .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
+    var service = {};
+
+    service.pageDataWatch = function() {
+
+      window.addEventListener('message', function(e) {
+
+        S_eventer.sendEvent('loadedDataFromTab', e.data);
+      });
+
+
+      setTimeout(function() {
+        S_eventer.sendEvent('loadedDataFromTab', {
+          "images": [{
+            "alt": "Грелка ",
+            "clientHeight": 450,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 450,
+            "title": "Грелка ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/grelka-_1416265291.jpg"
+          }, {
+            "alt": "Любовь - великая сила ",
+            "clientHeight": 571,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 571,
+            "title": "Любовь - великая сила ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/lyubov-velikaya-sila-_1416314178.jpg"
+          }, {
+            "alt": "Скоро праздники ",
+            "clientHeight": 600,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 600,
+            "title": "Скоро праздники ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/skoro-prazdniki-_1416214236.jpg"
+          }, {
+            "alt": "Фигулька ",
+            "clientHeight": 778,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 778,
+            "title": "Фигулька ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/figulka-_1415910890.jpg"
+          }, {
+            "alt": "Коварная чугунная поня ",
+            "clientHeight": 449,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 449,
+            "title": "Коварная чугунная поня ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/kovarnaya-chugunnaya-ponya-_1416233562.jpg"
+          }, {
+            "alt": "Таблетки для смеха",
+            "clientHeight": 488,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 488,
+            "title": "Таблетки для смеха",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/tabletki-dlya-smeha-_1415531344.jpg"
+          }, {
+            "alt": "Разбуженный грабитель ",
+            "clientHeight": 399,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 399,
+            "title": "Разбуженный грабитель ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/razbuzhennyy-grabitel-_1416233761.jpg"
+          }, {
+            "alt": "Нам бы карася  ",
+            "clientHeight": 429,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 429,
+            "title": "Нам бы карася  ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nam-by-karasya-_1416233413.jpg"
+          }, {
+            "alt": "Нычкарик по призванию ",
+            "clientHeight": 450,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 450,
+            "title": "Нычкарик по призванию ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nychkarik-po-prizvaniyu-_1416232762.jpg"
+          }, {
+            "alt": "Еда с гавкающим названием ",
+            "clientHeight": 800,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 800,
+            "title": "Еда с гавкающим названием ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/yeda-s-gavkayuschim-nazvaniyem-_1416203979.jpg"
+          }, {
+            "alt": "",
+            "clientHeight": 250,
+            "clientWidth": 250,
+            "width": 250,
+            "height": 250,
+            "title": "",
+            "src": "http://static.lolkot.ru/images/usermatrix1416326402.jpg"
+          }, {
+            "alt": "",
+            "clientHeight": 15,
+            "clientWidth": 88,
+            "width": 88,
+            "height": 15,
+            "title": "",
+            "src": "http://counter.yadro.ru/hit?t26.16;rhttp%3A//yandex.ru/clck/jsredir%3Ffrom%…c%3D2.584962500721156;s1280*800*24;uhttp%3A//lolkot.ru/;0.5310913703870028"
+          }],
+          "title": "Смешные картинки кошек с надписями",
+          "url": "http://lolkot.ru/",
+          "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
+        })
+      }, 1000);
+    }
+
+
+    service.getVkToken = function() {
+      var defer = $q.defer();
+      chrome.storage.local.get({
+        'vkaccess_token': {}
+      }, function(items) {
+
+        if (items.vkaccess_token.length !== undefined) {
+          defer.resolve(items.vkaccess_token);
+          return;
+        } else {
+          defer.reject();
+        }
+      });
+      return defer.promise;
+    }
+
+
+    service.showExtensionPopup = function(tab) {
+      var code = [
+        'var d = document.createElement("div");',
+        'd.setAttribute("style", "background-color: rgba(0,0,0,0.5); width: 100%; height: 100%; position: fixed; top: 0px; left: 0px; z-index: 99999899999898988899;");',
+        'var iframe = document.createElement("iframe");',
+        'iframe.src = chrome.extension.getURL("pages/createPost.html");',
+        'iframe.setAttribute("style", "width:100%;height:100%;");',
+        'iframe.setAttribute("id", "smm-transport-ekniERgebe39EWee");',
+        'iframe.setAttribute("frameborder", "0");',
+        'd.appendChild(iframe);',
+        'document.body.appendChild(d);'
+      ].join("\n");
+
+      /* Inject the code into the current tab */
+      chrome.tabs.executeScript(tab.id, {
+        code: code
+      });
+
+      chrome.tabs.executeScript(tab.id, {
+        file: "pack/pageParser.js"
+      });
+    }
+
+
+    return service;
+  }]);
+
+angular.module('App')
+  .service('S_eventer', [
+    '$rootScope',
+    function($rootScope) {
+      var service = {};
+
+      service.sendEvent = function(name, arguments) {
+        $rootScope.$broadcast(name, arguments);
+      }
+      
+      return service;
+    }
+  ]);
+
+angular.module('utilsTools',[])
+  .service('S_utils', [function() {
+    var service = {};
+
+    service.getUrlParameterValue = function(url, parameterName) {
+      "use strict";
+
+      var urlParameters = url.substr(url.indexOf("#") + 1),
+        parameterValue = "",
+        index,
+        temp;
+
+      urlParameters = urlParameters.split("&");
+
+      for (index = 0; index < urlParameters.length; index += 1) {
+        temp = urlParameters[index].split("=");
+
+        if (temp[0] === parameterName) {
+          return temp[1];
+        }
+      }
+
+      return parameterValue;
+    }
+
+    return service;
+  }]);
+
+angular.module('vkTools',[])
+  .service('S_vk', [
+    '$q',
+    '$http',
+    'S_utils',
+    '__vkAppId',
+    function($q, $http, S_utils, __vkAppId) {
+      var service = {};
+
+      service.default = {
+        version: '5.26',
+        language: 'ru'
+      };
+
+
+
+      function listenerHandler(authenticationTabId, afterAuth) {
+        "use strict";
+
+        return function tabUpdateListener(tabId, changeInfo) {
+          var vkAccessToken,
+            vkAccessTokenExpiredFlag;
+
+          if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
+
+            if (changeInfo.url.indexOf('oauth.vk.com/blank.html') > -1) {
+              authenticationTabId = null;
+              chrome.tabs.onUpdated.removeListener(tabUpdateListener);
+
+              vkAccessToken = S_utils.getUrlParameterValue(changeInfo.url, 'access_token');
+
+              if (vkAccessToken === undefined || vkAccessToken.length === undefined) {
+                displayeAnError('vk auth response problem', 'access_token length = 0 or vkAccessToken == undefined');
+                return;
+              }
+
+              vkAccessTokenExpiredFlag = Number(S_utils.getUrlParameterValue(changeInfo.url, 'expires_in'));
+
+              if (vkAccessTokenExpiredFlag !== 0) {
+                displayeAnError('vk auth response problem', 'vkAccessTokenExpiredFlag != 0' + vkAccessToken);
+                return;
+              }
+              service.setToken(vkAccessToken);
+              chrome.storage.local.set({
+                'vkaccess_token': vkAccessToken
+              }, function() {
+                afterAuth();
+              });
+            }
+          }
+        };
+      }
+
+
+      service.request = function(_method, _params, _response) {
+        var path = '/method/' + _method + '?' + 'access_token=' + service.token;
+        _params['v'] = _params['v'] || service.default.version;
+        _params['lang'] = _params['lang'] || service.default.language;
+
+        for (var key in _params) {
+          if (key === "message") {
+            path += ('&' + key + '=' + encodeURIComponent(_params[key]));
+          } else {
+            path += ('&' + key + '=' + _params[key]);
+          }
+        }
+
+        $http.get('https://api.vk.com' + path, function(res) {
+          if (typeof _response === 'function') {
+            _response(res.data);
+          }
+        });
+      };
+
+      service.setToken = function(token) {
+        service.token = token;
+      };
+
+      service.testRequest = function() {
+        var defer = $q.defer();
+        service.request('users.get', {}, function(resp) {
+          if (resp.success) {
+            defer.resolve();
+          } else {
+            defer.reject();
+          }
+        })
+        return defer.promise;
+      }
+
+      service.callAuthPopup = function() {
+        var defer = $q.defer();
+        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,video,audio,wall,offline,email,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
+
+        chrome.tabs.create({
+          url: vkAuthenticationUrl,
+          selected: true
+        }, function(tab) {
+          chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
+            defer.resolve();
+          }));
+        });
+
+        return defer.promise;
+      }
+
+
+
+      service.getToken = function() {
+        return service.token;
+      };
+      return service;
+    }
+  ]);
+
+var VKS = function(_options) {
+  var self = this;
+
+  self.options = _options || {};
+
+  self.default = {
+    version: '5.26',
+    language: 'ru'
+  };
+
+  self.request = function(_method, _params, _response) {
+    var path = '/method/' + _method + '?' + 'access_token=' + self.token;
+    _params['v'] = _params['v'] || self.options.version || self.default.version;
+    _params['lang'] = _params['lang'] || self.options.language || self.default.language;
+
+    for (var key in _params) {
+      if (key === "message") {
+        path += ('&' + key + '=' + encodeURIComponent(_params[key]));
+      } else {
+        path += ('&' + key + '=' + _params[key]);
+      }
+    }
+
+    $.get('https://api.vk.com' + path, function(res) {
+      if (typeof _response === 'function') {
+        _response(res);
+      }
+    });
+  };
+
+  self.setToken = function(_param) {
+    self.token = _param.token;
+  };
+
+  self.getToken = function() {
+    return self.token;
+  };
+};

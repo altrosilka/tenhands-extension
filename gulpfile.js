@@ -14,12 +14,20 @@ var gulp = require("gulp"),
 
 
 
+var backgroundScripts = [
+  './bower_components/angular/angular.js',
+  './src/js/app/services/vk.js',
+  './src/js/app/services/chrome.js',
+  './src/js/app/services/utils.js',
+  './src/js/app/configuration.js',
+  './src/js/background.js'
+];
 
 var vendorLibs = [
-  './node_modules/jquery/dist/jquery.js',
-  './node_modules/bootstrap/dist/js/bootstrap.js',
-  './node_modules/angular/angular.js',
-  './node_modules/angular-bootstrap/ui-bootstrap-tpls.js'
+  './bower_components/jquery/dist/jquery.js',
+  './bower_components/bootstrap/dist/js/bootstrap.js',
+  './bower_components/angular/angular.js',
+  './bower_components/angular-bootstrap/ui-bootstrap-tpls.js'
 ];
 
 var vendorLibsCss = [
@@ -33,10 +41,19 @@ gulp.task('scripts', function() {
   gulp.src(['./src/js/app/**/*.js'])
     .pipe(concat('scripts.js'))
     .pipe(gulp.dest('./public/pack'))
-  gulp.src(['./src/js/background.js'])
-    .pipe(gulp.dest('./public/pack'))
+
   gulp.src(vendorLibs)
     .pipe(concat('vendor.js'))
+    .pipe(gulp.dest('./public/pack'))
+});
+
+
+
+
+
+gulp.task('background-scripts', function() {
+  gulp.src(backgroundScripts)
+    .pipe(concat('background.js'))
     .pipe(gulp.dest('./public/pack'))
 });
 
@@ -95,12 +112,35 @@ gulp.task('styles-deploy', function() {
 });
 
 
+gulp.task('dist-manifest', function() {
+  var pkg = getPackageJson();
+
+  gulp.src(['./src/manifest.json'])
+    .pipe(bump({
+      version: pkg.version
+    }))
+    .pipe(gulp.dest('./public'));
+});
+
+
+gulp.task('dist-background', function() {
+  gulp.src(['./src/background.html'])
+    .pipe(gulp.dest('./public'));
+});
+
+gulp.task('dist-pages', function() {
+  gulp.src(['./src/pages/**/*.html'])
+    .pipe(gulp.dest('./public/pages'));
+});
 
 
 gulp.task("watch", function() {
   gulp.watch('./src/js/**', ["scripts"]);
   gulp.watch('./src/less/**', ["less"]);
   gulp.watch('./tmp/css/**', ["styles"]);
+  gulp.watch('./src/manifest.json', ["dist-manifest"]);
+  gulp.watch('./src/background.html', ["dist-background"]);
+  gulp.watch('./src/pages/**', ["dist-pages"]);
   gulp.watch('./src/templates/**', ["templates"]);
 });
 
@@ -125,19 +165,20 @@ function inc(type) {
   var pkg = getPackageJson();
   var newVer = semver.inc(pkg.version, type);
 
-
   git.tag('v' + newVer, 'new version', function(err) {
     console.log(newVer)
   });
 
-
-  return gulp.src(['./bower.json', './package.json'])
+  gulp.src(['./src/manifest.json'])
+    .pipe(bump({
+      version: newVer
+    }))
+    .pipe(gulp.dest('./public'));
+  gulp.src(['./package.json'])
     .pipe(bump({
       version: newVer
     }))
     .pipe(gulp.dest('./'));
-
-
 }
 
 gulp.task('patch', function() {

@@ -1,5 +1,9 @@
 var App = angular.module('App', [
-  'ngSanitize',
+  'config',
+  'vkTools',
+  'chromeTools',
+  'utilsTools',
   'ui.bootstrap',
   'templates'
-]);
+]); 
+  

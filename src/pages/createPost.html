@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" type="text/css" href="/pack/styles.css" />
+  <title></title>
+</head>
+
+<body data-ng-app="App" data-ng-controller="C_main as ctr" data-ng-class="{'loaded': ctr.dataIsLoaded}">
+  <section class="window">
+    <header>he</header>
+    <section class="body">body
+
+
+    <div>
+    	<span style="float:left;" data-ng-repeat="image in ctr.data.images">
+    		<img ng-src="{{image.src}}">
+    		<span>{{image.clientWidth}}x{{image.clientHeight}} ({{image.height}}x{{image.width}})</span>
+    	</span>
+    </div>
+    </section>
+    <footer>fo</footer>
+  </section>
+
+  <script type="text/javascript" src="/pack/vendor.js"></script>
+  <script type="text/javascript" src="/pack/templates.js"></script>
+  <script type="text/javascript" src="/pack/scripts.js"></script>
+</body>
+
+</html>
+
+
+
+

@@ -5,11 +5,18 @@ html, body {
 body {
   font: 13px Arial, Helvetica, sans-serif;
   font-weight: 300;
-  background-color: #3b4a83;
+  background-color: transparent;
+  &.loaded{
+    .window{
+      transform: scale(1);
+      opacity: 1;
+      visibility: visible;
+    }
+  }
 }
 a {
   color: #fff;
-  &:hover {
+  &:hover { 
     color: #f90;
   }
 }
@@ -34,243 +41,15 @@ a {
   text-decoration: none!important;  
   cursor: default!important;
 }
-.content {
-  width: 1200px;
-  margin: auto;
-}
-i {
-  &.icon {
-    position: relative;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    &.role-offense {
-      background-image: url("../images/roles/small/offense.png");
-      top: 2px;
-    }
-    &.role-defense {
-      background-image: url("../images/roles/small/defense.png");
-      top: 3px;
-    }
-    &.role-support {
-      background-image: url("../images/roles/small/support.png");
-      top: 2px;
-    }
-    &.role-tank {
-      background-image: url("../images/roles/small/tank.png");
-      top: 2px;
-    }
-  }
-  &.bigicon {
-    position: relative;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    display: inline-block;
-    &.role-offense {
-      background-image: url("../images/roles/big/offense.png");
-      top: 2px;
-    }
-    &.role-defense {
-      background-image: url("../images/roles/big/defense.png");
-      top: 3px;
-    }
-    &.role-support {
-      background-image: url("../images/roles/big/support.png");
-      top: 2px;
-    }
-    &.role-tank {
-      background-image: url("../images/roles/big/tank.png");
-      top: 2px;
-    }
-  }
-}
-header.full {
-  padding: 120px 0 40px;
-  position: relative;
-  z-index: 3;
-  h1, h2 {
-    margin: 0 100px;
-    padding: 0;
-    text-transform: uppercase;
-    transform: skew(-.25rad);
-    color: #fff;
-    text-align: center;
-    text-shadow: 2.5px -2px .5px rgba(35, 31, 32, .1), -2.5px 2px .5px rgba(35, 31, 32, .1), -2.5px -2px .5px rgba(35, 31, 32, .1), 2.5px 2px .5px rgba(35, 31, 32, .1);
-  }
-  h1 {
-    font: 400 7.5em BigNoodleToo, impact, sans-serif;
-  }
-  h2 {
-    font: 400 5.5em BigNoodleToo, impact, sans-serif;
-  }
-  &.inpage {
-    padding: 60px 0 40px;
-  }
-}
-.fullsizebg {
-  background-position: top center;
-  background-repeat: no-repeat;
-  position: relative;
-}
-.masked-video {
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0px 0px 0px 3px rgba(255, 255, 255, 0.4);
-  overflow: hidden;
-  video {
-    width: 100%;
-    height: 100%;
-    float: left;
-  }
-  &:hover {
-    box-shadow: 0px 0px 0px 3px rgba(255, 255, 255, 0.9);
-    .video-overlay {
-      box-shadow: inset 0 0 50px @colorDefaultLight;
-      cursor: pointer;
-    }
-  }
-  .video-overlay {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    border-radius: 10px;
-    .video-overlay-icon {}
-  }
-}
-.stdText {
-  font-size: 21px;
-  line-height: 1.6em;
-  color: #fff;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, .5);
-  a {
-    color: @colorPrimary;
-    text-decoration: none;
-    transition: @fastTime;
-    border-bottom: 1px solid;
-    &:hover {
-      border-color:transparent;
-    }
-  }
-}
-.separator {
-  height: 5px;
-  background-color: @colorDefaultLight;
-}
-.flag {
-  width: 42px;
-  height: 25px;
-  background-image: url(../images/flags.gif);
-  background-repeat: no-repeat;
-  display: inline-block;
-  &.flag-kings-row {
-    background-position-y: -50px;
-  }
-  &.flag-temple-of-anubis {
-    background-position-y: -25px;
-  }
-  &.flag-hanamura {
-    background-position-y: 0px;
-  }
-}
-.fixedBg {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 0;
-  background-repeat: no-repeat;
-  background-posiiton: center top;
-  &.news {
-    background-image: url(../images/backgrounds/news.jpg);
-  }
-  &.page404 {
-    background-image: url(../images/backgrounds/404.jpg);
-  }
-}
-.bgBlaker {
-  z-index: 0;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-}
-.up {
-  position: relative;
-  z-index: 1;
-}
-.fancybox-overlay {
-  background-color: rgba(0, 0, 0, .8);
-}
-.fancybox-opened .fancybox-skin {
-  box-shadow: none;
-}
-.fancybox-skin {
-  background: rgba(0, 0, 0, 0.9);
-}
-.backgroundOnLoadLayer {
-  transition: 0.5s ease-in-out;
+
+.window{
   opacity: 0;
   visibility: hidden;
-  background-position: top center;
-  background-repeat: no-repeat;
-  position: absolute;
-  z-index: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: 0;
-  &.active {
-    opacity: 1;
-    visibility: visible;
-  } 
-}
-.relative {
-  position: relative;
-}
-.shareButtons {
-  text-align: center;
-  height: 46px;
-  .wrapper {
-    border-left: 3px solid #fff;
-    border-right: 3px solid #fff;
-    border-radius: 10px;
-    display: inline-block;
-  }
-  .inner {
-    margin: 5px 7px;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 6px;
-    padding: 0 13px 0 6px;
-    height: 36px;
-    overflow: auto;
-    .shareText {
-      color: #eee;
-      display: inline-block;
-      position: relative;
-      font-size: 12px;
-      float: left;
-      margin: 12px 5px 0;
-    }
-    .pluso {
-      float: right;
-    }
-  }
-  .pluso-more:after {
-    content: '';
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    background: url(../images/plus.png) 0 -25px;
-    border-radius: 3px;
-  }
+  transform: scale(0.9);
+  transition: 0.2s;
+  width:960px;
+  margin:40px auto;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0px 0px 10px #000;
 }
