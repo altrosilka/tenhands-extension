@@ -1,0 +1,107 @@
+.btn {
+  font-family: Futura, "century gothic", arial, sans-serif;
+  position: relative;
+  border-radius: 7px;
+  padding: 7px 40px;
+  text-transform: uppercase;
+  text-shadow: none;
+  span, &:after {
+    transition: @fastTime;
+  }
+  span {
+    color: #fff;
+    position: relative;
+    z-index: 2;
+    font-size: 17px;
+    height: 27px;
+    display: inline-block;
+    line-height: 1.5em;
+  }
+  &:after {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    transform: scale(0.95, 0.85);
+    content: '';
+    z-index: 1;
+    border-radius: 4px;
+  }
+  &:hover {
+    cursor: pointer;
+    border: 1px solid #fff;
+    span {
+      color: #000;
+    }
+    &:after {
+      transform: scale(1.05, 1.1);
+    }
+  }
+  &.btn-default {
+    background-color: transparent;
+    border: 1px solid @colorDefaultLight;
+    &:after {
+      background-color: @colorDefault;
+    }
+    &:hover {
+      &:after {
+        background-color: #fff;
+      }
+    }
+  }
+  &.btn-primary {
+    background-color: transparent;
+    border: 1px solid @colorPrimaryLight;
+    &:after {
+      background-color: @colorPrimary;
+    }
+    &:hover {
+      &:after {
+        background-color: #fff;
+      }
+    }
+    span {
+      color: #000;
+    }
+  }
+  &.btn-white {
+    background-color: transparent;
+    border: 2px solid #fff;
+    &:after {
+      background-color: transparent;
+    }
+    &:hover {
+      &:after {
+        background-color: #fff;
+        transform: scale(1);
+      }
+      span {
+        color: #000;
+      }
+    }
+    span {
+      color: #fff;
+    }
+  }
+
+  &.btn-black {
+    background-color: transparent;
+    border: 2px solid #000;
+    &:after {
+      background-color: transparent;
+    }
+    &:hover {
+      &:after {
+        background-color: #000;
+        transform: scale(1);
+      }
+      span {
+        color: #fff;
+      }
+    }
+    span {
+      color: #000;
+    }
+  }
+}

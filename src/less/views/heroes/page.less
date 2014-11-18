@@ -1,0 +1,334 @@
+#v_heroes_page {
+  header.top {
+    height: 1045px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    position: relative;
+    .poster {
+      max-width: 1918.16px;
+      height: 1045px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin-left: -955.8px;
+      margin-top: 2px;
+    }
+    .hidden-panel {
+      position: absolute;
+      left: 50%;
+      z-index: 2;
+      top: 50%;
+      margin-top: -250px;
+      margin-left: -500px;
+      .info {
+        border-left: 5px solid #fff;
+        border-radius: 10px;
+        color: #fff;
+        .wrapper {
+          background: rgba(8, 27, 43, .7);
+          border-radius: 10px;
+          margin: 7px 0 7px 12px;
+          padding: 10px 30px;
+          min-width: 300px;
+          max-width: 420px;
+          .name {
+            margin: 0;
+            font-family: BigNoodleToo, impact, sans-serif;
+            font-size: 80px;
+            color: #fff;
+            transform: skew(-.25rad);
+            text-transform: uppercase;
+            font-weight: normal;
+          }
+          .role {
+            font-family: Futura, "century gothic", arial, sans-serif;
+            text-transform: uppercase;
+            font-size: 20px;
+            label {
+              color: #fff;
+              display: inline-block;
+            }
+            i {
+              margin-left: 4px;
+              margin-right: 2px;
+              height: 18px;
+              width: 22px;
+              display: inline-block;
+            }
+            p {
+              display: inline-block;
+              color: @colorDefaultLight;
+            }
+          }
+          .all {
+            margin-top: 10px;
+            .fact {
+              margin-bottom: 5px;
+              .what {
+                color: #999;
+              }
+              .answer {
+                font-family: Futura, "century gothic", arial, sans-serif;
+                text-transform: uppercase;
+                font-size: 16px;
+              }
+            }
+          }
+        }
+      }
+      .main-video-float {
+        margin-top: 30px;
+        border-left: 5px solid #fff;
+        border-radius: 10px;
+        color: #fff;
+        .main-video {
+          background: rgba(8, 27, 43, .7);
+          border-radius: 10px;
+          margin: 7px 0 7px 16px;
+          width: 263px;
+          height: 145px;
+          display: inline-block;
+        }
+      }
+    }
+  }
+  .summary {
+    padding-bottom:60px;
+    .noinfo{
+      text-align: center;
+    }
+    .content {
+      width: 1000px;
+      margin: auto;
+      .slogan {
+        width: 800px;
+        text-align: center;
+        margin: auto;
+        span {
+          font: 400 1.35em Futura, "century gothic", arial, sans-serif;
+          text-transform: uppercase;
+          color: #00c3ff;
+          text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+          font-size: 22px;
+        }
+      }
+      .panelka {
+        float: left;
+        width: 500px;
+        padding: 0 40px;
+        .inner {
+          font-size: 16px;
+          color: #eee;
+          line-height: 1.6em;
+          h3 {
+            font-family: Futura, "century gothic", arial, sans-serif;
+            padding: 20px 0 20px;
+          }
+          .list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            li {
+              margin-bottom: 35px;
+              h4 {
+                font-weight: bold;
+                color: #fff;
+              }
+              .about {
+                a {
+                  color: @colorPrimary;
+                  transition: @fastTime;
+                  text-decoration: none;
+                  &:hover{
+                    color:#fff;
+                    border-bottom: 1px solid;
+                  }
+                }
+              }
+            }
+          }
+        }
+        &.pluses {
+          h3 {
+            color: #D7FFD7;
+          }
+        }
+        &.minuses {
+          h3 {
+            color: #FFD7D7;
+          }
+        }
+      }
+    }
+  }
+  .skills {
+    width: 1000px;
+    margin: auto;
+    padding-bottom: 80px;
+    .skill {
+      .inner {
+        width: 220px;
+        display: inline-block;
+      }
+      .skill-icon {
+        height: 140px;
+        position: relative;
+        .bg, .icon {
+          background-position: center;
+          background-repeat: no-repeat;
+          height: 100%;
+          width: 100%;
+          position: absolute;
+          left: 0;
+          top: 0;
+        }
+        .bg {} .icon {
+          background-size: auto 46px;
+        }
+      }
+      h3 {
+        margin: 40px 0 20px;
+        height: 50px;
+        font-size: 16px;
+        text-align: center;
+        text-transform: uppercase;
+        color: #fff;
+        font-family: Futura, "century gothic", arial, sans-serif
+      }
+      .video {} .description {
+        color: #fff;
+        margin: 10px 0;
+        font-size: 12px;
+        line-height: 1.6em;
+        text-align: left;
+        position: relative;
+      }
+    }
+  }
+  .story {
+    width: 960px;
+    margin: auto;
+    padding-bottom: 80px;
+    .desc {
+      display: inline-block;
+      text-align: left;
+      width: 600px;
+      line-height: 1.7em;
+      color: #fff;
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      background-color: rgba(0, 0, 0, .4);
+      padding: 30px;
+      position: relative;
+      border-radius: 10px;
+      h3 {
+        font: 400 1.35em Futura, "century gothic", arial, sans-serif;
+        text-transform: uppercase;
+        color: #00c3ff;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, .5);
+        font-size: 22px;
+        margin: 0 0 20px;
+      }
+      p {
+        text-shadow: 1px 1px 1px #000;
+        margin-bottom: 1.8em;
+        &:last-child {
+          margin-bottom: 0px!important;
+        }
+      }
+      .text {
+        position: relative;
+        z-index: 2;
+      }
+      .border {
+        z-index: 1;
+        height: 50px;
+        position: absolute;
+        left: -4px;
+        right: -4px;
+        border-radius: 10px;
+        &.top {
+          top: -10px;
+          border-top: 4px solid #fff;
+        }
+        &.bottom {
+          bottom: -10px;
+          border-bottom: 4px solid #fff;
+        }
+      }
+    }
+  }
+  &.hero-mercy, &.hero-reinhardt, &.hero-torbjorn, &.hero-bastion {
+    .skill {
+      &:last-child {
+        padding-top:30px;
+        width: 100%;
+        clear: both;
+        display: block;
+        float: none;
+        text-align: center;
+      }
+    }
+  }
+  &.hero-zenyatta, &.hero-reinhardt, &.hero-reaper, &.hero-winston, &.hero-pharah {
+    .story {
+      text-align: right;
+    }
+  }
+  &.hero-mercy .storyBg {
+    background-position-x: 70%;
+  }
+  &.hero-symmetra .storyBg {
+    background-position-x: 76%;
+  }
+  &.hero-zenyatta .storyBg {
+    background-position-x: 30%;
+  }
+  &.hero-reinhardt .storyBg {
+    background-position-x: 30%;
+  }
+  &.hero-torbjorn .storyBg {
+    background-position-x: 72%;
+  }
+  &.hero-bastion .storyBg {
+    background-position-x: 66%;
+  }
+  &.hero-hanzo .storyBg {
+    background-position-x: 60%;
+  }
+  &.hero-tracer .storyBg {
+    background-position-x: 76%;
+  }
+  &.hero-reaper .storyBg {
+    background-position-x: 30%;
+  }
+  &.hero-widowmaker .storyBg {
+    background-position-x: 68%;
+  }
+  &.hero-winston .storyBg {
+    background-position-x: 37%;
+  }
+  &.hero-pharah .storyBg {
+    background-position-x: 32%;
+  }
+  @media screen and (max-width: 1600px) {
+    header.top {
+      height: 940.5px;
+      .poster {
+        height: 940.5px;
+        margin-left: -863.17px;
+      }
+    }
+  }
+  @media screen and (max-width: 1366px) {
+    header.top {
+      height: 783.75px;
+      .poster {
+        height: 783.75px;
+        margin-left: -719.31px;
+      }
+    }
+  }
+}

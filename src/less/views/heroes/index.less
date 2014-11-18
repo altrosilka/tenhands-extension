@@ -1,0 +1,73 @@
+#v_heroes {
+  background: #000 url(../images/backgrounds/reaper.jpg) top center no-repeat;
+  position: relative;
+  .content {
+    position: relative;
+    z-index: 3;
+    padding-bottom: 70px;
+    .spec {
+      overflow: hidden;
+      .bigicon {
+        height: 60px;
+        width: 100%;
+        background-size: 80px;
+      }
+      h2 {
+        text-shadow: -.5px -.5px 1px rgba(234, 89, 247, .5), .5px .5px 1px rgba(0, 228, 230, .5);
+        color: rgba(255, 255, 255, .9);
+        font-size: 40px;
+        text-align: center;
+        font-family: BigNoodleToo, impact, sans-serif;
+      }
+      .heroes {
+        margin-top: 50px;
+        .hero {
+          display: block;
+          transform: skew(-0.25rad);
+          margin: 0 0 20px;
+          text-decoration: none;
+          height: 109px;
+          padding-left: 30px;
+          .wrapper, span {} .wrapper {
+            transition: @fastTime;
+            float: left;
+            width: 104px;
+            border-top: 4px solid #fff;
+            border-bottom: 4px solid #fff;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.15);
+            height: 108px;
+            overflow: hidden;
+            .image {
+              transform: skew(0.25rad);
+              background-repeat: no-repeat;
+              background-position: center;
+              background-size: 112px;
+              width: 112px;
+              height: 100%;
+            }
+          }
+          span {
+            font-family: Futura, "century gothic", arial, sans-serif;
+            color: #fff;
+            transform: skew(0.25rad);
+            text-transform: uppercase;
+            display: block;
+            float: left;
+            margin: 43px 0 0 24px;
+            font-size: 19px;
+          }
+          &:hover {
+            .wrapper {
+              border-color: @colorDefaultLight;
+              background-color: @colorPrimary;
+            }
+            span {
+              color: @colorPrimary;
+            }
+          }
+        }
+      }
+    }
+  }
+}
