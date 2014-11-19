@@ -12,12 +12,19 @@ App.config([
   function($httpProvider) {
     $httpProvider.defaults.useXDomain = true;
     delete $httpProvider.defaults.headers.common['X-Requested-With'];
-    $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf8';
+    
+    //$httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf8';
   }
 ]);
   
 angular.module('config',[])
   .constant('__vkAppId', 4639658)
+  .constant('__api', {
+    baseUrl: 'http://api.smm.dev/',
+    paths: {
+      saveExtensionToken: 'user/saveExtensionToken'
+    }
+  })
 App.run([
   '__vkAppId',
   'S_chrome',
@@ -35,20 +42,73 @@ App.run([
 
       })
     }, function() {
-
-
       chrome.runtime.sendMessage({
         vk_auth: true
       }, function(response) {
         console.log(response.farewell);
       });
-
-      
     })
-
-
   }
 ]);
+
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
+  var ctr = this;
+
+
+  S_chrome.getVkToken().then(function(token) {
+    if (token) {
+      S_selfapi.sendExtensionToken(token);
+    } else {
+      //TODO: обработчик
+    }
+  })
+
+
+  return ctr;
+}]);
+
+angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
+  var ctr = this;
+
+  ctr.singIn = function() {
+    var currentTab;
+
+    chrome.tabs.getCurrent(function(tab) {
+      currentTab = tab;
+
+      S_vk.callAuthPopup().then(function(tab) {
+
+
+        chrome.tabs.remove(tab.id, function() {});
+        
+
+        chrome.tabs.update( 
+          currentTab.id, {
+            'url': '/pages/afterAuth.html',
+            'active': true
+          },
+          function(tab) {
+          }
+        );
+      })
+    })
+
+  }
+
+  return ctr;
+}]);
 
 angular.module('App').controller('C_main', ['$scope', function($scope) {
   var ctr = this;
@@ -65,18 +125,6 @@ angular.module('App').controller('C_main', ['$scope', function($scope) {
   return ctr;
 }]);
 
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
 angular.module('chromeTools', [])
   .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
     var service = {};
@@ -84,7 +132,7 @@ angular.module('chromeTools', [])
     service.pageDataWatch = function() {
 
       window.addEventListener('message', function(e) {
-
+ 
         S_eventer.sendEvent('loadedDataFromTab', e.data);
       });
 
@@ -194,17 +242,15 @@ angular.module('chromeTools', [])
         })
       }, 1000);
     }
-
+ 
 
     service.getVkToken = function() {
       var defer = $q.defer();
       chrome.storage.local.get({
         'vkaccess_token': {}
       }, function(items) {
-
         if (items.vkaccess_token.length !== undefined) {
           defer.resolve(items.vkaccess_token);
-          return;
         } else {
           defer.reject();
         }
@@ -213,26 +259,24 @@ angular.module('chromeTools', [])
     }
 
 
-    service.showExtensionPopup = function(tab) {
-      var code = [
-        'var d = document.createElement("div");',
-        'd.setAttribute("style", "background-color: rgba(0,0,0,0.5); width: 100%; height: 100%; position: fixed; top: 0px; left: 0px; z-index: 99999899999898988899;");',
-        'var iframe = document.createElement("iframe");',
-        'iframe.src = chrome.extension.getURL("pages/createPost.html");',
-        'iframe.setAttribute("style", "width:100%;height:100%;");',
-        'iframe.setAttribute("id", "smm-transport-ekniERgebe39EWee");',
-        'iframe.setAttribute("frameborder", "0");',
-        'd.appendChild(iframe);',
-        'document.body.appendChild(d);'
-      ].join("\n");
+    service.showExtensionPopup = function(tab) { 
 
       /* Inject the code into the current tab */
-      chrome.tabs.executeScript(tab.id, {
-        code: code
-      });
+      //chrome.tabs.executeScript(tab.id, {
+      //  code: code
+      //});
 
+      
       chrome.tabs.executeScript(tab.id, {
-        file: "pack/pageParser.js"
+        file: "pack/pageEnviroment.js"
+      });
+    }
+
+    service.openPreAuthPage = function() {
+      chrome.tabs.create({
+        url: '/pages/afterInstall.html',
+        selected: true
+      }, function(tab) {
       });
     }
 
@@ -250,6 +294,27 @@ angular.module('App')
         $rootScope.$broadcast(name, arguments);
       }
       
+      return service;
+    }
+  ]);
+
+angular.module('App')
+  .service('S_selfapi', [
+    '$http',
+    '__api',
+    function($http, __api) {
+      var service = {};
+      var base = __api.baseUrl;
+      service.sendExtensionToken = function(token) {
+        return $http({
+          url: base + __api.paths.saveExtensionToken,
+          method: 'POST',
+          data: { 
+            token: token
+          }
+        });
+      }
+
       return service;
     }
   ]);
@@ -303,7 +368,7 @@ angular.module('vkTools',[])
 
         return function tabUpdateListener(tabId, changeInfo) {
           var vkAccessToken,
-            vkAccessTokenExpiredFlag;
+            vkAccessTokenExpiredFlag; 
 
           if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
 
@@ -348,7 +413,7 @@ angular.module('vkTools',[])
             path += ('&' + key + '=' + _params[key]);
           }
         }
-
+ 
         $http.get('https://api.vk.com' + path, function(res) {
           if (typeof _response === 'function') {
             _response(res.data);
@@ -380,8 +445,9 @@ angular.module('vkTools',[])
           url: vkAuthenticationUrl,
           selected: true
         }, function(tab) {
+          
           chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
-            defer.resolve();
+            defer.resolve(tab);
           }));
         });
 

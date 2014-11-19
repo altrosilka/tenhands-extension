@@ -23,6 +23,8 @@ var backgroundScripts = [
   './src/js/background.js'
 ];
 
+var enviromentScripts = ['./src/js/pageParser.js', './src/js/pageEnviroment.js'];
+
 var vendorLibs = [
   './bower_components/jquery/dist/jquery.js',
   './bower_components/bootstrap/dist/js/bootstrap.js',
@@ -57,6 +59,10 @@ gulp.task('background-scripts', function() {
     .pipe(gulp.dest('./public/pack'))
 });
 
+gulp.task('dist-enviroment', function() {
+  gulp.src(enviromentScripts)
+    .pipe(gulp.dest('./public/pack'))
+});
 
 
 
@@ -135,7 +141,7 @@ gulp.task('dist-pages', function() {
 
 
 gulp.task("watch", function() {
-  gulp.watch('./src/js/**', ["scripts"]);
+  gulp.watch('./src/js/**', ["scripts","dist-enviroment"]);
   gulp.watch('./src/less/**', ["less"]);
   gulp.watch('./tmp/css/**', ["styles"]);
   gulp.watch('./src/manifest.json', ["dist-manifest"]);

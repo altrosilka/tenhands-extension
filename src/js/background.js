@@ -51,7 +51,12 @@ App.run([
 
     chrome.browserAction.onClicked.addListener(function(tab) {
       if (tab) {
-        S_chrome.showExtensionPopup(tab);
+        //S_chrome.getVkToken().then(function(token){
+          //S_chrome.showExtensionPopup(tab);
+        //},function(){
+          S_chrome.openPreAuthPage();
+        //});
+        
       }
     });
 

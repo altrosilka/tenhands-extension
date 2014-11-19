@@ -19,7 +19,7 @@ angular.module('vkTools',[])
 
         return function tabUpdateListener(tabId, changeInfo) {
           var vkAccessToken,
-            vkAccessTokenExpiredFlag;
+            vkAccessTokenExpiredFlag; 
 
           if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
 
@@ -64,7 +64,7 @@ angular.module('vkTools',[])
             path += ('&' + key + '=' + _params[key]);
           }
         }
-
+ 
         $http.get('https://api.vk.com' + path, function(res) {
           if (typeof _response === 'function') {
             _response(res.data);
@@ -96,8 +96,9 @@ angular.module('vkTools',[])
           url: vkAuthenticationUrl,
           selected: true
         }, function(tab) {
+          
           chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
-            defer.resolve();
+            defer.resolve(tab);
           }));
         });
 
