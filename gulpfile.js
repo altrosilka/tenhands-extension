@@ -26,16 +26,23 @@ var backgroundScripts = [
 var enviromentScripts = ['./src/js/pageParser.js', './src/js/pageEnviroment.js'];
 
 var vendorLibs = [
+  './bower_components/lodash/dist/lodash.js',
   './bower_components/jquery/dist/jquery.js',
   './bower_components/bootstrap/dist/js/bootstrap.js',
   './bower_components/angular/angular.js',
-  './bower_components/angular-bootstrap/ui-bootstrap-tpls.js'
+  './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
+  './bower_components/fancybox/source/jquery.fancybox.js',
+  './bower_components/Jcrop/js/jquery.Jcrop.js',
+  './bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js',
+  './bower_components/blueimp-file-upload/js/jquery.iframe-transport.js',
+  './bower_components/blueimp-file-upload/js/jquery.fileupload.js'
 ];
 
 var vendorLibsCss = [
   './bower_components/bootstrap/dist/css/bootstrap.min.css',
   './bower_components/font-awesome/css/font-awesome.css',
-  './bower_components/fancybox/source/jquery.fancybox.css'
+  './bower_components/fancybox/source/jquery.fancybox.css',
+  './bower_components/Jcrop/css/jquery.Jcrop.css'
 ];
 
 
@@ -61,6 +68,7 @@ gulp.task('background-scripts', function() {
 
 gulp.task('dist-enviroment', function() {
   gulp.src(enviromentScripts)
+    .pipe(concat('pageEnviroment.js'))
     .pipe(gulp.dest('./public/pack'))
 });
 
@@ -141,13 +149,14 @@ gulp.task('dist-pages', function() {
 
 
 gulp.task("watch", function() {
-  gulp.watch('./src/js/**', ["scripts","dist-enviroment"]);
+  gulp.watch('./src/js/**', ["scripts", "dist-enviroment"]);
   gulp.watch('./src/less/**', ["less"]);
   gulp.watch('./tmp/css/**', ["styles"]);
   gulp.watch('./src/manifest.json', ["dist-manifest"]);
   gulp.watch('./src/background.html', ["dist-background"]);
   gulp.watch('./src/pages/**', ["dist-pages"]);
   gulp.watch('./src/templates/**', ["templates"]);
+  gulp.watch('./src/js/*.js', ["background-scripts"]);
 });
 
 gulp.task('build', [

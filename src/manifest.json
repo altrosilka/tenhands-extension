@@ -19,6 +19,6 @@
   "web_accessible_resources": [
     "pages/createPost.html"
   ],
-  "content_security_policy": "script-src 'self' 'unsafe-eval' https://*.vk.com; object-src 'self'",
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://*.vk.com https://*.google.com; object-src 'self'",
   "version": "@@version"
 }

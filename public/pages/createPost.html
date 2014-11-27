@@ -3,25 +3,66 @@
 
 <head>
   <meta charset="UTF-8" />
+  <link rel="stylesheet" type="text/css" href="/pack/vendors.css" />
   <link rel="stylesheet" type="text/css" href="/pack/styles.css" />
   <title></title>
 </head>
 
 <body data-ng-app="App" data-ng-controller="C_main as ctr" data-ng-class="{'loaded': ctr.dataIsLoaded}">
   <section class="window">
-    <header>he</header>
-    <section class="body">body
+    <header>he <i class="ion-loading-c"></i>
+    </header>
+    <section class="body clearfix">
+
+      <textarea class="postArea" ng-model="ctr.text"></textarea>
+
+      <div class="separator"></div>
+
+      <div class="postActions">
+        <label>
+          <i class="fa fa-picture-o"></i>
+          <span>загрузить изображения</span>
+          <div class="gogoleft" image-upload-area on-upload-start="ctr.pushUploadingAttach" after-image-uploaded="ctr.afterImageUploaded"></div>
+        </label>
+        <label ng-click="ctr.openPhotobankSearch()">
+          <i class="fa fa-cloud"></i>
+          <span>поиск в фотобанке</span>
+        </label>
+      </div>
+
+      <div class="attaches clearfix">
+        <div class="attach" data-ng-repeat="attach in ctr.attachments" ng-class="{'processing':ctr.attachIsProcessing(attach), selected: ctr.attachIsSelected(attach)}">
+          <div class="process"><i class="fa fa-circle-o-notch fa-spin"></i>
+          </div>
+          <div class="image" ng-style="{'background-image':'url('+attach.src+')'}">
+
+            <div class="actions" ng-click="ctr.toggleAttach(attach)">
+
+              <span class="main">
+                <i class="check fa fa-check"></i>
+                <i class="remove fa fa-times"></i>
+              </span>
+            </div>
 
 
-    <div>
-    	<span style="float:left;" data-ng-repeat="image in ctr.data.images">
-    		<img ng-src="{{image.src}}">
-    		<span>{{image.clientWidth}}x{{image.clientHeight}} ({{image.height}}x{{image.width}})</span>
-    	</span>
-    </div>
+          </div>
+          <span class="additional">
+                <i ng-click="ctr.openFullImage(attach)" class="fa fa-search-plus"></i>
+              </span>
+          <div class="info">
+            <span tooltip-placement="left" tooltip="Видимый размер изображения">
+              {{attach.clientWidth}}x{{attach.clientHeight}}
+            </span>
+            <span class="gray" ng-if="ctr.showRealImageSize(attach)" tooltip-placement="left" tooltip="Оригинальный резмер изображения">
+              ({{attach.width}}x{{attach.height}})
+            </span>
+          </div>
+        </div>
+      </div>
     </section>
     <footer>fo</footer>
   </section>
+
 
   <script type="text/javascript" src="/pack/vendor.js"></script>
   <script type="text/javascript" src="/pack/templates.js"></script>
@@ -29,7 +70,3 @@
 </body>
 
 </html>
-
-
-
-

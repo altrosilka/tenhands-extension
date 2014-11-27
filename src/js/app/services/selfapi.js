@@ -9,9 +9,27 @@ angular.module('App')
         return $http({
           url: base + __api.paths.saveExtensionToken,
           method: 'POST',
-          data: { 
+          data: {
             token: token
           }
+        });
+      }
+
+      service.uploadImageToVk = function(url, c, w, h, id) {
+        var obj = {
+          url: url,
+          id: id
+        };
+
+        if (c) {
+          _.extend(obj, c);
+          obj.originalWidth = w;
+          obj.originalHeight = h;
+        }
+        return $http({
+          url: base + __api.paths.uploadPhoto,
+          method: 'POST',
+          data: obj
         });
       }
 

@@ -4,9 +4,22 @@
 
   var imagesColection = document.getElementsByTagName('img');
   var images = [],
-    image;
+    image, res;
   for (var i = 0, l = imagesColection.length; i < l; i++) {
     image = imagesColection.item(i);
+    //console.log(image, image.src)
+ 
+    if (image.src === 'http://www.lookatme.ru/mag/live/experience-news/209627-trailer') {
+      //debugger
+    }
+    if (image.hidden || image.naturalHeight < 100 || image.naturalWidth < 100 || image.width < 150 || image.height < 150) {
+      continue;
+    }
+    res = image.width / image.height;
+
+    if (res > 4 || res < 0.25){
+      continue;
+    }
     images.push({
       alt: image.alt,
       clientHeight: image.clientHeight,
@@ -14,7 +27,8 @@
       width: image.width,
       height: image.height,
       title: image.title,
-      src: image.src
+      src: image.src,
+      type: 'image'
     });
   }
 
@@ -48,10 +62,24 @@
       setTimeout(sendToIframe, 300);
     } else {
       setTimeout(function() {
-        frame.contentWindow.postMessage(data, 'chrome-extension://njbifdlkgjknapheokjpilhjpemjbmnk')
+        frame.contentWindow.postMessage(data, 'chrome-extension://njbifdlkgjknapheokjpilhjpemjbmnk');
       }, 500);
     }
   }
+
+
+  /* selection */
+  var selection = window.getSelection();
+  if (selection && selection.type !== 'None') {
+    var range = selection.getRangeAt(0);
+    if (range) {
+      var div = document.createElement('div');
+      div.appendChild(range.cloneContents());
+      data.selection = div.innerHTML;
+    }
+  }
+
+
   console.log(JSON.stringify(data));
   sendToIframe();
 })();

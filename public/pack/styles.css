@@ -2,13 +2,14 @@
 /* plasma blue */
 /* borders */
 /* borders */
+/*@import url('vendor/ionicons/ionicons.less');  */
 html,
 body {
   height: 100%;
   min-height: 100%;
 }
 body {
-  font: 13px Arial, Helvetica, sans-serif;
+  font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
   background-color: transparent;
 }
@@ -49,9 +50,178 @@ a:hover {
   visibility: hidden;
   transform: scale(0.9);
   transition: 0.2s;
-  width: 960px;
+  width: 752px;
   margin: 40px auto;
-  background: #fff;
+  background: #f9f9f9;
   border-radius: 2px;
   box-shadow: 0px 0px 10px #000;
+}
+.window .body {
+  padding: 20px;
+}
+.window .body .postArea {
+  width: 577px;
+  padding: 10px;
+  border: 1px solid #DDD;
+  background: #FFF;
+  height: 120px;
+  font-size: 12px;
+  word-wrap: break-word;
+  line-height: 18px;
+  outline: none;
+}
+.window .body .separator {
+  height: 1px solid #eee;
+  clear: both;
+  padding: 10px 0;
+}
+.jcrop-hline {
+  background: #ffffff url("../images/Jcrop.gif");
+}
+.fancybox-wrap {
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  transform: scale(0.9);
+}
+.fancybox-wrap.showed {
+  opacity: 1;
+  transform: scale(1);
+}
+.gogoleft {
+  position: absolute;
+  left: -9999px;
+}
+.attaches {
+  margin: 0 -7px;
+}
+.attaches .attach {
+  float: left;
+  width: 131px;
+  height: 131px;
+  margin: 7px;
+  position: relative;
+  transition: 0.2s;
+  box-shadow: 0px 0px 0px 1px #CCC;
+  background: #DDD;
+}
+.attaches .attach.processing .process {
+  opacity: 1;
+  visibility: visible;
+}
+.attaches .attach .process {
+  opacity: 0;
+  position: absolute;
+  font-size: 30px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  top: 0;
+  bottom: 0;
+  line-height: 132px;
+  visibility: hidden;
+  transition: 0.2s;
+  z-index: 2;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+.attaches .attach .image {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.attaches .attach .image .actions {
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s;
+  background-color: rgba(255, 255, 255, 0.7);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  cursor: pointer;
+}
+.attaches .attach .image .actions .remove,
+.attaches .attach .image .actions .check {
+  transiiton: 0.2s;
+}
+.attaches .attach .image .actions .remove {
+  opacity: 0;
+  visibility: hidden;
+  margin-left: 0px;
+}
+.attaches .attach .image .actions .check {
+  opacity: 1;
+  visibility: visible;
+}
+.attaches .attach .image .actions .main {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 28px;
+  margin: -20px 0 0 -20px;
+  text-shadow: 0px 0px 1px #FFF;
+  background: rgba(255, 255, 255, 0.8);
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  box-shadow: 0px 0px 3px #222;
+  text-align: center;
+}
+.attaches .attach .image .actions .main i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 7px;
+}
+.attaches .attach .image:hover .actions {
+  opacity: 1;
+  visibility: visible;
+}
+.attaches .attach .additional {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  cursor: pointer;
+  transition: 0.2s;
+  background: rgba(0, 0, 0, 0.5);
+  color: #EEE;
+  padding: 0 3px;
+  font-size: 13px;
+}
+.attaches .attach .info {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  color: #EEE;
+  font-size: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 2px 5px;
+  transition: 0.2s;
+}
+.attaches .attach .info .gray {
+  color: #aaa;
+}
+.attaches .attach.selected {
+  box-shadow: 0px 0px 0px 5px #99f;
+}
+.attaches .attach.selected .actions {
+  opacity: 1;
+  visibility: visible;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+.attaches .attach.selected .actions .check {
+  opacity: 0;
+  visibility: hidden;
+}
+.attaches .attach.selected .actions .remove {
+  opacity: 1;
+  visibility: visible;
+}
+.attaches .attach.selected .additional,
+.attaches .attach.selected .info {
+  opacity: 0;
+  visibility: hidden;
 }

@@ -25841,7 +25841,7 @@ angular.module('vkTools',[])
 
       service.callAuthPopup = function() {
         var defer = $q.defer();
-        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,video,audio,wall,offline,email,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
+        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,email,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
 
         chrome.tabs.create({
           url: vkAuthenticationUrl,
@@ -25870,13 +25870,12 @@ angular.module('chromeTools', [])
     var service = {};
 
     service.pageDataWatch = function() {
-
-      window.addEventListener('message', function(e) {
  
+      window.addEventListener('message', function(e) {
         S_eventer.sendEvent('loadedDataFromTab', e.data);
       });
 
-
+      
       setTimeout(function() {
         S_eventer.sendEvent('loadedDataFromTab', {
           "images": [{
@@ -25982,7 +25981,7 @@ angular.module('chromeTools', [])
         })
       }, 1000);
     }
- 
+
 
     service.getVkToken = function() {
       var defer = $q.defer();
@@ -25999,14 +25998,7 @@ angular.module('chromeTools', [])
     }
 
 
-    service.showExtensionPopup = function(tab) { 
-
-      /* Inject the code into the current tab */
-      //chrome.tabs.executeScript(tab.id, {
-      //  code: code
-      //});
-
-      
+    service.showExtensionPopup = function(tab, info) {
       chrome.tabs.executeScript(tab.id, {
         file: "pack/pageEnviroment.js"
       });
@@ -26016,16 +26008,15 @@ angular.module('chromeTools', [])
       chrome.tabs.create({
         url: '/pages/afterInstall.html',
         selected: true
-      }, function(tab) {
-      });
+      }, function(tab) {});
     }
 
 
     return service;
   }]);
 
-angular.module('utilsTools',[])
-  .service('S_utils', [function() {
+angular.module('utilsTools', [])
+  .service('S_utils', ['$modal', function($modal) {
     var service = {};
 
     service.getUrlParameterValue = function(url, parameterName) {
@@ -26049,6 +26040,52 @@ angular.module('utilsTools',[])
       return parameterValue;
     }
 
+    service.openUploadImageModal = function() {
+      $modal.open({
+        templateUrl: 'templates/modals/addImage.html',
+        controller: 'CM_addImage as ctr',
+        size: 'md'
+      }).result;
+    }
+
+
+    service.decodeEntities = (function() {
+      var element = document.createElement('div');
+
+      function decodeHTMLEntities(str) {
+        if (str && typeof str === 'string') {
+          // strip script/html tags
+          str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
+          str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
+          element.innerHTML = str;
+          str = element.textContent;
+          element.textContent = '';
+        }
+
+        return str;
+      }
+
+      return decodeHTMLEntities;
+    })();
+
+    service.getAttachesByType = function(attaches, type) {
+      return _.filter(attaches, function(q) {
+        return q.type === type;
+      });
+    }
+
+    service.attachToFancy = function(ats) {
+      return _.map(ats, function(image) {
+        return {
+          href: image.src
+        }
+      });
+    }
+
+    service.convertUploadedPhotoToAttach = function(photo){
+      
+    }
+
     return service;
   }]);
 
@@ -26057,9 +26094,13 @@ angular.module('config',[])
   .constant('__api', {
     baseUrl: 'http://api.smm.dev/',
     paths: {
-      saveExtensionToken: 'user/saveExtensionToken'
+      saveExtensionToken: 'user/saveExtensionToken',
+      uploadPhoto: 'posts/uploadImage'
     }
   })
+
+
+  
 angular.module('mock', []).service('S_eventer', [function() {}]);
 
 
@@ -26067,7 +26108,7 @@ var App = angular.module('App', [
   'config',
   'vkTools',
   'chromeTools',
-  'utilsTools',
+  'utilsTools', 
   'mock'
 ]);
 
@@ -26101,28 +26142,32 @@ App.run([
     chrome.contextMenus.create({
       "title": "Сохранить изображение в банк",
       "type": "normal",
-      "contexts": ["image", "page"],
+      "contexts": ["image"],
       "onclick": saveImageToBankFromContext
     });
 
     chrome.contextMenus.create({
-      "title": "Оформить пост из этого",
-      "contexts": ["selection", "image"],
+      "contexts": ["selection"],
+      "title":"Офомить пост из выделенного текста '%s'",
+      "onclick": openPostCreationFromContext
+    });
+
+    chrome.contextMenus.create({
+      "contexts": ["image"],
+      "title":"ОФормить пост из изображения",
       "onclick": openPostCreationFromContext
     });
 
     chrome.browserAction.onClicked.addListener(function(tab) {
       if (tab) {
-        //S_chrome.getVkToken().then(function(token){
-          //S_chrome.showExtensionPopup(tab);
-        //},function(){
+        S_chrome.getVkToken().then(function(token){
+          S_chrome.showExtensionPopup(tab);
+        },function(){
           S_chrome.openPreAuthPage();
-        //});
+        });
         
       }
     });
-
-    console.log('init back');
 
     chrome.runtime.onMessage.addListener(
       function(request, sender, sendResponse) {
@@ -26136,9 +26181,9 @@ App.run([
 
 
     function openPostCreationFromContext(info, tab) {
+      debugger
       S_chrome.showExtensionPopup(tab, info);
     }
-
 
 
     function saveImageToBankFromContext(info, tab) {

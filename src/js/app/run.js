@@ -2,8 +2,11 @@ App.run([
   '__vkAppId',
   'S_chrome',
   'S_vk',
-  function(__vkAppId, S_chrome, S_vk) {
+  'S_google',
+  function(__vkAppId, S_chrome, S_vk, S_google) {
     S_chrome.pageDataWatch();
+
+    S_google.init();
 
     S_chrome.getVkToken().then(function(token) {
 

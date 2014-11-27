@@ -3,13 +3,12 @@ angular.module('chromeTools', [])
     var service = {};
 
     service.pageDataWatch = function() {
-
-      window.addEventListener('message', function(e) {
  
+      window.addEventListener('message', function(e) {
         S_eventer.sendEvent('loadedDataFromTab', e.data);
       });
 
-
+      
       setTimeout(function() {
         S_eventer.sendEvent('loadedDataFromTab', {
           "images": [{
@@ -115,7 +114,7 @@ angular.module('chromeTools', [])
         })
       }, 1000);
     }
- 
+
 
     service.getVkToken = function() {
       var defer = $q.defer();
@@ -132,14 +131,7 @@ angular.module('chromeTools', [])
     }
 
 
-    service.showExtensionPopup = function(tab) { 
-
-      /* Inject the code into the current tab */
-      //chrome.tabs.executeScript(tab.id, {
-      //  code: code
-      //});
-
-      
+    service.showExtensionPopup = function(tab, info) {
       chrome.tabs.executeScript(tab.id, {
         file: "pack/pageEnviroment.js"
       });
@@ -149,8 +141,7 @@ angular.module('chromeTools', [])
       chrome.tabs.create({
         url: '/pages/afterInstall.html',
         selected: true
-      }, function(tab) {
-      });
+      }, function(tab) {});
     }
 
 

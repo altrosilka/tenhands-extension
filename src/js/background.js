@@ -5,7 +5,7 @@ var App = angular.module('App', [
   'config',
   'vkTools',
   'chromeTools',
-  'utilsTools',
+  'utilsTools', 
   'mock'
 ]);
 
@@ -39,28 +39,32 @@ App.run([
     chrome.contextMenus.create({
       "title": "Сохранить изображение в банк",
       "type": "normal",
-      "contexts": ["image", "page"],
+      "contexts": ["image"],
       "onclick": saveImageToBankFromContext
     });
 
     chrome.contextMenus.create({
-      "title": "Оформить пост из этого",
-      "contexts": ["selection", "image"],
+      "contexts": ["selection"],
+      "title":"Офомить пост из выделенного текста '%s'",
+      "onclick": openPostCreationFromContext
+    });
+
+    chrome.contextMenus.create({
+      "contexts": ["image"],
+      "title":"ОФормить пост из изображения",
       "onclick": openPostCreationFromContext
     });
 
     chrome.browserAction.onClicked.addListener(function(tab) {
       if (tab) {
-        //S_chrome.getVkToken().then(function(token){
-          //S_chrome.showExtensionPopup(tab);
-        //},function(){
+        S_chrome.getVkToken().then(function(token){
+          S_chrome.showExtensionPopup(tab);
+        },function(){
           S_chrome.openPreAuthPage();
-        //});
+        });
         
       }
     });
-
-    console.log('init back');
 
     chrome.runtime.onMessage.addListener(
       function(request, sender, sendResponse) {
@@ -74,9 +78,9 @@ App.run([
 
 
     function openPostCreationFromContext(info, tab) {
+      debugger
       S_chrome.showExtensionPopup(tab, info);
     }
-
 
 
     function saveImageToBankFromContext(info, tab) {

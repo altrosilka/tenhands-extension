@@ -1,0 +1,44 @@
+<div class="modal-header">
+  <h3 class="modal-title">Поиск изображения</h3>
+</div>
+<div class="modal-body">
+  <p>Укажи поисковый запрос на интересующую тематику, выбери подходящие изображения и добавь их к записи в ВК</p>
+  <div class="text-center">
+    <form ng-submit="ctr.search(ctr.q)">
+      <input class="form-control" type="text" ng-model="ctr.q" placeholder="spa или борщ">
+      <input type="submit" style="position:absolute;left:-9999px;">
+    </form>
+
+    <div class="attaches clearfix">
+      <div class="attach" data-ng-repeat="attach in ctr.attachments" ng-class="{'processing':ctr.attachIsProcessing(attach), selected: ctr.attachIsSelected(attach)}">
+        <div class="process"><i class="fa fa-circle-o-notch fa-spin"></i>
+        </div>
+        <div class="image" ng-style="{'background-image':'url('+attach.tbUrl+')'}">
+
+          <div class="actions" ng-click="ctr.toggleAttach(attach)">
+
+            <span class="main">
+                <i class="check fa fa-check"></i>
+                <i class="remove fa fa-times"></i>
+              </span>
+          </div>
+
+
+        </div>
+        <span class="additional">
+                <i ng-click="ctr.openFullImage(attach)" class="fa fa-search-plus"></i>
+              </span>
+        <div class="info">
+          <span tooltip-placement="left" tooltip="Видимый размер изображения">
+              {{attach.width}}x{{attach.height}}
+            </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="modal-footer">
+  <button class="btn btn-default pull-left" ng-click="$dismiss()">Закрыть</button>
+  <button class="btn btn-success" ng-show="ctr.selectedAttachments.length" ng-disabled="ctr.processingImages.length" ng-click="$close(ctr.selectedAttachments)">Добавить выбранные</button>
+</div>

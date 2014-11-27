@@ -40,7 +40,7 @@
 
     return dom;
   }
-
+  debugger
   function sendToIframe() {
     frame = document.getElementById('smm-transport-ekniERgebe39EWee');
     if (frame === null) {
