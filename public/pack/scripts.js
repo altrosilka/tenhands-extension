@@ -58,6 +58,133 @@ App.run([
   }
 ]);
 
+angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
+  var ctr = this;
+
+
+  S_chrome.getVkToken().then(function(token) {
+    if (token) {
+      S_selfapi.sendExtensionToken(token);
+    } else {
+      //TODO: обработчик
+    }
+  })
+
+
+  return ctr;
+}]);
+
+angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
+  var ctr = this;
+
+  ctr.singIn = function() {
+    var currentTab;
+
+    chrome.tabs.getCurrent(function(tab) {
+      currentTab = tab;
+
+      S_vk.callAuthPopup().then(function(tab) {
+
+
+        chrome.tabs.remove(tab.id, function() {});
+        
+
+        chrome.tabs.update( 
+          currentTab.id, {
+            'url': '/pages/afterAuth.html',
+            'active': true
+          },
+          function(tab) {
+          }
+        );
+      })
+    })
+
+  }
+
+  return ctr;
+}]);
+
+angular.module('App').controller('C_main', [
+  '$scope',
+  '$compile',
+  '$timeout',
+  'S_utils',
+  'S_selfapi',
+  function($scope, $compile, $timeout, S_utils, S_selfapi) {
+    var ctr = this;
+
+    ctr.attachments = [];
+
+    ctr.selectedAttachments = [];
+    ctr.processingImages = [];
+    ctr.uploadingAttaches = [];
+
+    ctr.openParserResults = function() {
+      var q = (!ctr.dataIsLoaded) ? false : ctr.pageAttachments;
+      S_utils.openParserResults(q).then(function(resp) {
+        _.forEach(resp, function(q) {
+          ctr.attachments.push(angular.copy(q));
+        });
+      });
+    }
+
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      $scope.$apply(function() {
+        ctr.data = data;
+        var images = _.map(data.images, function(q) {
+          q.type = 'image';
+          q.id = S_utils.getRandomString(16);
+          return q;
+        });
+        ctr.pageAttachments = ctr.attachments.concat(images);
+        ctr.attachments.push(images[0]);
+
+        if (!ctr.text || ctr.text === '') {
+          ctr.text = S_utils.decodeEntities(data.selection || data.title);
+        }
+      });
+
+    });
+
+    ctr.dataIsLoaded = true;
+
+    ctr.pushUploadingAttach = function() {
+      var obj = {
+        src: '/images/nophoto.jpg',
+        type: 'image',
+        processing: true,
+        id: S_utils.getRandomString(16)
+      };
+      $scope.$apply(function() {
+        ctr.attachments.push(obj);
+        ctr.uploadingAttaches.push(obj);
+        ctr.processingImages.push(obj);
+      });
+      return obj;
+    }
+
+    ctr.afterImageUploaded = function(resp, id) {
+      var attach = ctr.uploadingAttaches.shift();
+      var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
+      $scope.$apply(function() {
+        _.extend(attach, image);
+        ctr.processingImages.shift();
+      });
+    }
+
+    ctr.openPhotobankSearch = function() {
+      S_utils.openPhotobankModal().then(function(resp) {
+        _.forEach(resp, function(el) {
+          ctr.attachments.push(el);
+        });
+      });
+    }
+
+    return ctr;
+  }
+]);
+
 angular.module('App').directive('imageUploadArea', ['$timeout', '__api', function($timeout, __api) {
   return {
     scope: {
@@ -156,193 +283,119 @@ angular.module('App').directive('jcropArea', ['$timeout',function($timeout) {
 
 }]);
 
-angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
-  var ctr = this;
-
-
-  S_chrome.getVkToken().then(function(token) {
-    if (token) {
-      S_selfapi.sendExtensionToken(token);
-    } else {
-      //TODO: обработчик
-    }
+angular.module('App').directive('popoverHtmlUnsafePopup', function() {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        content: '@',
+        placement: '@',
+        animation: '&',
+        isOpen: '='
+      },
+      templateUrl: 'templates/directives/popoverHtmlUnsafePopup.html'
+    };
   })
-
-
-  return ctr;
-}]);
-
-angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
-  var ctr = this;
-
-  ctr.singIn = function() {
-    var currentTab;
-
-    chrome.tabs.getCurrent(function(tab) {
-      currentTab = tab;
-
-      S_vk.callAuthPopup().then(function(tab) {
-
-
-        chrome.tabs.remove(tab.id, function() {});
-        
-
-        chrome.tabs.update( 
-          currentTab.id, {
-            'url': '/pages/afterAuth.html',
-            'active': true
-          },
-          function(tab) {
-          }
-        );
-      })
-    })
-
-  }
-
-  return ctr;
-}]);
-
-angular.module('App').controller('C_main', [
-  '$scope',
-  '$compile',
+  .directive('popoverHtmlUnsafe', ['$tooltip',
+    function($tooltip) {
+      return $tooltip('popoverHtmlUnsafe', 'popover', 'click');
+    }
+  ])
+ 
+angular.module('App').directive('selectArea', [
   '$timeout',
-  'S_utils',
+  '$compile',
   'S_selfapi',
-  function($scope, $compile, $timeout, S_utils, S_selfapi) {
-    var ctr = this;
-    var _fanciedImage, _fancyBoxObject;
-    ctr.attachments = [];
+  'S_utils',
+  function($timeout, $compile, S_selfapi, S_utils) {
+    return {
+      scope: {
+        selectedAttachments: '=',
+        processingAttachments: '=',
+        attachments: '='
+      },
+      templateUrl: 'templates/directives/selectArea.html',
+      controller: ['$scope', function($scope) {
+        var ctr = this;
 
-    ctr.selectedAttachments = [];
-    ctr.processingImages = [];
-    ctr.uploadingAttaches = [];
+        var _fanciedImage;
 
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
-        var images = _.map(data.images, function(q) {
-          q.type = 'image';
-          q.id = S_utils.getRandomString(16);
-          return q;
-        });
-        ctr.attachments = ctr.attachments.concat(images);
-        ctr.text = S_utils.decodeEntities(data.selection || data.title);
-        ctr.dataIsLoaded = true;
-      });
-
-    });
-
-
-    ctr.showRealImageSize = function(attach) {
-      return (attach.clientWidth !== attach.width && attach.clientHeight !== attach.height);
-    }
-
-    ctr.onCropReady = function(src, c, w, h) {
-      ctr.processingImages.push(_fanciedImage);
-      $.fancybox.close();
-      S_selfapi.uploadImageToVk(src, c, w, h, _fanciedImage.id).then(function(resp) {
-        var photo = resp.data.response[0];
-        var image = _.remove(ctr.processingImages, function(q) {
-          return q.id === resp.data.id;
-        })[0];
-
-        _.extend(image, {
-          photo: photo,
-          width: photo.width,
-          clientWidth: photo.width,
-          height: photo.height,
-          clientHeight: photo.height,
-          src: photo.photo_130,
-          src_big: photo.photo_807 || photo.photo_604
-        });
-      });
-    }
-
-    ctr.openFullImage = function(image) {
-      _fanciedImage = image;
-      var src = image.src_big || image.src;
-      _fancyBoxObject = $.fancybox({
-        type: 'html',
-        overlayShow: true,
-        content: $compile('<div jcrop-area on-crop-ready="ctr.onCropReady" image="' + src + '"></div>')($scope),
-        padding: 0,
-        openEffect: 'none',
-        closeEffect: 'none',
-        width: 960,
-        height: 520,
-        helpers: {
-          overlay: {
-            locked: false
+        ctr.toggleAttach = function(attach) {
+          var i = _.remove($scope.selectedAttachments, function(q) {
+            return q.id === attach.id;
+          });
+          if (!i.length) {
+            $scope.selectedAttachments.push(attach);
           }
         }
-      });
 
-      $timeout(function() {
-        $(window).resize();
-        $timeout(function() {
-          $('.fancybox-wrap').addClass('showed');
-        });
-      })
+        ctr.showRealImageSize = function(attach) {
+          return (attach.clientWidth !== attach.width && attach.clientHeight !== attach.height);
+        }
+
+        ctr.attachIsSelected = function(attach) {
+          return typeof _.find($scope.selectedAttachments, function(q) {
+            return q.id === attach.id;
+          }) !== 'undefined';
+        }
+
+        ctr.attachIsProcessing = function(attach) {
+          return typeof _.find($scope.processingAttachments, function(q) {
+            return q.id === attach.id;
+          }) !== 'undefined';
+        }
+
+        ctr.onCropReady = function(src, c, w, h) {
+          $scope.processingAttachments.push(_fanciedImage);
+          $.fancybox.close();
+          S_selfapi.uploadImageToVk(src, c, w, h, _fanciedImage.id).then(function(resp) {
+            var photo = resp.data.response[0];
+            var image = _.remove($scope.processingAttachments, function(q) {
+              return q.id === resp.data.id;
+            })[0];
+
+            _.extend(image, {
+              photo: photo,
+              width: photo.width,
+              clientWidth: photo.width,
+              height: photo.height,
+              clientHeight: photo.height,
+              src: photo.photo_130,
+              src_big: photo.photo_807 || photo.photo_604
+            });
+          });
+        }
+
+        ctr.openFullImage = function(image) {
+          _fanciedImage = image;
+          var src = image.src_big || image.src;
+
+          S_utils.loadImage(src).then(function() {
+            _fancyBoxObject = $.fancybox({
+              type: 'html',
+              overlayShow: true,
+              content: $compile('<div jcrop-area on-crop-ready="ctr.onCropReady" image="' + src + '"></div>')($scope),
+              padding: 0,
+              openEffect: 'none',
+              closeEffect: 'none',
+              width: 960,
+              height: 520,
+              helpers: {
+                overlay: {
+                  locked: false
+                }
+              }
+            });
+            $('.fancybox-wrap').addClass('showed');
+          });
+        }
+
+        return ctr;
+      }],
+      link: function($scope, $element) {
+      },
+      controllerAs: 'ctr'
     }
-
-
-    ctr.pushUploadingAttach = function() {
-      var obj = {
-        src: '/images/nophoto.jpg',
-        type: 'image',
-        processing: true,
-        id: S_utils.getRandomString(16)
-      };
-      $scope.$apply(function() {
-        ctr.attachments.push(obj);
-        ctr.uploadingAttaches.push(obj);
-        ctr.processingImages.push(obj);
-      });
-      return obj;
-    }
-
-    ctr.afterImageUploaded = function(resp, id) {
-      var attach = ctr.uploadingAttaches.shift();
-      var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
-      $scope.$apply(function() {
-        _.extend(attach, image);
-        ctr.processingImages.shift();
-      });
-    }
-
-    ctr.toggleAttach = function(attach) {
-      var i = _.remove(ctr.selectedAttachments, function(q) {
-        return q.id === attach.id;
-      });
-
-      if (!i.length) {
-        ctr.selectedAttachments.push(attach);
-      }
-    }
-
-    ctr.attachIsSelected = function(attach) {
-      return typeof _.find(ctr.selectedAttachments, function(q) {
-        return q.id === attach.id;
-      }) !== 'undefined';
-    }
-
-    ctr.attachIsProcessing = function(attach) {
-      return typeof _.find(ctr.processingImages, function(q) {
-        return q.id === attach.id;
-      }) !== 'undefined';
-    }
-
-
-    ctr.openPhotobankSearch = function() {
-      S_utils.openPhotobankModal().then(function(resp) {
-        _.forEach(resp, function(el) {
-          ctr.attachments.push(S_utils.convertGoogleImageToAttach(el));
-        });
-      });
-    }
-
-    return ctr;
   }
 ]);
 
@@ -669,6 +722,19 @@ angular.module('utilsTools', [])
       }).result;
     }
 
+    service.openParserResults = function(q) {
+      return $modal.open({
+        templateUrl: 'templates/modals/parserResults.html',
+        controller: 'CM_parserResults as ctr',
+        size: 'md',
+        resolve: {
+          attaches: function(){
+            return q;
+          }
+        }
+      }).result;
+    }
+
     service.loadImage = function(src) {
       var defer = $q.defer();
 
@@ -700,7 +766,7 @@ angular.module('utilsTools', [])
     service.convertGoogleImageToAttach = function(image) {
       return {
         photo: image.photo,
-        id: image.id,
+        id: image.id || service.getRandomString(16),
         width: image.width,
         clientWidth: image.width,
         height: image.height,
@@ -2120,26 +2186,54 @@ var VKS = function(_options) {
   };
 };
 
+angular.module('App').controller('CM_parserResults', [
+  '$scope',
+  '$modalInstance',
+  'S_google',
+  'S_utils',
+  'attaches',
+  function($scope, $modalInstance, S_google, S_utils, attaches) {
+    var ctr = this;
+
+    ctr.attachments = [];
+    ctr.selectedAttachments = [];
+    ctr.processingImages = []; 
+
+    if (!attaches) {
+      $scope.$on('loadedDataFromTab', function(event, data) {
+        $scope.$apply(function() {
+          var images = _.map(data.images, function(q) {
+            q.type = 'image';
+            q.id = S_utils.getRandomString(16);
+            return q;
+          });
+          ctr.attachments = ctr.attachments.concat(images);
+        });
+      });
+    } else {
+      ctr.attachments = attaches;
+    }
+
+    return ctr;
+  }
+]);
+
 angular.module('App').controller('CM_photobankSearch', [
   '$scope',
   '$modalInstance',
-  '$compile',
-  '$timeout',
   'S_google',
   'S_utils',
-  'S_selfapi',
-  function($scope, $modalInstance, $compile, $timeout, S_google, S_utils, S_selfapi) {
+  function($scope, $modalInstance, S_google, S_utils) {
     var ctr = this;
 
     var _fanciedImage, _fancyBoxObject;
     ctr.attachments = [];
+    ctr.selectedAttachments = [];
+    ctr.processingImages = []; 
 
+    ctr.aboutSearchText = '<div style="width:300px">Например, ты хочешь найти <b>борщ</b>. Какие запросы ты можешь задать: <b>борщ</b>, <b>украинский борщ</b>, <b>борщ с бараниной</b>, <b>розовый борщ</b>, <b>шутка про борщ</b>, <b>борщ на природе</b>, <b>борщ с пампушками</b>. И все эти запросы приведут тебя к разным изображениям.<br><br>Формируй запросы правильно и все будет хорошо!</div>';
 
     ctr.page = 0;
-
-    ctr.selectedAttachments = [];
-
-    ctr.processingImages = [];
 
     ctr.search = function(q) {
       if (q === '') {
@@ -2148,80 +2242,11 @@ angular.module('App').controller('CM_photobankSearch', [
 
       S_google.loadImages(q).then(function(resp) {
         var images = _.map(resp.results, function(q) {
-          q.type = 'image';
-          q.id = S_utils.getRandomString(16);
-          return q;
+          return S_utils.convertGoogleImageToAttach(q);
         });
         ctr.attachments = images;
         console.log(images);
       });
-    }
-
-    ctr.onCropReady = function(src, c, w, h) {
-      ctr.processingImages.push(_fanciedImage);
-      $.fancybox.close();
-      S_selfapi.uploadImageToVk(src, c, w, h, _fanciedImage.id).then(function(resp) {
-        var photo = resp.data.response[0];
-        var image = _.remove(ctr.processingImages, function(q) {
-          return q.id === resp.data.id;
-        })[0];
-        
-        _.extend(image, {
-          photo: photo,
-          width: photo.width,
-          clientWidth: photo.width,
-          height: photo.height,
-          clientHeight: photo.height,
-          tbUrl: photo.photo_130,
-          src_big: photo.photo_807 || photo.photo_604
-        });
-      });
-    }
-
-    ctr.openFullImage = function(image) {
-      _fanciedImage = image;
-      var src = image.unescapedUrl;
-
-      S_utils.loadImage(src).then(function() {
-        _fancyBoxObject = $.fancybox({
-          type: 'html',
-          overlayShow: true,
-          content: $compile('<div jcrop-area on-crop-ready="ctr.onCropReady" image="' + src + '"></div>')($scope),
-          padding: 0,
-          openEffect: 'none',
-          closeEffect: 'none',
-          width: 960,
-          height: 520,
-          helpers: {
-            overlay: {
-              locked: false
-            }
-          }
-        });
-        $('.fancybox-wrap').addClass('showed');
-      });
-    }
-
-    ctr.toggleAttach = function(attach) {
-      var i = _.remove(ctr.selectedAttachments, function(q) {
-        return q.id === attach.id;
-      });
-
-      if (!i.length) {
-        ctr.selectedAttachments.push(attach);
-      }
-    }
-
-    ctr.attachIsSelected = function(attach) {
-      return typeof _.find(ctr.selectedAttachments, function(q) {
-        return q.id === attach.id;
-      }) !== 'undefined';
-    }
-
-    ctr.attachIsProcessing = function(attach) {
-      return typeof _.find(ctr.processingImages, function(q) {
-        return q.id === attach.id;
-      }) !== 'undefined';
     }
 
     return ctr;

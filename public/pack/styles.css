@@ -225,3 +225,10 @@ a:hover {
   opacity: 0;
   visibility: hidden;
 }
+.pointer {
+  cursor: pointer;
+}
+.popover {
+  max-width: 400px;
+  font-size: 12px;
+}

@@ -75,6 +75,19 @@ angular.module('utilsTools', [])
       }).result;
     }
 
+    service.openParserResults = function(q) {
+      return $modal.open({
+        templateUrl: 'templates/modals/parserResults.html',
+        controller: 'CM_parserResults as ctr',
+        size: 'md',
+        resolve: {
+          attaches: function(){
+            return q;
+          }
+        }
+      }).result;
+    }
+
     service.loadImage = function(src) {
       var defer = $q.defer();
 
@@ -106,7 +119,7 @@ angular.module('utilsTools', [])
     service.convertGoogleImageToAttach = function(image) {
       return {
         photo: image.photo,
-        id: image.id,
+        id: image.id || service.getRandomString(16),
         width: image.width,
         clientWidth: image.width,
         height: image.height,

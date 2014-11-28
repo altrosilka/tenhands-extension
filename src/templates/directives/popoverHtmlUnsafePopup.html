@@ -1,0 +1,8 @@
+<div class="popover {{placement}}" data-ng-class="{ in: isOpen, fade: animation() }" data-ng-click="isOpen = false">
+  <div class="arrow"></div>
+
+  <div class="popover-inner">
+    <h3 class="popover-title" data-ng-bind="title" data-ng-show="title"></h3>
+    <div class="popover-content" data-bind-html-unsafe="content"></div>
+  </div>
+</div> 

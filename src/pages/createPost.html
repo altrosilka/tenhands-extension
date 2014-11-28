@@ -28,37 +28,13 @@
           <i class="fa fa-cloud"></i>
           <span>поиск в фотобанке</span>
         </label>
+        <label ng-click="ctr.openParserResults()">
+          <i class="fa fa-file-image-o"></i>
+          <span>добавить со страницы</span>
+        </label>
       </div>
 
-      <div class="attaches clearfix">
-        <div class="attach" data-ng-repeat="attach in ctr.attachments" ng-class="{'processing':ctr.attachIsProcessing(attach), selected: ctr.attachIsSelected(attach)}">
-          <div class="process"><i class="fa fa-circle-o-notch fa-spin"></i>
-          </div>
-          <div class="image" ng-style="{'background-image':'url('+attach.src+')'}">
-
-            <div class="actions" ng-click="ctr.toggleAttach(attach)">
-
-              <span class="main">
-                <i class="check fa fa-check"></i>
-                <i class="remove fa fa-times"></i>
-              </span>
-            </div>
-
-
-          </div>
-          <span class="additional">
-                <i ng-click="ctr.openFullImage(attach)" class="fa fa-search-plus"></i>
-              </span>
-          <div class="info">
-            <span tooltip-placement="left" tooltip="Видимый размер изображения">
-              {{attach.clientWidth}}x{{attach.clientHeight}}
-            </span>
-            <span class="gray" ng-if="ctr.showRealImageSize(attach)" tooltip-placement="left" tooltip="Оригинальный резмер изображения">
-              ({{attach.width}}x{{attach.height}})
-            </span>
-          </div>
-        </div>
-      </div>
+      <div select-area selected-attachments="ctr.selectedAttachments" processing-attachments="ctr.processingImages" attachments="ctr.attachments"></div>
     </section>
     <footer>fo</footer>
   </section>
