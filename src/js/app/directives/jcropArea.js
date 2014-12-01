@@ -1,4 +1,4 @@
-angular.module('App').directive('jcropArea', ['$timeout',function($timeout) {
+angular.module('App').directive('jcropArea', ['$timeout', function($timeout) {
   return {
     scope: {
       image: '@',
@@ -23,28 +23,42 @@ angular.module('App').directive('jcropArea', ['$timeout',function($timeout) {
 
 
         image.Jcrop({
+          setSelect: [0, 0, image.width(), image.height()]
         }, function() {
           jCrop = this;
         });
+
+
       }
 
       ctr.applyCrop = function() {
         var c = jCrop.tellSelect();
-        $scope.onCropReady(ctr.image, c, image.width(), image.height());
+        var orW = image.width();
+        var orH = image.height();
+        if (c.x === 0 && c.y === 0 && c.x2 === orW && c.y2 === orH) {
+          ctr.cancelCrop();
+        } else {
+          $scope.onCropReady(ctr.image, c, image.width(), image.height());
+        }
       }
 
       ctr.cancelCrop = function() {
         ctr.editType = undefined;
         ctr.disableActions = false;
-        jCrop.destroy(); 
+        jCrop.destroy();
         jCrop = undefined;
+        $.fancybox.close();
       }
 
+      $timeout(function() {
+
+        ctr.startCrop();
+      })
 
       return ctr;
     }],
     link: function($scope, $element) {
-      
+
     },
     controllerAs: 'ctr'
   }

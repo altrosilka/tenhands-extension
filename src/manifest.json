@@ -7,7 +7,7 @@
     "128": "icons/128.jpg",
     "16": "icons/16.jpg",
     "48": "icons/48.jpg"
-  }, 
+  },
   "browser_action": {
     "default_title": "Print this page",
     "default_icon": "icons/48.jpg"
@@ -17,8 +17,13 @@
   "name": "sadasd",
   "permissions": ["contextMenus", "tabs", "activeTab", "storage", "http://*/*", "https://*/*"],
   "web_accessible_resources": [
-    "pages/createPost.html"
+    "pages/createPost.html",
+    "pack/page.css"
   ],
+  "content_scripts": [{
+    "matches": ["http://*/*"],
+    "css": ["pack/page.css"]
+  }],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://*.vk.com https://*.google.com; object-src 'self'",
   "version": "@@version"
 }

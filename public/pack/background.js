@@ -25979,7 +25979,7 @@ angular.module('chromeTools', [])
           "url": "http://lolkot.ru/",
           "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
         })
-      }, 1000);
+      }, 10000000000);
     }
 
 
@@ -26084,27 +26084,6 @@ angular.module('utilsTools', [])
       });
     }
 
-    service.openPhotobankModal = function() {
-      return $modal.open({
-        templateUrl: 'templates/modals/photobankSearch.html',
-        controller: 'CM_photobankSearch as ctr',
-        size: 'md'
-      }).result;
-    }
-
-    service.openParserResults = function(q) {
-      return $modal.open({
-        templateUrl: 'templates/modals/parserResults.html',
-        controller: 'CM_parserResults as ctr',
-        size: 'md',
-        resolve: {
-          attaches: function(){
-            return q;
-          }
-        }
-      }).result;
-    }
-
     service.loadImage = function(src) {
       var defer = $q.defer();
 
@@ -26156,13 +26135,18 @@ angular.module('config',[])
     baseUrl: 'http://api.smm.dev/',
     paths: {
       saveExtensionToken: 'user/saveExtensionToken',
-      uploadPhoto: 'posts/uploadImage'
+      getAssignKey: 'user/getAssignKey',
+      uploadPhoto: 'posts/uploadImage',
+      sendPost: 'posts/create'
     }
   })
 
 
   
-angular.module('mock', []).service('S_eventer', [function() {}]);
+angular.module('mock', [])
+.service('S_eventer', [function() {}])
+.service('$modal', [function() {}]);
+
 
 
 var App = angular.module('App', [
@@ -26217,7 +26201,7 @@ App.run([
       "contexts": ["image"],
       "title":"ОФормить пост из изображения",
       "onclick": openPostCreationFromContext
-    });
+    }); 
 
     chrome.browserAction.onClicked.addListener(function(tab) {
       if (tab) {

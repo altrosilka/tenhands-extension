@@ -15,8 +15,7 @@ App.run([
         console.log(1);
       }, function() {
         console.log(2);
-
-      })
+      });
     }, function() {
       chrome.runtime.sendMessage({
         vk_auth: true

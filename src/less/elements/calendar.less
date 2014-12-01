@@ -1,0 +1,110 @@
+.calendar {
+  outline: none!important;
+  .dropdown-menu {
+    outline: none;
+    padding: 0;
+  }
+}
+.calendar .btn.btn-default {
+  padding: 0px 3px;
+  font-size: 14px;
+  outline: none;
+  border: none;
+  line-height: 16px;
+  color: #000;
+  border-radius: 0px;
+}
+.calendar .btn-default[disabled] {
+  background: #f9f9f9;
+  cursor: default!important;
+  color: #ccc!important;
+}
+.calendar .text-info {
+  color: #3A65BE;
+  font-weight: bold;
+}
+.calendar table {
+  border-collapse: collapse;
+  width: 100%;
+  border-spacing: 0;
+  outline: none!important;
+}
+.calendar .btn {} .calendar table tr:first-child th {
+  background-color: #e7e7e7;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 43px;
+  height: 43px;
+  text-align: center;
+  border: none;
+  padding: 0;
+  min-width: 34px;
+  border: none;
+}
+.calendar table tr:first-child th:nth-child(1), .calendar table tr:first-child th:nth-child(3) {
+  width: 34px;
+}
+.calendar table tr:first-child th:nth-child(2) {
+  width: 184px;
+}
+.calendar table tr:first-child th:nth-child(2) .btn {
+  font-size: 14px;
+  background: #e7e7e7!important;
+  cursor: default!important;
+}
+.calendar table tr:first-child th:nth-child(1) i:before {
+  content: "\f104"!important;
+}
+.calendar table tr:first-child th:nth-child(3) i:before {
+  content: "\f105"!important;
+}
+.calendar table tr:first-child th .btn:hover {
+  background-color: #eee;
+}
+.calendar table tr:first-child th .btn:active {
+  background-color: #ddd;
+}
+.calendar table tr:first-child th:nth-child(2) .btn strong {
+  font-weight: normal;
+}
+.calendar table tr:first-child th .btn {
+  height: 100%;
+  padding: 0;
+  width: 100%;
+}
+.calendar table tr:first-child th .btn i {
+  padding: 0 10px;
+  font-family: FontAwesome!important;
+  font-size: 32px;
+  color: #707070;
+}
+.calendar table tr:last-child th {
+  background-color: #fff;
+  color: #575757;
+  font-weight: 400;
+  font-size: 12px;
+  padding: 4px;
+}
+.calendar table td {
+  border: 1px solid #E3E3E3;
+  background-color: #FFF;
+  text-align: center;
+  height: 32px;
+  width: 32px;
+  font-size: 14px;
+  padding: 0;
+}
+.calendar table td .btn {
+  height: 100%;
+  box-shadow: inset 0px 0px 0px 2px transparent;
+}
+.calendar .text-muted {
+  color: #A9A9A9;
+}
+.calendar button.btn.btn-default.btn-sm.btn-info.active {
+  box-shadow: inset 0px 0px 0px 2px #009ee0;
+  color: #000;
+}
+.calendar .btn.btn-default:focus {
+  background: transparent;
+}

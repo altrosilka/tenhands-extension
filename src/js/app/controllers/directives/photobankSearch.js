@@ -1,9 +1,8 @@
-angular.module('App').controller('CM_photobankSearch', [
+angular.module('App').controller('CD_photobankSearch', [
   '$scope',
-  '$modalInstance',
   'S_google',
   'S_utils',
-  function($scope, $modalInstance, S_google, S_utils) {
+  function($scope, S_google, S_utils) {
     var ctr = this;
 
     var _fanciedImage, _fancyBoxObject;

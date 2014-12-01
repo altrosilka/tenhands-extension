@@ -112,7 +112,7 @@ angular.module('chromeTools', [])
           "url": "http://lolkot.ru/",
           "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
         })
-      }, 1000);
+      }, 10000000000);
     }
 
 

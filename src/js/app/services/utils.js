@@ -67,27 +67,6 @@ angular.module('utilsTools', [])
       });
     }
 
-    service.openPhotobankModal = function() {
-      return $modal.open({
-        templateUrl: 'templates/modals/photobankSearch.html',
-        controller: 'CM_photobankSearch as ctr',
-        size: 'md'
-      }).result;
-    }
-
-    service.openParserResults = function(q) {
-      return $modal.open({
-        templateUrl: 'templates/modals/parserResults.html',
-        controller: 'CM_parserResults as ctr',
-        size: 'md',
-        resolve: {
-          attaches: function(){
-            return q;
-          }
-        }
-      }).result;
-    }
-
     service.loadImage = function(src) {
       var defer = $q.defer();
 

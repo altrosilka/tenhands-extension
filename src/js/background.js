@@ -1,4 +1,7 @@
-angular.module('mock', []).service('S_eventer', [function() {}]);
+angular.module('mock', [])
+.service('S_eventer', [function() {}])
+.service('$modal', [function() {}]);
+
 
 
 var App = angular.module('App', [
@@ -53,7 +56,7 @@ App.run([
       "contexts": ["image"],
       "title":"ОФормить пост из изображения",
       "onclick": openPostCreationFromContext
-    });
+    }); 
 
     chrome.browserAction.onClicked.addListener(function(tab) {
       if (tab) {

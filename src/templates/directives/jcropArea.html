@@ -1,13 +1,11 @@
-<div class="image">
-  <img id="cropImage" ng-src="{{ctr.image}}" ng-style="{'maxHeight':ctr.maxHeight}">
-</div>
-<div class="submits" ng-show="ctr.disableActions">
-	<div class="text-right" ng-show="ctr.editType === 'crop'">
-		<span class="btn btn-default" ng-click="ctr.cancelCrop()">отменить</span>
-		<span class="btn btn-success" ng-click="ctr.applyCrop(ctr.coords)">сохранить</span>
-	</div>
-</div>
-<div class="actions" ng-hide="ctr.disableActions">
-  <span ng-click="ctr.startCrop()"><i class="fa fa-crop"></i> кадировать</span>
-  <span class="ng-hide"><i class="fa fa-camera-retro"></i> применить фильтр</span>
+<div class="jcropArea">
+  <div class="image">
+    <img id="cropImage" ng-src="{{ctr.image}}" ng-style="{'maxHeight':ctr.maxHeight}">
+  </div>
+  <div class="submits" ng-show="ctr.disableActions">
+    <div class="text-center mb10" ng-show="ctr.editType === 'crop'">
+      <span class="btn btn-default" ng-click="ctr.cancelCrop()">закрыть</span>
+      <span class="btn btn-success" ng-click="ctr.applyCrop(ctr.coords)">сохранить</span>
+    </div>
+  </div>
 </div>

@@ -6,9 +6,10 @@ angular.module('App').directive('selectArea', [
   function($timeout, $compile, S_selfapi, S_utils) {
     return {
       scope: {
-        selectedAttachments: '=',
         processingAttachments: '=',
-        attachments: '='
+        attachments: '=',
+        postAttachments: '=',
+        mainMode: '='
       },
       templateUrl: 'templates/directives/selectArea.html',
       controller: ['$scope', function($scope) {
@@ -16,13 +17,13 @@ angular.module('App').directive('selectArea', [
 
         var _fanciedImage;
 
-        ctr.toggleAttach = function(attach) {
-          var i = _.remove($scope.selectedAttachments, function(q) {
+        ctr.mainMode = $scope.mainMode;
+
+        ctr.add = function(attach) {
+          var i = _.remove($scope.postAttachments, function(q) {
             return q.id === attach.id;
           });
-          if (!i.length) {
-            $scope.selectedAttachments.push(attach);
-          }
+          $scope.postAttachments.push(attach);
         }
 
         ctr.showRealImageSize = function(attach) {
@@ -30,7 +31,7 @@ angular.module('App').directive('selectArea', [
         }
 
         ctr.attachIsSelected = function(attach) {
-          return typeof _.find($scope.selectedAttachments, function(q) {
+          return typeof _.find($scope.postAttachments, function(q) {
             return q.id === attach.id;
           }) !== 'undefined';
         }
@@ -41,13 +42,26 @@ angular.module('App').directive('selectArea', [
           }) !== 'undefined';
         }
 
+        ctr.removeFromPost = function(attach){
+          _.remove($scope.postAttachments,function(q){
+            return attach.id === q.id;
+          });
+        }
+
+        ctr.removeAttach = function(attach){
+          _.remove($scope.attachments,function(q){
+            return attach.id === q.id;
+          });
+        }
+
         ctr.onCropReady = function(src, c, w, h) {
           $scope.processingAttachments.push(_fanciedImage);
           $.fancybox.close();
+
           S_selfapi.uploadImageToVk(src, c, w, h, _fanciedImage.id).then(function(resp) {
-            var photo = resp.data.response[0];
+            var photo = resp.photo;
             var image = _.remove($scope.processingAttachments, function(q) {
-              return q.id === resp.data.id;
+              return q.id === resp.id;
             })[0];
 
             _.extend(image, {

@@ -23,6 +23,8 @@
     "angular-sanitize": "~1.3.0",
     "fancybox": "~2.1.5",
     "Jcrop": "~0.9.12",
-    "blueimp-file-upload": "~9.8.0"
+    "blueimp-file-upload": "~9.8.0",
+    "angular-i18n": "~1.3.4",
+    "angular-ui-select": "~0.9.0"
   }
 }

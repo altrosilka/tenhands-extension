@@ -1,0 +1,36 @@
+#smm-layout-ekniERgebe39EWee {
+  background-color: rgba(233, 233, 233, 0.96);
+  border-top: 1px solid #4F73AB;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  bottom: 0px;
+  left: 0px;
+  transition: 0.4s;
+  z-index: 99999899999898988899;
+}
+#smm-layout-ekniERgebe39EWee .smm-UEe9vE-contolButtons {
+  cursor: pointer;
+  height: 50px;
+  position: absolute;
+  z-index: 3;
+  right: 10px;
+  top: 0px;
+}
+#smm-layout-ekniERgebe39EWee .smm-UEe9vE-closer,
+#smm-layout-ekniERgebe39EWee .smm-UEe9vE-mover {
+  color: #4F73AB;
+  font-size: 13px;
+  line-height: 50px;
+  display: block;
+  float: left;
+  opacity: 0.8;
+  transition: 0.2s;
+  padding: 0 12px;
+  font-family: Tahoma, Geneva, sans-serif, arial, verdana;
+}
+#smm-layout-ekniERgebe39EWee .smm-UEe9vE-closer:hover,
+#smm-layout-ekniERgebe39EWee .smm-UEe9vE-mover:hover {
+  opacity: 1;
+  cursor: pointer;
+}

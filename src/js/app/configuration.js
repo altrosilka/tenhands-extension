@@ -4,7 +4,9 @@ angular.module('config',[])
     baseUrl: 'http://api.smm.dev/',
     paths: {
       saveExtensionToken: 'user/saveExtensionToken',
-      uploadPhoto: 'posts/uploadImage'
+      getAssignKey: 'user/getAssignKey',
+      uploadPhoto: 'posts/uploadImage',
+      sendPost: 'posts/create'
     }
   })
 

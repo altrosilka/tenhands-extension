@@ -28,6 +28,7 @@
       height: image.height,
       title: image.title,
       src: image.src,
+      src_big: image.src,
       type: 'image'
     });
   }
@@ -84,22 +85,30 @@
   sendToIframe();
 })();
 
-(function(w, d) {
+;(function(w, d) {
+
+  var __id = 'smm-UEe9vE-';
 
   var oldEvent;
 
   var id = 'smm-layout-ekniERgebe39EWee';
   var layout = d.getElementById(id);
+
   if (layout === null) {
     layout = d.createElement("div");
     layout.setAttribute("id", id);
-    layout.setAttribute("style", "background-color: rgba(0,0,0,0.5); border-top: 1px solid #666;width: 100%; height: 100%; position: fixed; bottom: 0px; left: 0px;transition:0.4s; z-index: 99999899999898988899;");
+    layout.setAttribute("class", __id+"layout");
+    var contolButtons = d.createElement("div");
+    contolButtons.setAttribute("class", __id+'contolButtons');
+    layout.appendChild(contolButtons);
     var mover = d.createElement("div");
-    mover.setAttribute("style", "cursor:pointer;width:20px;height:20px;position:absolute;z-index:3;background-color:#ff0;right:36px;top:10px;");
-    layout.appendChild(mover);
+    mover.innerHTML = 'свернуть';
+    mover.setAttribute("class", __id+'mover');
+    contolButtons.appendChild(mover);
     var closer = d.createElement("div");
-    closer.setAttribute("style", "cursor:pointer;width:20px;height:20px;position:absolute;z-index:3;background-color:#f00;right:10px;top:10px;");
-    layout.appendChild(closer);
+    closer.innerHTML = 'закрыть';
+    closer.setAttribute("class", __id+"closer");
+    contolButtons.appendChild(closer);
     var iframe = d.createElement("iframe");
     iframe.src = chrome.extension.getURL("pages/createPost.html");
     iframe.setAttribute("style", "width:100%;height:100%;z-index:1;position:relative;");
@@ -136,7 +145,7 @@
     });
 
     closer.addEventListener('click', function() {
-      layout.style.transform = 'scale(0.9)';
+      layout.style.transform = 'translateY(100px)';
       layout.style.opacity = '0';
       layout.style.visibility = 'hidden';
     });
@@ -187,7 +196,7 @@
     });
   } else {
     if (w.getComputedStyle(layout).visibility === 'hidden') {
-      layout.style.transform = 'scale(1)';
+      layout.style.transform = 'translateY(0px)';
       layout.style.opacity = '1';
       layout.style.visibility = 'visible';
     }

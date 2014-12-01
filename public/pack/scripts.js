@@ -2,8 +2,10 @@ var App = angular.module('App', [
   'config',
   'vkTools',
   'chromeTools',
+  'ngSanitize',
   'utilsTools',
   'ui.bootstrap',
+  'ui.select',
   'templates'
 ]); 
   
@@ -23,7 +25,9 @@ angular.module('config',[])
     baseUrl: 'http://api.smm.dev/',
     paths: {
       saveExtensionToken: 'user/saveExtensionToken',
-      uploadPhoto: 'posts/uploadImage'
+      getAssignKey: 'user/getAssignKey',
+      uploadPhoto: 'posts/uploadImage',
+      sendPost: 'posts/create'
     }
   })
 
@@ -46,8 +50,7 @@ App.run([
         console.log(1);
       }, function() {
         console.log(2);
-
-      })
+      });
     }, function() {
       chrome.runtime.sendMessage({
         vk_auth: true
@@ -57,6 +60,401 @@ App.run([
     })
   }
 ]);
+
+angular.module('App').directive('imageUploadArea', ['$timeout', '__api', function($timeout, __api) {
+  return {
+    scope: {
+      afterImageUploaded: '=',
+      onUploadStart: '='
+    },
+    templateUrl: 'templates/directives/imageUploadArea.html',
+    controller: ['$scope', function($scope) {
+      var ctr = this;
+
+
+      return ctr;
+    }],
+    link: function($scope, $element) {
+      $element.find('input').fileupload({
+        url: __api.baseUrl + __api.paths.uploadPhoto,
+        dataType: 'json',
+        singleFileUploads: true,
+        limitMultiFileUploads: 1,
+        done: function(e, data) {
+          var info = data.result;
+
+          $scope.afterImageUploaded(info);
+        },
+        add: function(e, data) {
+          _.forEach(data.files,function(){
+            $scope.onUploadStart();
+          });
+          
+          if (data.autoUpload || (data.autoUpload !== false &&
+              $(this).fileupload('option', 'autoUpload'))) {
+            data.process().done(function() {
+              data.submit();
+            });
+          }
+        }
+      });
+    },
+    controllerAs: 'ctr'
+  }
+
+
+}]);
+
+angular.module('App').directive('jcropArea', ['$timeout', function($timeout) {
+  return {
+    scope: {
+      image: '@',
+      onCropReady: '='
+    },
+    templateUrl: 'templates/directives/jcropArea.html',
+    controller: ['$scope', function($scope) {
+      var ctr = this;
+
+      var jCrop, image;
+
+      ctr.disableActions = false;
+      ctr.image = $scope.image;
+      ctr.maxHeight = $(window).height() - 100;
+
+
+      ctr.startCrop = function() {
+        ctr.editType = 'crop';
+        ctr.disableActions = true;
+
+        image = $('#cropImage');
+
+
+        image.Jcrop({
+          setSelect: [0, 0, image.width(), image.height()]
+        }, function() {
+          jCrop = this;
+        });
+
+
+      }
+
+      ctr.applyCrop = function() {
+        var c = jCrop.tellSelect();
+        var orW = image.width();
+        var orH = image.height();
+        if (c.x === 0 && c.y === 0 && c.x2 === orW && c.y2 === orH) {
+          ctr.cancelCrop();
+        } else {
+          $scope.onCropReady(ctr.image, c, image.width(), image.height());
+        }
+      }
+
+      ctr.cancelCrop = function() {
+        ctr.editType = undefined;
+        ctr.disableActions = false;
+        jCrop.destroy();
+        jCrop = undefined;
+        $.fancybox.close();
+      }
+
+      $timeout(function() {
+
+        ctr.startCrop();
+      })
+
+      return ctr;
+    }],
+    link: function($scope, $element) {
+
+    },
+    controllerAs: 'ctr'
+  }
+
+
+}]);
+
+angular.module('App').directive('photobankSearch', [function() {
+  return {
+    templateUrl: 'templates/directives/photobankSearch.html',
+    controller: 'CD_photobankSearch as pbctr',
+    link: function($scope, $element) {
+      
+    }
+  }
+}]);
+
+angular.module('App').directive('popoverHtmlUnsafePopup', function() {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        content: '@',
+        placement: '@',
+        animation: '&',
+        isOpen: '='
+      },
+      templateUrl: 'templates/directives/popoverHtmlUnsafePopup.html'
+    };
+  })
+  .directive('popoverHtmlUnsafe', ['$tooltip',
+    function($tooltip) {
+      return $tooltip('popoverHtmlUnsafe', 'popover', 'click');
+    }
+  ])
+ 
+angular.module('App').directive('postsTimeline', [function() {
+  return {
+    scope: {
+      data: '=postsTimeline'
+    },
+    link: function($scope, $element, $attrs) {
+      var chart, $canvas;
+
+      var _color = '#090';
+
+      $scope.$watch('data', function(data) {
+        if (!data) return;
+        
+        chart = $element.highcharts({
+          chart: {
+            type: 'column'
+          },
+          title: {
+            text: null
+          },
+          xAxis: {
+            categories: data.categories
+          },
+          yAxis: {
+            min: 0,
+            lineWidth: 0,
+            minorGridLineWidth: 0,
+            gridLineWidth: 0,
+            lineColor: 'transparent',
+            title: {
+              text: null
+            },
+            labels: {
+              enabled: false
+            },
+            minorTickLength: 0,
+            tickLength: 0,
+            stackLabels: {
+              enabled: true,
+              style: {
+                fontSize: '22px',
+                bottom: '10px',
+                color: (Highcharts.theme && Highcharts.theme.textColor) || '#000'
+              }
+            }
+          },
+          legend: {
+            enabled: false
+          },
+          tooltip: {
+            enabled: false,
+            formatter: function() {
+              return '<b>' + this.x + '</b><br/>' +
+                this.series.name + ': ' + this.y + '<br/>' +
+                'Total: ' + this.point.stackTotal;
+            }
+          },
+          plotOptions: {
+            column: {
+              stacking: 'normal',
+              animation: false,
+              dataLabels: {
+                enabled: false
+              }
+            },
+            series: {
+              states: {
+                hover: {
+                  enabled: false
+                }
+              }
+            }
+          },
+          series: series
+        });
+        chart.find('text:contains("Highcharts.com")').remove();
+      });
+    }
+  }
+}])
+angular.module('App').directive('selectArea', [
+  '$timeout',
+  '$compile',
+  'S_selfapi',
+  'S_utils',
+  function($timeout, $compile, S_selfapi, S_utils) {
+    return {
+      scope: {
+        processingAttachments: '=',
+        attachments: '=',
+        postAttachments: '=',
+        mainMode: '='
+      },
+      templateUrl: 'templates/directives/selectArea.html',
+      controller: ['$scope', function($scope) {
+        var ctr = this;
+
+        var _fanciedImage;
+
+        ctr.mainMode = $scope.mainMode;
+
+        ctr.add = function(attach) {
+          var i = _.remove($scope.postAttachments, function(q) {
+            return q.id === attach.id;
+          });
+          $scope.postAttachments.push(attach);
+        }
+
+        ctr.showRealImageSize = function(attach) {
+          return (attach.clientWidth !== attach.width && attach.clientHeight !== attach.height);
+        }
+
+        ctr.attachIsSelected = function(attach) {
+          return typeof _.find($scope.postAttachments, function(q) {
+            return q.id === attach.id;
+          }) !== 'undefined';
+        }
+
+        ctr.attachIsProcessing = function(attach) {
+          return typeof _.find($scope.processingAttachments, function(q) {
+            return q.id === attach.id;
+          }) !== 'undefined';
+        }
+
+        ctr.removeFromPost = function(attach){
+          _.remove($scope.postAttachments,function(q){
+            return attach.id === q.id;
+          });
+        }
+
+        ctr.removeAttach = function(attach){
+          _.remove($scope.attachments,function(q){
+            return attach.id === q.id;
+          });
+        }
+
+        ctr.onCropReady = function(src, c, w, h) {
+          $scope.processingAttachments.push(_fanciedImage);
+          $.fancybox.close();
+
+          S_selfapi.uploadImageToVk(src, c, w, h, _fanciedImage.id).then(function(resp) {
+            var photo = resp.photo;
+            var image = _.remove($scope.processingAttachments, function(q) {
+              return q.id === resp.id;
+            })[0];
+
+            _.extend(image, {
+              photo: photo,
+              width: photo.width,
+              clientWidth: photo.width,
+              height: photo.height,
+              clientHeight: photo.height,
+              src: photo.photo_130,
+              src_big: photo.photo_807 || photo.photo_604
+            });
+          });
+        }
+
+        ctr.openFullImage = function(image) {
+          _fanciedImage = image;
+          var src = image.src_big || image.src;
+
+          S_utils.loadImage(src).then(function() {
+            _fancyBoxObject = $.fancybox({
+              type: 'html',
+              overlayShow: true,
+              content: $compile('<div jcrop-area on-crop-ready="ctr.onCropReady" image="' + src + '"></div>')($scope),
+              padding: 0,
+              openEffect: 'none',
+              closeEffect: 'none',
+              width: 960,
+              height: 520,
+              helpers: {
+                overlay: {
+                  locked: false
+                }
+              }
+            });
+            $('.fancybox-wrap').addClass('showed');
+          });
+        }
+
+        return ctr;
+      }],
+      link: function($scope, $element) {
+      },
+      controllerAs: 'ctr'
+    }
+  }
+]);
+
+angular.module('App')
+  .directive('selectDate', [
+    '$filter',
+    function($filter) {
+      return {
+        scope: {
+          isOpen: '=',
+          hideInputs: '=',
+          minDate: '=',
+          maxDate: '=',
+          model: '='
+        },
+        templateUrl: 'templates/directives/selectDate.html',
+        link: function($scope, element, attrs) {
+
+          $scope.editdate = {
+            day: undefined,
+            month: undefined,
+            year: undefined
+          };
+
+          $scope.$watch('model', function(date) {
+            applyNewDate($scope, date);
+          });
+
+          element.find('.inputs input').on('blur', function() {
+
+            if (typeof $scope.editdate.day === 'undefined' || typeof $scope.editdate.month === 'undefined' || typeof $scope.editdate.year === 'undefined')
+              return;
+
+            var date = new Date(parseInt($scope.editdate.year), parseInt($scope.editdate.month) - 1, parseInt($scope.editdate.day));
+
+            if (!isNaN(date)) {
+              $scope.$apply(function() {
+                $scope.model = date;
+                applyNewDate($scope, date);
+              });
+
+            } else {
+              $scope.$apply(function() {
+                applyNewDate($scope, $scope.model);
+              });
+
+            }
+          }).on('keypress', function(e) {
+            if (e.which == 13) {
+              $(this).trigger('blur'); 
+            }
+          });
+
+          function applyNewDate(scope, date) {
+            if (!date) {
+              return
+            }
+            scope.editdate.day = $filter('date')(date, 'dd', 0);
+            scope.editdate.month = $filter('date')(date, 'MM', 0);
+            scope.editdate.year = $filter('date')(date, 'yyyy', 0);
+          }
+        }
+      }
+    }
+  ])
 
 angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
   var ctr = this;
@@ -111,23 +509,43 @@ angular.module('App').controller('C_main', [
   '$timeout',
   'S_utils',
   'S_selfapi',
-  function($scope, $compile, $timeout, S_utils, S_selfapi) {
+  'S_vk',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_vk) {
     var ctr = this;
+
+    ctr.minDate = new Date();
+    ctr.postingDate = new Date();
+    ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
+
+    ctr.datepickerOptions = {};
+
+    ctr.openDatepicker = function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+      ctr.openedDatepickerPopup = !ctr.openedDatepickerPopup;
+    };
+
 
     ctr.attachments = [];
 
-    ctr.selectedAttachments = [];
-    ctr.processingImages = [];
+    ctr.processingAttachments = [];
     ctr.uploadingAttaches = [];
 
-    ctr.openParserResults = function() {
-      var q = (!ctr.dataIsLoaded) ? false : ctr.pageAttachments;
-      S_utils.openParserResults(q).then(function(resp) {
-        _.forEach(resp, function(q) {
-          ctr.attachments.push(angular.copy(q));
-        });
-      });
-    }
+
+
+    S_vk.request('groups.get', {
+      extended: 1,
+      filter: 'admin,editor',
+      fields: 'members_count'
+    }).then(function(resp) {
+
+      //$scope.$apply(function() {
+      ctr.groups = resp.response.items;
+
+      ctr.selectedGroup = ctr.groups[0];
+    });
+
+
 
     $scope.$on('loadedDataFromTab', function(event, data) {
       $scope.$apply(function() {
@@ -148,6 +566,9 @@ angular.module('App').controller('C_main', [
     });
 
     ctr.dataIsLoaded = true;
+    ctr.getRemainingAttachesCount = function() {
+      return 9 - ctr.attachments.length;
+    }
 
     ctr.pushUploadingAttach = function() {
       var obj = {
@@ -159,7 +580,7 @@ angular.module('App').controller('C_main', [
       $scope.$apply(function() {
         ctr.attachments.push(obj);
         ctr.uploadingAttaches.push(obj);
-        ctr.processingImages.push(obj);
+        ctr.processingAttachments.push(obj);
       });
       return obj;
     }
@@ -169,236 +590,139 @@ angular.module('App').controller('C_main', [
       var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
       $scope.$apply(function() {
         _.extend(attach, image);
-        ctr.processingImages.shift();
+        ctr.processingAttachments.shift();
       });
     }
 
-    ctr.openPhotobankSearch = function() {
-      S_utils.openPhotobankModal().then(function(resp) {
-        _.forEach(resp, function(el) {
-          ctr.attachments.push(el);
-        });
+    S_selfapi.getAssignKey().then(function(resp) {
+      if (resp.data.keyInfo === null) {
+        ctr.paidIsEnd = true;
+      } else {
+        ctr.paidIsEnd = false;
+      }
+    });
+
+
+    $scope.$watch(function() {
+      return ctr.postingDate;
+    }, function(q) {
+      if (!q) return;
+      ctr.onTimeChanged();
+    });
+
+    $scope.$watch(function() {
+      return ctr.postingTime;
+    }, function(q) {
+      if (!q) return;
+      ctr.onTimeChanged();
+    });
+
+
+    ctr.onTimeChanged = function() {
+      if (!ctr.postingTime || !ctr.postingDate) return;
+
+      var dateUnix = +moment(moment(ctr.postingDate).format('DD.MM.YY'), 'DD.MM.YY').format('X');
+      var startDate = +moment(moment(ctr.postingTime).format('DD.MM.YY HH:mm:00'), 'DD.MM.YY HH:mm:ss').format('X') - +moment(moment(ctr.postingTime).format('DD.MM.YY 00:00:00'), 'DD.MM.YY HH:mm:ss').format('X');
+
+      ctr.postingUnixTime = dateUnix + startDate;
+
+      ctr.loadTimeline(ctr.postingUnixTime);
+    }
+
+    ctr.loadTimeline = function(unix) {
+      return;
+      S_vk.request('newsfeed.get', {
+        filters: 'post',
+        return_banned: 1,
+        start_time: unix - 5 * 3600,
+        source_ids: ctr.groupId,
+        count: 100
+      }, function(resp) {
+        console.log(resp);
       });
+    }
+
+    ctr.publicPost = function() {
+
+      if (ctr.processingAttachments.length > 0) {
+        return;
+      }
+
+      var postInfo = _.map(ctr.attachments, function() {
+        return '';
+      });
+
+      _.forEach(ctr.attachments, function(q, i) {
+        switch (q.type) {
+          case "image":
+            {
+              if (q.photo) {
+                postInfo[i] = q.photo;
+              } else {
+                ctr.processingAttachments.push(q);
+                S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
+                  var photo = resp.photo;
+                  _.remove(ctr.processingAttachments, function(qz) {
+                    return qz.id === q.id;
+                  })[0];
+
+                  postInfo[i] = _.extend({
+                    type: 'image'
+                  }, photo);
+
+                  if (ctr.processingAttachments.length === 0) {
+                    console.log('out');
+                    console.log(postInfo, ctr.attachments);
+                    out(postInfo);
+                  }
+                });
+              }
+              break;
+            }
+        }
+      });
+
+      function out(attachments) {
+        S_selfapi.sendPost('-'+ctr.selectedGroup.id, ctr.text, attachments, ctr.postingUnixTime, 0).then(function(resp) {
+          console.log(resp.data);
+        });
+      }
     }
 
     return ctr;
   }
 ]);
 
-angular.module('App').directive('imageUploadArea', ['$timeout', '__api', function($timeout, __api) {
-  return {
-    scope: {
-      afterImageUploaded: '=',
-      onUploadStart: '='
-    },
-    templateUrl: 'templates/directives/imageUploadArea.html',
-    controller: ['$scope', function($scope) {
-      var ctr = this;
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
 
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
 
-      return ctr;
-    }],
-    link: function($scope, $element) {
-      $element.find('input').fileupload({
-        url: __api.baseUrl + __api.paths.uploadPhoto,
-        dataType: 'json',
-        singleFileUploads: true,
-        limitMultiFileUploads: 1,
-        done: function(e, data) {
-          var info = data.result;
-
-          $scope.afterImageUploaded(info);
-        },
-        add: function(e, data) {
-          _.forEach(data.files,function(){
-            $scope.onUploadStart();
-          });
-          
-          if (data.autoUpload || (data.autoUpload !== false &&
-              $(this).fileupload('option', 'autoUpload'))) {
-            data.process().done(function() {
-              data.submit();
-            });
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
           }
+        }
+
+        if (itemMatches) {
+          out.push(item);
         }
       });
-    },
-    controllerAs: 'ctr'
-  }
-
-
-}]);
-
-angular.module('App').directive('jcropArea', ['$timeout',function($timeout) {
-  return {
-    scope: {
-      image: '@',
-      onCropReady: '='
-    },
-    templateUrl: 'templates/directives/jcropArea.html',
-    controller: ['$scope', function($scope) {
-      var ctr = this;
-
-      var jCrop, image;
-
-      ctr.disableActions = false;
-      ctr.image = $scope.image;
-      ctr.maxHeight = $(window).height() - 100;
-
-
-      ctr.startCrop = function() {
-        ctr.editType = 'crop';
-        ctr.disableActions = true;
-
-        image = $('#cropImage');
-
-
-        image.Jcrop({
-        }, function() {
-          jCrop = this;
-        });
-      }
-
-      ctr.applyCrop = function() {
-        var c = jCrop.tellSelect();
-        $scope.onCropReady(ctr.image, c, image.width(), image.height());
-      }
-
-      ctr.cancelCrop = function() {
-        ctr.editType = undefined;
-        ctr.disableActions = false;
-        jCrop.destroy(); 
-        jCrop = undefined;
-      }
-
-
-      return ctr;
-    }],
-    link: function($scope, $element) {
-      
-    },
-    controllerAs: 'ctr'
-  }
-
-
-}]);
-
-angular.module('App').directive('popoverHtmlUnsafePopup', function() {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        content: '@',
-        placement: '@',
-        animation: '&',
-        isOpen: '='
-      },
-      templateUrl: 'templates/directives/popoverHtmlUnsafePopup.html'
-    };
-  })
-  .directive('popoverHtmlUnsafe', ['$tooltip',
-    function($tooltip) {
-      return $tooltip('popoverHtmlUnsafe', 'popover', 'click');
+    } else {
+      // Let the output be the input untouched
+      out = items;
     }
-  ])
- 
-angular.module('App').directive('selectArea', [
-  '$timeout',
-  '$compile',
-  'S_selfapi',
-  'S_utils',
-  function($timeout, $compile, S_selfapi, S_utils) {
-    return {
-      scope: {
-        selectedAttachments: '=',
-        processingAttachments: '=',
-        attachments: '='
-      },
-      templateUrl: 'templates/directives/selectArea.html',
-      controller: ['$scope', function($scope) {
-        var ctr = this;
 
-        var _fanciedImage;
-
-        ctr.toggleAttach = function(attach) {
-          var i = _.remove($scope.selectedAttachments, function(q) {
-            return q.id === attach.id;
-          });
-          if (!i.length) {
-            $scope.selectedAttachments.push(attach);
-          }
-        }
-
-        ctr.showRealImageSize = function(attach) {
-          return (attach.clientWidth !== attach.width && attach.clientHeight !== attach.height);
-        }
-
-        ctr.attachIsSelected = function(attach) {
-          return typeof _.find($scope.selectedAttachments, function(q) {
-            return q.id === attach.id;
-          }) !== 'undefined';
-        }
-
-        ctr.attachIsProcessing = function(attach) {
-          return typeof _.find($scope.processingAttachments, function(q) {
-            return q.id === attach.id;
-          }) !== 'undefined';
-        }
-
-        ctr.onCropReady = function(src, c, w, h) {
-          $scope.processingAttachments.push(_fanciedImage);
-          $.fancybox.close();
-          S_selfapi.uploadImageToVk(src, c, w, h, _fanciedImage.id).then(function(resp) {
-            var photo = resp.data.response[0];
-            var image = _.remove($scope.processingAttachments, function(q) {
-              return q.id === resp.data.id;
-            })[0];
-
-            _.extend(image, {
-              photo: photo,
-              width: photo.width,
-              clientWidth: photo.width,
-              height: photo.height,
-              clientHeight: photo.height,
-              src: photo.photo_130,
-              src_big: photo.photo_807 || photo.photo_604
-            });
-          });
-        }
-
-        ctr.openFullImage = function(image) {
-          _fanciedImage = image;
-          var src = image.src_big || image.src;
-
-          S_utils.loadImage(src).then(function() {
-            _fancyBoxObject = $.fancybox({
-              type: 'html',
-              overlayShow: true,
-              content: $compile('<div jcrop-area on-crop-ready="ctr.onCropReady" image="' + src + '"></div>')($scope),
-              padding: 0,
-              openEffect: 'none',
-              closeEffect: 'none',
-              width: 960,
-              height: 520,
-              helpers: {
-                overlay: {
-                  locked: false
-                }
-              }
-            });
-            $('.fancybox-wrap').addClass('showed');
-          });
-        }
-
-        return ctr;
-      }],
-      link: function($scope, $element) {
-      },
-      controllerAs: 'ctr'
-    }
+    return out;
   }
-]);
-
+});
 angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
   return function(date) {
     if (!date) {
@@ -525,7 +849,7 @@ angular.module('chromeTools', [])
           "url": "http://lolkot.ru/",
           "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
         })
-      }, 1000);
+      }, 10000000000);
     }
 
 
@@ -609,8 +933,9 @@ angular.module('App')
 angular.module('App')
   .service('S_selfapi', [
     '$http',
+    '$q',
     '__api',
-    function($http, __api) {
+    function($http, $q, __api) {
       var service = {};
       var base = __api.baseUrl;
       service.sendExtensionToken = function(token) {
@@ -623,7 +948,31 @@ angular.module('App')
         });
       }
 
+      service.sendPost = function(owner_id, message, attachments, publish_date, signed) {
+        return $http({
+          url: base + __api.paths.sendPost,
+          method: 'POST',
+          data: {
+            owner_id: owner_id,
+            message: message,
+            attachments: attachments,
+            publish_date: publish_date,
+            signed: signed
+          }
+        });
+      }
+
+      service.getAssignKey = function(token) {
+        return $http({
+          url: base + __api.paths.getAssignKey,
+          method: 'GET'
+        });
+      }
+
+      var _uploadImageToVkStack = [];
       service.uploadImageToVk = function(url, c, w, h, id) {
+        var defer = $q.defer();
+
         var obj = {
           url: url,
           id: id
@@ -634,10 +983,35 @@ angular.module('App')
           obj.originalWidth = w;
           obj.originalHeight = h;
         }
-        return $http({
+
+        _uploadImageToVkStack.push({
+          obj: obj,
+          defer: defer
+        });
+
+        if (_uploadImageToVkStack.length === 1) {
+          uploadImageToVkCall();
+        }
+
+        return defer.promise;
+      }
+
+      function uploadImageToVkCall() {
+        var q = _uploadImageToVkStack[0];
+        $http({
           url: base + __api.paths.uploadPhoto,
           method: 'POST',
-          data: obj
+          data: q.obj
+        }).then(function(resp) {
+          _uploadImageToVkStack.shift();
+          q.defer.resolve({
+            photo: resp.data.response[0],
+            id: q.obj.id
+          });
+
+          if (_uploadImageToVkStack.length > 0) {
+            uploadImageToVkCall();
+          }
         });
       }
 
@@ -714,27 +1088,6 @@ angular.module('utilsTools', [])
       });
     }
 
-    service.openPhotobankModal = function() {
-      return $modal.open({
-        templateUrl: 'templates/modals/photobankSearch.html',
-        controller: 'CM_photobankSearch as ctr',
-        size: 'md'
-      }).result;
-    }
-
-    service.openParserResults = function(q) {
-      return $modal.open({
-        templateUrl: 'templates/modals/parserResults.html',
-        controller: 'CM_parserResults as ctr',
-        size: 'md',
-        resolve: {
-          attaches: function(){
-            return q;
-          }
-        }
-      }).result;
-    }
-
     service.loadImage = function(src) {
       var defer = $q.defer();
 
@@ -780,7 +1133,7 @@ angular.module('utilsTools', [])
     return service;
   }]);
 
-angular.module('vkTools',[])
+angular.module('vkTools', [])
   .service('S_vk', [
     '$q',
     '$http',
@@ -794,14 +1147,14 @@ angular.module('vkTools',[])
         language: 'ru'
       };
 
-
+      var _requestStack = [];
 
       function listenerHandler(authenticationTabId, afterAuth) {
         "use strict";
 
         return function tabUpdateListener(tabId, changeInfo) {
           var vkAccessToken,
-            vkAccessTokenExpiredFlag; 
+            vkAccessTokenExpiredFlag;
 
           if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
 
@@ -835,27 +1188,42 @@ angular.module('vkTools',[])
 
 
       service.request = function(_method, _params, _response) {
-        var path = '/method/' + _method + '?' + 'access_token=' + service.token;
-        _params['v'] = _params['v'] || service.default.version;
-        _params['lang'] = _params['lang'] || service.default.language;
+        var defer = $q.defer();
 
-        for (var key in _params) {
-          if (key === "message") {
-            path += ('&' + key + '=' + encodeURIComponent(_params[key]));
-          } else {
-            path += ('&' + key + '=' + _params[key]);
+        service.getToken().then(function(token) {
+
+          var path = '/method/' + _method + '?' + 'access_token=' + service.token;
+          _params['v'] = _params['v'] || service.default.version;
+          _params['lang'] = _params['lang'] || service.default.language;
+
+          for (var key in _params) {
+            if (key === "message") {
+              path += ('&' + key + '=' + encodeURIComponent(_params[key]));
+            } else {
+              path += ('&' + key + '=' + _params[key]);
+            }
           }
-        }
- 
-        $http.get('https://api.vk.com' + path, function(res) {
-          if (typeof _response === 'function') {
-            _response(res.data);
-          }
+
+
+          $http.get('https://api.vk.com' + path).then(function(res) {
+            if (typeof _response === 'function') {
+              _response(res.data);
+            } else {
+              defer.resolve(res.data);
+            }
+          });
         });
+
+        return defer.promise;
       };
 
       service.setToken = function(token) {
         service.token = token;
+        if (_requestStack.length > 0) {
+          angular.forEach(_requestStack, function(request) {
+            request.resolve(token);
+          });
+        }
       };
 
       service.testRequest = function() {
@@ -878,7 +1246,7 @@ angular.module('vkTools',[])
           url: vkAuthenticationUrl,
           selected: true
         }, function(tab) {
-          
+
           chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
             defer.resolve(tab);
           }));
@@ -890,8 +1258,17 @@ angular.module('vkTools',[])
 
 
       service.getToken = function() {
-        return service.token;
+        var defer = $q.defer();
+
+        if (service.token) {
+          defer.resolve(service.token);
+        } else {
+          _requestStack.push(defer);
+        }
+
+        return defer.promise;
       };
+
       return service;
     }
   ]);
@@ -2186,44 +2563,11 @@ var VKS = function(_options) {
   };
 };
 
-angular.module('App').controller('CM_parserResults', [
+angular.module('App').controller('CD_photobankSearch', [
   '$scope',
-  '$modalInstance',
   'S_google',
   'S_utils',
-  'attaches',
-  function($scope, $modalInstance, S_google, S_utils, attaches) {
-    var ctr = this;
-
-    ctr.attachments = [];
-    ctr.selectedAttachments = [];
-    ctr.processingImages = []; 
-
-    if (!attaches) {
-      $scope.$on('loadedDataFromTab', function(event, data) {
-        $scope.$apply(function() {
-          var images = _.map(data.images, function(q) {
-            q.type = 'image';
-            q.id = S_utils.getRandomString(16);
-            return q;
-          });
-          ctr.attachments = ctr.attachments.concat(images);
-        });
-      });
-    } else {
-      ctr.attachments = attaches;
-    }
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('CM_photobankSearch', [
-  '$scope',
-  '$modalInstance',
-  'S_google',
-  'S_utils',
-  function($scope, $modalInstance, S_google, S_utils) {
+  function($scope, S_google, S_utils) {
     var ctr = this;
 
     var _fanciedImage, _fancyBoxObject;

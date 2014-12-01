@@ -30,19 +30,26 @@ var vendorLibs = [
   './bower_components/jquery/dist/jquery.js',
   './bower_components/bootstrap/dist/js/bootstrap.js',
   './bower_components/angular/angular.js',
+  './bower_components/angular-sanitize/angular-sanitize.js',
   './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
   './bower_components/fancybox/source/jquery.fancybox.js',
   './bower_components/Jcrop/js/jquery.Jcrop.js',
   './bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js',
   './bower_components/blueimp-file-upload/js/jquery.iframe-transport.js',
-  './bower_components/blueimp-file-upload/js/jquery.fileupload.js'
+  './bower_components/blueimp-file-upload/js/jquery.fileupload.js',
+  './bower_components/momentjs/moment.js',
+  './bower_components/angular-i18n/angular-locale_ru.js',
+  './bower_components/angular-ui-select/dist/select.js'
 ];
 
 var vendorLibsCss = [
   './bower_components/bootstrap/dist/css/bootstrap.min.css',
   './bower_components/font-awesome/css/font-awesome.css',
   './bower_components/fancybox/source/jquery.fancybox.css',
-  './bower_components/Jcrop/css/jquery.Jcrop.css'
+  './bower_components/Jcrop/css/jquery.Jcrop.css',
+  './bower_components/select2/select2.css',
+  './bower_components/select2/select2-bootstrap.css',
+  './bower_components/angular-ui-select/dist/select.css'
 ];
 
 
@@ -77,6 +84,12 @@ gulp.task('dist-enviroment', function() {
 
 gulp.task('less', function() {
   gulp.src('./src/less/styles.less')
+    .pipe(less())
+    .pipe(gulp.dest('./public/pack'));
+});
+
+gulp.task('less-page', function() {
+  gulp.src('./src/less/page.less')
     .pipe(less())
     .pipe(gulp.dest('./public/pack'));
 });
@@ -151,6 +164,7 @@ gulp.task('dist-pages', function() {
 gulp.task("watch", function() {
   gulp.watch('./src/js/**', ["scripts", "dist-enviroment"]);
   gulp.watch('./src/less/**', ["less"]);
+  gulp.watch('./src/less/page.less', ["less-page"]);
   gulp.watch('./tmp/css/**', ["styles"]);
   gulp.watch('./src/manifest.json', ["dist-manifest"]);
   gulp.watch('./src/background.html', ["dist-background"]);

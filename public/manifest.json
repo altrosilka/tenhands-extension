@@ -24,8 +24,19 @@
     "https://*/*"
   ],
   "web_accessible_resources": [
-    "pages/createPost.html"
+    "pages/createPost.html",
+    "pack/page.css"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*"
+      ],
+      "css": [
+        "pack/page.css"
+      ]
+    }
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://*.vk.com https://*.google.com; object-src 'self'",
-  "version": "0.0.2"
+  "version": "0.0.3"
 }

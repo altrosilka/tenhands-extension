@@ -1,4 +1,4 @@
-angular.module('vkTools',[])
+angular.module('vkTools', [])
   .service('S_vk', [
     '$q',
     '$http',
@@ -12,14 +12,14 @@ angular.module('vkTools',[])
         language: 'ru'
       };
 
-
+      var _requestStack = [];
 
       function listenerHandler(authenticationTabId, afterAuth) {
         "use strict";
 
         return function tabUpdateListener(tabId, changeInfo) {
           var vkAccessToken,
-            vkAccessTokenExpiredFlag; 
+            vkAccessTokenExpiredFlag;
 
           if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
 
@@ -53,27 +53,42 @@ angular.module('vkTools',[])
 
 
       service.request = function(_method, _params, _response) {
-        var path = '/method/' + _method + '?' + 'access_token=' + service.token;
-        _params['v'] = _params['v'] || service.default.version;
-        _params['lang'] = _params['lang'] || service.default.language;
+        var defer = $q.defer();
 
-        for (var key in _params) {
-          if (key === "message") {
-            path += ('&' + key + '=' + encodeURIComponent(_params[key]));
-          } else {
-            path += ('&' + key + '=' + _params[key]);
+        service.getToken().then(function(token) {
+
+          var path = '/method/' + _method + '?' + 'access_token=' + service.token;
+          _params['v'] = _params['v'] || service.default.version;
+          _params['lang'] = _params['lang'] || service.default.language;
+
+          for (var key in _params) {
+            if (key === "message") {
+              path += ('&' + key + '=' + encodeURIComponent(_params[key]));
+            } else {
+              path += ('&' + key + '=' + _params[key]);
+            }
           }
-        }
- 
-        $http.get('https://api.vk.com' + path, function(res) {
-          if (typeof _response === 'function') {
-            _response(res.data);
-          }
+
+
+          $http.get('https://api.vk.com' + path).then(function(res) {
+            if (typeof _response === 'function') {
+              _response(res.data);
+            } else {
+              defer.resolve(res.data);
+            }
+          });
         });
+
+        return defer.promise;
       };
 
       service.setToken = function(token) {
         service.token = token;
+        if (_requestStack.length > 0) {
+          angular.forEach(_requestStack, function(request) {
+            request.resolve(token);
+          });
+        }
       };
 
       service.testRequest = function() {
@@ -96,7 +111,7 @@ angular.module('vkTools',[])
           url: vkAuthenticationUrl,
           selected: true
         }, function(tab) {
-          
+
           chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
             defer.resolve(tab);
           }));
@@ -108,8 +123,17 @@ angular.module('vkTools',[])
 
 
       service.getToken = function() {
-        return service.token;
+        var defer = $q.defer();
+
+        if (service.token) {
+          defer.resolve(service.token);
+        } else {
+          _requestStack.push(defer);
+        }
+
+        return defer.promise;
       };
+
       return service;
     }
   ]);

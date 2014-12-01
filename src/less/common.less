@@ -5,7 +5,7 @@ html, body {
 body {
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
-  background-color: transparent;
+  background-color: #F0F2F5;
   &.loaded {
     .window {
       transform: scale(1);
@@ -48,11 +48,19 @@ a {
   transition: 0.2s;
   width: 752px;
   margin: 40px auto;
-  background: #f9f9f9;
-  border-radius: 2px;
-  box-shadow: 0px 0px 10px #000;
+  padding-bottom: 300px;
+  header {
+    .sharePhrase {
+      position: relative;
+      top: 2px;
+    }
+  }
   .body {
-    padding: 20px;
+    margin: 20px 0;
+    h2 {
+      font-size: 17px;
+      margin: 25px 0 10px;
+    }
     .postArea {
       width: 577px;
       padding: 10px;
@@ -87,17 +95,33 @@ a {
   position: absolute;
   left: -9999px;
 }
+.relative {
+  position: relative;
+}
+.lastAttachCount {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  strong {
+    font-size: 20px;
+    display: block;
+    margin: 10px 10px;
+  }
+  .tooltip {
+    width: 200px;
+  }
+}
 .attaches {
-  margin: 0 -7px;
+  margin: -5px;
   .attach {
     float: left;
-    width: 131px;
-    height: 131px;
-    margin: 7px;
+    width: 103px;
+    height: 103px;
+    margin: 5px;
     position: relative;
     transition: 0.2s;
     box-shadow: 0px 0px 0px 1px #CCC;
-    background: #DDD;
+    background: #000;
     &.processing {
       .process {
         opacity: 1;
@@ -131,63 +155,53 @@ a {
         opacity: 0;
         visibility: hidden;
         transition: 0.2s;
-        background-color: rgba(255, 255, 255, 0.7);
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        cursor: pointer;
-        .remove, .check {
-          transiiton: 0.2s;
-        }
-        .remove {
-          opacity: 0;
-          visibility: hidden;
-          margin-left: 0px;
-        }
-        .check {
-          opacity: 1;
-          visibility: visible;
-        }
-        .main {
+        .lay {
           position: absolute;
-          left: 50%;
-          top: 50%;
-          font-size: 28px;
-          margin: -20px 0 0 -20px;
-          text-shadow: 0px 0px 1px #FFF;
-          background: rgba(255, 255, 255, 0.8);
-          height: 40px;
-          width: 40px;
-          border-radius: 50%;
-          box-shadow: 0px 0px 3px #222;
+          height: 100%;
+          top: 0;
+          width: 50%;
+          background-color: rgba(255, 255, 255, 0.9);
+          cursor: pointer;
+          transition: 0.2s;
           text-align: center;
-          i {
-            position: absolute;
+          font-size: 20px;
+          color: #000;
+          line-height: 98px;
+          &.right {
+            right: 0px;
+            width: 52px;
+          }
+          &.left {
+            left: 0px;
+            width: 51px;
+          }
+          &.full {
+            width: 100%;
             left: 0;
             right: 0;
-            top: 7px;
+          }
+          &.removeFromPost, &.check {
+            visibility: hidden;
+            opacity: 0;
+          }
+          &.check {
+            visibility: visible;
+            opacity: 1;
+          }
+          &.showen {
+            visibility: visible;
+            opacity: 0.8;
           }
         }
       }
       &:hover {
         .actions {
-          opacity: 1;
-          visibility: visible;
+          opacity: 0.8;
+          .lay:hover {
+            opacity: 1;
+          }
         }
       }
-    }
-    .additional {
-      position: absolute;
-      bottom: 0px;
-      left: 0px;
-      cursor: pointer;
-      transition: 0.2s;
-      background: rgba(0, 0, 0, 0.5);
-      color: #EEE;
-      padding: 0 3px;
-      font-size: 13px;
     }
     .info {
       position: absolute;
@@ -203,33 +217,109 @@ a {
       }
     }
     &.selected {
-      box-shadow: 0px 0px 0px 5px #99f;
+      box-shadow: 0px 0px 0px 3px #00A8FF;
       .actions {
-        opacity: 1;
-        visibility: visible;
-        background-color: rgba(255, 255, 255, 0.3);
-        .check {
-          opacity: 0;
-          visibility: hidden;
-        }
-        .remove {
-          opacity: 1;
-          visibility: visible;
+        .lay {
+          &.check {
+            opacity: 0;
+            visibility: hidden;
+          }
+          &.removeFromPost {
+            opacity: 1;
+            visibility: visible;
+          }
         }
       }
-      .additional, .info {
+      .info {
         opacity: 0;
         visibility: hidden;
       }
     }
   }
 }
-
-.pointer{
+.pointer {
   cursor: pointer;
 }
-
-.popover{
+.bg-panel {
+  background-color: #FFF;
+  border: 1px solid #F0F0F0;
+  padding: 10px;
+  border-radius: 2px;
+}
+.nav-tabs>li.active>a:hover {
+  border-color: #F0F0F0;
+  border-bottom-color: rgba(0, 0, 0, 0);
+}
+.nav-tabs>li.active>a {
+  border-color: #F0F0F0;
+  border-bottom-color: rgba(0, 0, 0, 0);
+}
+.up-level-tabs .nav-tabs {
+  position: relative;
+  top: 1px;
+  border-color: #F0F0F0;
+}
+.nav-tabs a {
+  color: #444;
+  cursor: pointer;
+}
+.popover {
   max-width: 400px;
-  font-size:12px;
+  font-size: 12px;
+}
+.content {
+  width: 577px;
+}
+.mb10 {
+  margin-bottom: 10px;
+}
+.mt20 {
+  margin-top: 20px;
+}
+.groupSelect {
+  .select2-container .select2-choice {
+    border: 1px solid #C3CBD4;
+    border-radius: 0px;
+    background: #FFF;
+    box-shadow: none!important;
+    .select2-arrow {
+      border: none;
+      background: rgba(0, 0, 0, 0);
+      font-family: FontAwesome;
+      b {
+        &:after {
+          content: "\f107";
+        }
+      }
+    }
+  }
+  .select2-drop-active {
+    border: 1px solid #C3CBD4;
+    border-radius: 0px;
+    padding-top: 10px;
+  }
+  .select2 {
+    min-width: 300px;
+  }
+  .ui-select-choices-row {
+    position: relative;
+    padding: 5px 0px;
+  }
+  .image {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    background-size: 25px;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    margin-top: -13px;
+  }
+  .name {
+    display: inline-block;
+    margin-left: 32px;
+    margin-top: 0px;
+  }
 }

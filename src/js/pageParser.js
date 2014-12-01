@@ -28,6 +28,7 @@
       height: image.height,
       title: image.title,
       src: image.src,
+      src_big: image.src,
       type: 'image'
     });
   }

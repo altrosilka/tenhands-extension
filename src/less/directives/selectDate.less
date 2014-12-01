@@ -1,0 +1,48 @@
+.date-selector {
+  width: 100%;
+
+  .inputs {
+    position: relative;
+    width: 168px;
+    margin: -3px 0 0 3px;
+    border: 1px solid #E0E0E0;
+    height: 30px
+  }
+  .inputs input {
+    border: none;
+    outline: 0;
+    float: left;
+    height: 100%;
+    line-height: 19px;
+    background: 0 0;
+    color: #000;
+    text-align: center
+  }
+  .inputs:after, .inputs:before {
+    position: absolute;
+    content: '';
+    top: 7px;
+    height: 13px;
+    width: 1px;
+    background: #ccc;
+  }
+  .inputs:after {
+    left: 85px;
+  }
+  .inputs:before {
+    left: 42px;
+  } 
+  .inputs .day, .inputs .month {
+    width: 43px;
+  }
+  .inputs .year {
+    width: 80px;
+  }
+  .hidden-input {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}

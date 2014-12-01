@@ -1,0 +1,9 @@
+<div class="date-selector">
+  <div class="inputs" ng-hide="hideInputs">
+    <input onclick="this.select()" class="day" type="text" placeholder="11" data-ng-model="editdate.day">
+    <input onclick="this.select()" class="month" type="text" placeholder="08" data-ng-model="editdate.month">
+    <input onclick="this.select()" class="year" type="text" placeholder="2014" data-ng-model="editdate.year">
+  </div>
+
+  <input type="text" class="hidden-input" close-text="Закрыть" is-open="isOpen" datepicker-popup="dd.MM.yyyy" ng-model="model" show-button-bar="false" min-date="minDate"  max-date="maxDate" datepicker-options="{ showWeeks: false,  maxMode: 'day', startingDay: 1, showButtonBar: false, formatDay: 'd'}" ng-required="true">
+</div>

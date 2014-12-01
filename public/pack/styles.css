@@ -3,6 +3,19 @@
 /* borders */
 /* borders */
 /*@import url('vendor/ionicons/ionicons.less');  */
+.btn {
+  transition: 0.2s;
+  padding: 6px 16px 7px;
+}
+.btn.btn-primary {
+  background-color: #6287AE;
+  font-size: 13px;
+  line-height: 1.385em;
+  border: none;
+}
+.btn.btn-primary:hover {
+  background-color: #678EB5;
+}
 html,
 body {
   height: 100%;
@@ -11,7 +24,7 @@ body {
 body {
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
-  background-color: transparent;
+  background-color: #F0F2F5;
 }
 body.loaded .window {
   transform: scale(1);
@@ -52,12 +65,18 @@ a:hover {
   transition: 0.2s;
   width: 752px;
   margin: 40px auto;
-  background: #f9f9f9;
-  border-radius: 2px;
-  box-shadow: 0px 0px 10px #000;
+  padding-bottom: 300px;
+}
+.window header .sharePhrase {
+  position: relative;
+  top: 2px;
 }
 .window .body {
-  padding: 20px;
+  margin: 20px 0;
+}
+.window .body h2 {
+  font-size: 17px;
+  margin: 25px 0 10px;
 }
 .window .body .postArea {
   width: 577px;
@@ -91,18 +110,34 @@ a:hover {
   position: absolute;
   left: -9999px;
 }
+.relative {
+  position: relative;
+}
+.lastAttachCount {
+  position: absolute;
+  left: 100%;
+  top: 0;
+}
+.lastAttachCount strong {
+  font-size: 20px;
+  display: block;
+  margin: 10px 10px;
+}
+.lastAttachCount .tooltip {
+  width: 200px;
+}
 .attaches {
-  margin: 0 -7px;
+  margin: -5px;
 }
 .attaches .attach {
   float: left;
-  width: 131px;
-  height: 131px;
-  margin: 7px;
+  width: 103px;
+  height: 103px;
+  margin: 5px;
   position: relative;
   transition: 0.2s;
   box-shadow: 0px 0px 0px 1px #CCC;
-  background: #DDD;
+  background: #000;
 }
 .attaches .attach.processing .process {
   opacity: 1;
@@ -135,61 +170,51 @@ a:hover {
   opacity: 0;
   visibility: hidden;
   transition: 0.2s;
-  background-color: rgba(255, 255, 255, 0.7);
+}
+.attaches .attach .image .actions .lay {
   position: absolute;
-  left: 0;
-  right: 0;
+  height: 100%;
   top: 0;
-  bottom: 0;
-  cursor: pointer;
-}
-.attaches .attach .image .actions .remove,
-.attaches .attach .image .actions .check {
-  transiiton: 0.2s;
-}
-.attaches .attach .image .actions .remove {
-  opacity: 0;
-  visibility: hidden;
-  margin-left: 0px;
-}
-.attaches .attach .image .actions .check {
-  opacity: 1;
-  visibility: visible;
-}
-.attaches .attach .image .actions .main {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  font-size: 28px;
-  margin: -20px 0 0 -20px;
-  text-shadow: 0px 0px 1px #FFF;
-  background: rgba(255, 255, 255, 0.8);
-  height: 40px;
-  width: 40px;
-  border-radius: 50%;
-  box-shadow: 0px 0px 3px #222;
-  text-align: center;
-}
-.attaches .attach .image .actions .main i {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 7px;
-}
-.attaches .attach .image:hover .actions {
-  opacity: 1;
-  visibility: visible;
-}
-.attaches .attach .additional {
-  position: absolute;
-  bottom: 0px;
-  left: 0px;
+  width: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   transition: 0.2s;
-  background: rgba(0, 0, 0, 0.5);
-  color: #EEE;
-  padding: 0 3px;
-  font-size: 13px;
+  text-align: center;
+  font-size: 20px;
+  color: #000;
+  line-height: 98px;
+}
+.attaches .attach .image .actions .lay.right {
+  right: 0px;
+  width: 52px;
+}
+.attaches .attach .image .actions .lay.left {
+  left: 0px;
+  width: 51px;
+}
+.attaches .attach .image .actions .lay.full {
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+.attaches .attach .image .actions .lay.removeFromPost,
+.attaches .attach .image .actions .lay.check {
+  visibility: hidden;
+  opacity: 0;
+}
+.attaches .attach .image .actions .lay.check {
+  visibility: visible;
+  opacity: 1;
+}
+.attaches .attach .image .actions .lay.showen {
+  visibility: visible;
+  opacity: 0.8;
+}
+.attaches .attach .image:hover .actions {
+  opacity: 0.8;
+}
+.attaches .attach .image:hover .actions .lay:hover {
+  opacity: 1;
 }
 .attaches .attach .info {
   position: absolute;
@@ -205,22 +230,16 @@ a:hover {
   color: #aaa;
 }
 .attaches .attach.selected {
-  box-shadow: 0px 0px 0px 5px #99f;
+  box-shadow: 0px 0px 0px 3px #00A8FF;
 }
-.attaches .attach.selected .actions {
-  opacity: 1;
-  visibility: visible;
-  background-color: rgba(255, 255, 255, 0.3);
-}
-.attaches .attach.selected .actions .check {
+.attaches .attach.selected .actions .lay.check {
   opacity: 0;
   visibility: hidden;
 }
-.attaches .attach.selected .actions .remove {
+.attaches .attach.selected .actions .lay.removeFromPost {
   opacity: 1;
   visibility: visible;
 }
-.attaches .attach.selected .additional,
 .attaches .attach.selected .info {
   opacity: 0;
   visibility: hidden;
@@ -228,7 +247,260 @@ a:hover {
 .pointer {
   cursor: pointer;
 }
+.bg-panel {
+  background-color: #FFF;
+  border: 1px solid #F0F0F0;
+  padding: 10px;
+  border-radius: 2px;
+}
+.nav-tabs > li.active > a:hover {
+  border-color: #F0F0F0;
+  border-bottom-color: rgba(0, 0, 0, 0);
+}
+.nav-tabs > li.active > a {
+  border-color: #F0F0F0;
+  border-bottom-color: rgba(0, 0, 0, 0);
+}
+.up-level-tabs .nav-tabs {
+  position: relative;
+  top: 1px;
+  border-color: #F0F0F0;
+}
+.nav-tabs a {
+  color: #444;
+  cursor: pointer;
+}
 .popover {
   max-width: 400px;
   font-size: 12px;
+}
+.content {
+  width: 577px;
+}
+.mb10 {
+  margin-bottom: 10px;
+}
+.mt20 {
+  margin-top: 20px;
+}
+.groupSelect .select2-container .select2-choice {
+  border: 1px solid #C3CBD4;
+  border-radius: 0px;
+  background: #FFF;
+  box-shadow: none!important;
+}
+.groupSelect .select2-container .select2-choice .select2-arrow {
+  border: none;
+  background: rgba(0, 0, 0, 0);
+  font-family: FontAwesome;
+}
+.groupSelect .select2-container .select2-choice .select2-arrow b:after {
+  content: "\f107";
+}
+.groupSelect .select2-drop-active {
+  border: 1px solid #C3CBD4;
+  border-radius: 0px;
+  padding-top: 10px;
+}
+.groupSelect .select2 {
+  min-width: 300px;
+}
+.groupSelect .ui-select-choices-row {
+  position: relative;
+  padding: 5px 0px;
+}
+.groupSelect .image {
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  background-size: 25px;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  margin-top: -13px;
+}
+.groupSelect .name {
+  display: inline-block;
+  margin-left: 32px;
+  margin-top: 0px;
+}
+.jcropArea .image {
+  padding: 20px;
+}
+.jcropArea .jcrop-keymgr {
+  left: -9999px !important;
+}
+.jcropArea .jcrop-handle {
+  background-color: #FFF;
+  border: 1px solid #EEE;
+  width: 12px;
+  height: 12px;
+  font-size: 1px;
+  box-shadow: 0px 0px 2px #000;
+  opacity: 1!important;
+}
+.jcropArea .jcrop-hline,
+.jcropArea .jcrop-vline {
+  background: #fff!important;
+}
+.date-selector {
+  width: 100%;
+}
+.date-selector .inputs {
+  position: relative;
+  width: 168px;
+  margin: -3px 0 0 3px;
+  border: 1px solid #E0E0E0;
+  height: 30px;
+}
+.date-selector .inputs input {
+  border: none;
+  outline: 0;
+  float: left;
+  height: 100%;
+  line-height: 19px;
+  background: 0 0;
+  color: #000;
+  text-align: center;
+}
+.date-selector .inputs:after,
+.date-selector .inputs:before {
+  position: absolute;
+  content: '';
+  top: 7px;
+  height: 13px;
+  width: 1px;
+  background: #ccc;
+}
+.date-selector .inputs:after {
+  left: 85px;
+}
+.date-selector .inputs:before {
+  left: 42px;
+}
+.date-selector .inputs .day,
+.date-selector .inputs .month {
+  width: 43px;
+}
+.date-selector .inputs .year {
+  width: 80px;
+}
+.date-selector .hidden-input {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  height: 0;
+  display: none;
+}
+.calendar {
+  outline: none!important;
+}
+.calendar .dropdown-menu {
+  outline: none;
+  padding: 0;
+}
+.calendar .btn.btn-default {
+  padding: 0px 3px;
+  font-size: 14px;
+  outline: none;
+  border: none;
+  line-height: 16px;
+  color: #000;
+  border-radius: 0px;
+}
+.calendar .btn-default[disabled] {
+  background: #f9f9f9;
+  cursor: default!important;
+  color: #ccc!important;
+}
+.calendar .text-info {
+  color: #3A65BE;
+  font-weight: bold;
+}
+.calendar table {
+  border-collapse: collapse;
+  width: 100%;
+  border-spacing: 0;
+  outline: none!important;
+}
+.calendar table tr:first-child th {
+  background-color: #e7e7e7;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 43px;
+  height: 43px;
+  text-align: center;
+  padding: 0;
+  min-width: 34px;
+  border: none;
+}
+.calendar table tr:first-child th:nth-child(1),
+.calendar table tr:first-child th:nth-child(3) {
+  width: 34px;
+}
+.calendar table tr:first-child th:nth-child(2) {
+  width: 184px;
+}
+.calendar table tr:first-child th:nth-child(2) .btn {
+  font-size: 14px;
+  background: #e7e7e7!important;
+  cursor: default!important;
+}
+.calendar table tr:first-child th:nth-child(1) i:before {
+  content: "\f104" !important;
+}
+.calendar table tr:first-child th:nth-child(3) i:before {
+  content: "\f105" !important;
+}
+.calendar table tr:first-child th .btn:hover {
+  background-color: #eee;
+}
+.calendar table tr:first-child th .btn:active {
+  background-color: #ddd;
+}
+.calendar table tr:first-child th:nth-child(2) .btn strong {
+  font-weight: normal;
+}
+.calendar table tr:first-child th .btn {
+  height: 100%;
+  padding: 0;
+  width: 100%;
+}
+.calendar table tr:first-child th .btn i {
+  padding: 0 10px;
+  font-family: FontAwesome!important;
+  font-size: 32px;
+  color: #707070;
+}
+.calendar table tr:last-child th {
+  background-color: #fff;
+  color: #575757;
+  font-weight: 400;
+  font-size: 12px;
+  padding: 4px;
+}
+.calendar table td {
+  border: 1px solid #E3E3E3;
+  background-color: #FFF;
+  text-align: center;
+  height: 32px;
+  width: 32px;
+  font-size: 14px;
+  padding: 0;
+}
+.calendar table td .btn {
+  height: 100%;
+  box-shadow: inset 0px 0px 0px 2px transparent;
+}
+.calendar .text-muted {
+  color: #A9A9A9;
+}
+.calendar button.btn.btn-default.btn-sm.btn-info.active {
+  box-shadow: inset 0px 0px 0px 2px #009ee0;
+  color: #000;
+}
+.calendar .btn.btn-default:focus {
+  background: transparent;
 }
