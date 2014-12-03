@@ -1,0 +1,9 @@
+<span class="timeSelect">
+	<span class="selectWrapper">
+		<select ng-model="ctr.hour" class="form-control" ng-options="ctr.getView(option) for option in ctr.hours" ng-change="ctr.updateTime()"></select>
+	</span>
+	<span class="sep">:</span>
+	<span class="selectWrapper">
+		<select ng-model="ctr.minute" class="form-control" ng-options="ctr.getView(option) for option in ctr.minutes" ng-change="ctr.updateTime()"></select>
+	</span>
+</span>

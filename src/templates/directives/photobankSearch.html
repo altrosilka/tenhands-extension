@@ -1,15 +1,13 @@
-<p>
-  Укажи поисковый запрос на интересующую тематику, выбери подходящие изображения и добавь их к записи в ВК</p>
-<div class="text-center">
+<div class="text-center photobankSearch">
   <form class="mb10" ng-submit="pbctr.search(pbctr.q)">
-    <div class="input-group">
-      <div class="input-group-addon pointer" popover-placement="right" popover-trigger="click" popover-html-unsafe="{{pbctr.aboutSearchText}}" popover-append-to-body="true"><i class="fa fa-info-circle"></i>
-      </div>
-      <input autofocus="autofocus" class="form-control" type="text" ng-model="pbctr.q" placeholder="spa или борщ">
-      <div class="input-group-addon btn btn-default" ng-click="pbctr.search(pbctr.q)">поиск</div>
+    <div class="searchField relative">
+      <i class="fa fa-search"></i>
+      <input autofocus="autofocus" class="form-control search" type="text" ng-model="pbctr.q" placeholder="spa или борщ">
+      <div class="btn btn-link pointer info" popover-placement="left" popover-trigger="click" popover-html-unsafe="{{pbctr.aboutSearchText}}" popover-append-to-body="true">что это?</div>
+      <!--<div class="input-group-addon btn btn-default" ng-click="pbctr.search(pbctr.q)">поиск</div>-->
     </div>
     <input type="submit" class="gogoleft">
   </form>
 
-  <div select-area post-attachments="ctr.attachments" processing-attachments="pbctr.processingImages" attachments="pbctr.attachments"></div>
+  <div select-area selected-attachments="ctr.selectedAttachments" attachments="pbctr.attachments"></div>
 </div>

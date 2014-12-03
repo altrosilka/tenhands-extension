@@ -14,7 +14,7 @@
   </div>
   <section class="window">
     <header>
-      <span class="sharePhrase">Поделиться в</span>
+      <span class="sharePhrase">Поделиться записью в</span>
       <span class="groupSelect">
         <ui-select ng-model="ctr.selectedGroup" theme="select2">
           <ui-select-match placeholder="Выбери группу, в которую нужно разместить запись">
@@ -28,66 +28,92 @@
       </span>
 
     </header>
+
+
+
     <section class="body clearfix">
 
-      <textarea class="postArea" ng-model="ctr.text"></textarea>
+      <div class="leftColumn">
+        <textarea class="postArea" ng-model="ctr.text"></textarea>
+        <div class=" content relative">
 
-      <div class="separator"></div>
-
-      <h2>К записи прикреплены:</h2>
-      <div class="bg-panel content relative">
-        <div class="lastAttachCount">
-          <strong ng-bind="ctr.getRemainingAttachesCount()" tooltip-placement="right" tooltip="Ты можешь прикрепить к посту только 9 материалов (фото, опросов, видео и аудио)" tooltip-trigger="mouseenter"><span  ></span></strong>
+          <div select-area selected-attachments="ctr.selectedAttachments" processing-attachments="ctr.processingAttachments" attachments="ctr.attachments" main-mode="true"></div>
         </div>
-        <div select-area selected-attachments="ctr.selectedAttachments" processing-attachments="ctr.processingAttachments" attachments="ctr.attachments" main-mode="true"></div>
-      </div>
-      <div class="point content clearfix">
-        <label class="pull-right btn btn-primary btn-sm mt20">
-          <span>загрузить</span>
-          <div class="gogoleft" image-upload-area on-upload-start="ctr.pushUploadingAttach" after-image-uploaded="ctr.afterImageUploaded"></div>
-        </label>
-        <h2>Изображения</h2>
-      </div>
-      <div class="point content up-level-tabs">
-        <tabset>
-          <tab heading="со страницы" active="true">
-
-            <div class="bg-panel">
-              <div select-area post-attachments="ctr.attachments" processing-attachments="ctr.processingAttachments" attachments="ctr.pageAttachments"></div>
-            </div>
-          </tab>
-          <tab heading="из фотобанка">
-            <div class="bg-panel">
-              <div photobank-search></div>
-            </div>
-          </tab>
-          <tab heading="хранилище" title="бу" disabled="true">
-
-          </tab>
-        </tabset>
       </div>
 
-      <div>
-        <p class="input-group">
+ 
 
-          <div class="calendar" select-date data-is-open="ctr.openedDatepickerPopup" min-date="ctr.minDate" max-date="ctr.maxDate" data-model="ctr.postingDate" class="picker_inputs"></div>
-          <button class="pick_icon btn btn-primary btn-sm" ng-click="ctr.openDatepicker($event)">выбрать</button>
 
-          <timepicker ng-model="ctr.postingTime" ng-change="ctr.loadTimeLine()" hour-step="1" minute-step="1" show-meridian="false"></timepicker>
-        </p>
+      <div class="rightColumn">
+        <h4>Прикрепить</h4>
+        <div class="attachsButtons">
+          <div ng-click="ctr.attachItem('photo')">
+            <i class="fa fa-camera"></i>
+            <span>Фотографию</span>
+          </div>
+          <div ng-click="ctr.attachItem('photo')">
+            <i class="fa fa-film"></i>
+            <span>Видеозапись</span>
+          </div>
+          <div ng-click="ctr.attachItem('photo')">
+            <i class="fa fa-music"></i>
+            <span>Аудиозапись</span>
+          </div>
+          <div ng-click="ctr.attachItem('photo')">
+            <i class="fa fa-bar-chart"></i>
+            <span>Опрос</span>
+          </div>
+          <div ng-click="ctr.attachItem('photo')">
+            <i class="fa fa-file"></i>
+            <span>Документ</span>
+          </div>
+        </div>
+
+        <div class="lastAttachCount">
+          <span ng-show="ctr.canAddAttach()">
+          к посту можно прикрепить еще <strong ng-bind="ctr.getRemainingAttachesCount()" tooltip-placement="right"></strong> материалов
+          </span>
+          <span ng-show="!ctr.canAddAttach()">
+          к посту больше нельзя ничего прикрепить
+          </span>
+        </div>
 
       </div>
     </section>
+
+    <div class="dateArea">
+      <h3 ng-hide="ctr.timerIsEnabled">Разместить запись <strong>сейчас</strong> / <span class="addTimer" ng-click="ctr.addTimer()">добавить таймер</span></h3>
+      <h3 ng-show="ctr.timerIsEnabled">Разместить отложенную запись / <span class="addTimer" ng-click="ctr.removeTimer()">разместить сейчас</span></h3>
+      <span ng-show="ctr.timerIsEnabled">
+        <div class="calendar" date-button min-date="ctr.minDate" max-date="ctr.maxDate" data-model="ctr.postingDate" class="picker_inputs"></div>
+        <span class="in">в</span>
+        <div class="timec" time-select time="ctr.postingTime" set-new-time="ctr.onTimeChange(time)"></div>
+
+        <span class="text-danger" ng-show="ctr.pastTime">в прошлое постить не умеем :(</span>
+      </span>
+
+    </div>
+    <div class="timelineArea">
+      <h3 class="ng-hide">Лента записей в группе</h3>
+      <div posts-timeline time="ctr.postingUnixTime" group-id="'755816'"></div>
+    </div>
+
+
     <footer>
-      <div class="btn-group" dropdown>
-        <button type="button" class="btn btn-primary dropdown-toggle" dropdown-toggle ng-disabled="ctr.paidIsEnd || ctr.processingAttachments.length" ng-click="ctr.publicPost()">
-          отправить <span class="caret"></span>
+      
+        <button type="button" class="btn btn-primary" ng-disabled="ctr.paidIsEnd || ctr.processingAttachments.length" ng-click="ctr.publicPost()">
+          отправить
         </button>
-        <ul class="dropdown-menu" role="menu">
-          <li><a href="#">Отложить</a>
-          </li>
-        </ul>
-      </div>
+
+
+        <div class="checkboxList controls-list">
+          <label>
+            <input type="checkbox" ng-model="ctr.assigned">
+            <span>подпись</span>
+          </label>
+        </div>
+
+
     </footer>
   </section>
 

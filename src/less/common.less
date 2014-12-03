@@ -6,6 +6,7 @@ body {
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
   background-color: #F0F2F5;
+  font-size: 12px;
   &.loaded {
     .window {
       transform: scale(1);
@@ -46,31 +47,114 @@ a {
   visibility: hidden;
   transform: scale(0.9);
   transition: 0.2s;
-  width: 752px;
+  width: 960px;
   margin: 40px auto;
   padding-bottom: 300px;
+  h2 {
+    font-size: 17px;
+    margin: 45px 0 10px;
+  }
+  h3 {
+    margin: 20px 0 5px;
+    font-size: 12px;
+  }
   header {
     .sharePhrase {
       position: relative;
       top: 2px;
     }
   }
+  footer {
+    margin-top: 40px;
+    .controls-list {
+      display: inline-block;
+      margin-left: 10px;
+    }
+  }
+  .leftColumn {
+    float: left;
+    width: 580px;
+    background: #FFF;
+    box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
+    padding: 25px;
+  }
+  .rightColumn {
+    float: left;
+    width: 160px;
+    margin-left: 30px;
+    position: relative;
+    background: #FFF;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
+    h4 {
+      font-size: 12px;
+      margin-top: 0px;
+      margin-bottom: 10px;
+      color: #999;
+    }
+    .attachsButtons {
+      margin-top: 9px;
+      div {
+        color: #2B587A;
+        transition: 0.2s;
+        margin-bottom: 7px;
+        opacity: 0.8;
+        &:hover {
+          opacity: 1;
+          cursor: pointer;
+          color: #222;
+        }
+        .fa {
+          width: 22px;
+          top: 1px;
+          position: relative;
+        }
+        .fa-camera {
+          font-size: 16px;
+          left: 1px;
+        }
+        .fa-music {
+          font-size: 17px;
+          top: 2px;
+          left: 1px;
+        }
+        .fa-film {
+          font-size: 15px;
+          left: 2px;
+        }
+        .fa-bar-chart {
+          font-size: 16px;
+          left: 1px;
+          top: 2px;
+        }
+        .fa-file {
+          font-size: 16px;
+          left: 3px;
+        }
+        span {
+          font-size: 12px;
+        }
+      }
+    }
+    .lastAttachCount {
+      color: #aaa;
+      margin-top: 15px;
+      font-size: 10px;
+    }
+  }
   .body {
     margin: 20px 0;
-    h2 {
-      font-size: 17px;
-      margin: 25px 0 10px;
-    }
     .postArea {
-      width: 577px;
+      width: 100%;
       padding: 10px;
       border: 1px solid #DDD;
       background: #FFF;
-      height: 120px;
+      height: 133px;
       font-size: 12px;
       word-wrap: break-word;
       line-height: 18px;
       outline: none;
+      margin-bottom: 10px;
     }
     .separator {
       height: 1px solid #eee;
@@ -98,19 +182,6 @@ a {
 .relative {
   position: relative;
 }
-.lastAttachCount {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  strong {
-    font-size: 20px;
-    display: block;
-    margin: 10px 10px;
-  }
-  .tooltip {
-    width: 200px;
-  }
-}
 .attaches {
   margin: -5px;
   .attach {
@@ -120,8 +191,8 @@ a {
     margin: 5px;
     position: relative;
     transition: 0.2s;
-    box-shadow: 0px 0px 0px 1px #CCC;
     background: #000;
+    cursor: pointer;
     &.processing {
       .process {
         opacity: 1;
@@ -131,13 +202,13 @@ a {
     .process {
       opacity: 0;
       position: absolute;
-      font-size: 30px;
+      font-size: 21px;
       left: 0;
       right: 0;
       text-align: center;
       top: 0;
       bottom: 0;
-      line-height: 132px;
+      line-height: 106px;
       visibility: hidden;
       transition: 0.2s;
       z-index: 2;
@@ -151,55 +222,47 @@ a {
       position: absolute;
       width: 100%;
       height: 100%;
-      .actions {
-        opacity: 0;
-        visibility: hidden;
+      z-index: 1;
+    }
+    .lower {
+      z-index: 2;
+      background-color: rgba(0, 0, 0, 0.7);
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      transition: 0.3s;
+      visibility: hidden;
+      opacity: 0;
+    }
+    .actions {
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.2s;
+      background-color: rgba(0, 0, 0, 0.7);
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 24px;
+      height: 24px;
+      z-index: 3;
+      .lay {
+        color: #eee;
         transition: 0.2s;
-        .lay {
-          position: absolute;
-          height: 100%;
-          top: 0;
-          width: 50%;
-          background-color: rgba(255, 255, 255, 0.9);
-          cursor: pointer;
-          transition: 0.2s;
-          text-align: center;
-          font-size: 20px;
-          color: #000;
-          line-height: 98px;
-          &.right {
-            right: 0px;
-            width: 52px;
-          }
-          &.left {
-            left: 0px;
-            width: 51px;
-          }
-          &.full {
-            width: 100%;
-            left: 0;
-            right: 0;
-          }
-          &.removeFromPost, &.check {
-            visibility: hidden;
-            opacity: 0;
-          }
-          &.check {
-            visibility: visible;
-            opacity: 1;
-          }
-          &.showen {
-            visibility: visible;
-            opacity: 0.8;
-          }
-        }
-      }
-      &:hover {
-        .actions {
+        left: 0;
+        bottom: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        text-align: center;
+        line-height: 24px;
+        transition: 0.2s;
+        opacity: 0.5;
+        font-size: 15px;
+        cursor: pointer;
+        &:hover {
           opacity: 0.8;
-          .lay:hover {
-            opacity: 1;
-          }
         }
       }
     }
@@ -209,7 +272,7 @@ a {
       right: 0px;
       color: #EEE;
       font-size: 10px;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(0, 0, 0, 0.7);
       padding: 2px 5px;
       transition: 0.2s;
       .gray {
@@ -217,17 +280,16 @@ a {
       }
     }
     &.selected {
-      box-shadow: 0px 0px 0px 3px #00A8FF;
+      .lower {
+        opacity: 0.5;
+        visibility: visible;
+      }
       .actions {
+        opacity: 1;
+        visibility: visible;
+        background-color: transparent;
         .lay {
-          &.check {
-            opacity: 0;
-            visibility: hidden;
-          }
-          &.removeFromPost {
-            opacity: 1;
-            visibility: visible;
-          }
+          opacity: 1;
         }
       }
       .info {
@@ -235,32 +297,15 @@ a {
         visibility: hidden;
       }
     }
+    &:hover {
+      .actions {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
   }
 }
 .pointer {
-  cursor: pointer;
-}
-.bg-panel {
-  background-color: #FFF;
-  border: 1px solid #F0F0F0;
-  padding: 10px;
-  border-radius: 2px;
-}
-.nav-tabs>li.active>a:hover {
-  border-color: #F0F0F0;
-  border-bottom-color: rgba(0, 0, 0, 0);
-}
-.nav-tabs>li.active>a {
-  border-color: #F0F0F0;
-  border-bottom-color: rgba(0, 0, 0, 0);
-}
-.up-level-tabs .nav-tabs {
-  position: relative;
-  top: 1px;
-  border-color: #F0F0F0;
-}
-.nav-tabs a {
-  color: #444;
   cursor: pointer;
 }
 .popover {
@@ -277,11 +322,15 @@ a {
   margin-top: 20px;
 }
 .groupSelect {
+  font-size: 12px;
   .select2-container .select2-choice {
     border: 1px solid #C3CBD4;
     border-radius: 0px;
     background: #FFF;
     box-shadow: none!important;
+    height: 33px;
+    line-height: 33px;
+    font-size: 12px;
     .select2-arrow {
       border: none;
       background: rgba(0, 0, 0, 0);
@@ -293,6 +342,14 @@ a {
       }
     }
   }
+  .select2-results {
+    padding: 0 0 0 0px;
+    margin: 5px 0px 0px 0;
+    .select2-highlighted {
+      background: #2B587A;
+      color: #FFF;
+    }
+  }
   .select2-drop-active {
     border: 1px solid #C3CBD4;
     border-radius: 0px;
@@ -300,6 +357,10 @@ a {
   }
   .select2 {
     min-width: 300px;
+    .select2-search {
+      padding-left: 9px;
+      padding-right: 9px;
+    }
   }
   .ui-select-choices-row {
     position: relative;
@@ -314,12 +375,93 @@ a {
     background-repeat: no-repeat;
     position: absolute;
     top: 50%;
-    left: 6px;
+    left: 10px;
     margin-top: -13px;
   }
   .name {
     display: inline-block;
-    margin-left: 32px;
+    margin-left: 38px;
     margin-top: 0px;
+    font-size: 12px;
   }
+}
+.uploadImage {
+  float: right;
+  position: relative;
+  top: 0px;
+  margin: 0!important;
+}
+.dateArea {
+  margin-top: 40px;
+  .addTimer {
+    color: #2B587A;
+    cursor: pointer;
+  }
+  .calendar, .in, .timec {
+    display: inline-block;
+  }
+  .in {
+    position: relative;
+    font-size: 12px;
+  }
+  .timec {
+    position: relative;
+    top: 8px;
+  }
+}
+.timelineArea {
+  margin-top: 20px;
+}
+.controls-list {
+  label {
+    display: block;
+    position: relative;
+    cursor: pointer;
+  }
+  input {
+    width: 1px;
+    height: 1px;
+    visibility: hidden;
+    opacity: 0;
+  }
+  input:checked + span:after {
+    opacity: 1;
+  }
+  span {
+    display: inline-block;
+    margin-left: 20px;
+    font-weight: normal;
+    font-size: 12px;
+  }
+  span:before {
+    width: 12px;
+    height: 12px;
+    box-shadow: 0px 0px 1px #000;
+    left: 5px;
+    top: 5px;
+    content: '';
+    position: absolute;
+    display: block;
+    background-color: #fff;
+  }
+  span:after {
+    width: 8px;
+    height: 8px;
+    left: 7px;
+    top: 7px;
+    background: #358CE0;
+    opacity: 0;
+    transition: 0.2s;
+    content: '';
+    position: absolute;
+    display: block;
+  }
+  &.radioList span:after, &.radioList span:before {
+    border-radius: 50%;
+  }
+}
+.noResults {
+  padding: 40px;
+  text-align: center;
+  color: #888;
 }

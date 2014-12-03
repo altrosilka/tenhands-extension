@@ -4,6 +4,17 @@ App.run([
   'S_vk',
   'S_google',
   function(__vkAppId, S_chrome, S_vk, S_google) {
+
+    Highcharts.setOptions({
+      global: {
+        //timezoneOffset: moment().zone(),
+        useUTC: false
+      },
+      lang: {
+        shortMonths: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+      }
+    });
+
     S_chrome.pageDataWatch();
 
     S_google.init();

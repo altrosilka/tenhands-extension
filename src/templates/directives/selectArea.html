@@ -1,34 +1,26 @@
 <div class="attaches clearfix">
-  <div class="attach" data-ng-repeat="attach in attachments" ng-class="{'processing':ctr.attachIsProcessing(attach), selected: ctr.attachIsSelected(attach), main: ctr.mainMode}">
+  <div class="attach" ng-repeat="attach in attachments" ng-class="{selected: ctr.attachIsSelected(attach)}">
     <div class="process">
       <i class="fa fa-circle-o-notch fa-spin"></i>
     </div>
-    <div class="image" ng-style="{'background-image':'url('+attach.src+')'}">
-
-      <div class="actions">
-        <div class="lay left showen" ng-click="ctr.openFullImage(attach)" ng-if="ctr.mainMode">
-          <i class="edit fa fa-pencil"></i>
-        </div>
-        <div class="lay right showen" ng-click="ctr.removeAttach(attach)" ng-if="ctr.mainMode">
-          <i class="fa fa-times"></i>
-        </div>
-
-        <div class="check lay full" ng-click="ctr.add(attach)" ng-if="!ctr.mainMode">
-          <i class="fa fa-check"></i>
-        </div>
-        <div class="lay full removeFromPost" ng-click="ctr.removeFromPost(attach)" ng-if="!ctr.mainMode">
-          <i class="fa fa-times"></i>
-        </div>
+    <div class="image" ng-click="ctr.onAttachClick(attach)" ng-style="{'background-image':'url('+attach.src+')'}">
+    </div>
+    <div class="lower" ng-click="ctr.remove(attach)"></div>
+    <div class="actions">
+      <div class="check lay" ng-click="ctr.toggle(attach)">
+        <i class="fa fa-check"></i>
       </div>
     </div>
 
     <div class="info">
       <span tooltip-placement="left" tooltip="Видимый размер изображения">
-              {{attach.clientWidth}}x{{attach.clientHeight}}
+              {{attach.clientWidth}}x{{attach.clientHeight}} 
             </span>
       <span class="gray" ng-if="ctr.showRealImageSize(attach)" tooltip-placement="left" tooltip="Оригинальный резмер изображения">
               ({{attach.width}}x{{attach.height}})
             </span>
     </div>
   </div>
+
+  <div class="noResults" ng-bind="ctr.noAttachesText" ng-show="!attachments.length"></div>
 </div>

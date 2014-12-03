@@ -16,6 +16,117 @@
 .btn.btn-primary:hover {
   background-color: #678EB5;
 }
+.btn.btn-link {
+  height: 31px;
+  font-size: 12px;
+  color: #45688E;
+  text-decoration: none;
+}
+.btn.btn-link:hover {
+  color: #000;
+  cursor: pointer;
+}
+.form-control {
+  border-radius: 0px;
+  border: 1px solid #C3CBD4;
+  background: #FFF;
+  box-shadow: none!important;
+  height: 31px;
+  font-size: 12px;
+}
+select.form-control {
+  -webkit-appearance: none;
+  position: relative;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0);
+  height: 25px;
+  padding: 3px 19px 3px 7px;
+}
+.selectWrapper {
+  background: #fff;
+  position: relative;
+  overflow: auto;
+  display: inline-block;
+}
+.selectWrapper:after {
+  position: absolute;
+  right: 6px;
+  top: 3px;
+  content: "\f107";
+  font-family: FontAwesome;
+  z-index: 1;
+  color: #CCC;
+  font-size: 14px;
+}
+.modal {
+  background: rgba(0, 0, 0, 0.7);
+}
+.modal .modal-content {
+  border-radius: 0px;
+}
+.modal .modal-dialog {
+  margin: 15px auto;
+}
+.modal .modal-header {
+  border-bottom: 1px solid #E5E5E5;
+  color: #FFF;
+  background: #597BA5;
+  font-weight: bold;
+  padding: 17px 20px 18px;
+}
+.modal .modal-header h3 {
+  font-size: 12px;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+}
+.modal .modal-body {
+  padding: 20px;
+}
+.modal .nav-tabs > li > a:hover,
+.modal .uploadImage:hover {
+  background-color: #E1E7ED;
+  cursor: pointer;
+}
+.modal .nav-tabs > li.active > a {
+  background-color: #597DA3;
+  color: #FFF;
+}
+.modal .up-level-tabs .nav-tabs {
+  position: relative;
+  top: 1px;
+  padding: 8px 20px 8px;
+  background: #F7F7F7;
+  border-bottom: 1px solid #DAE1E8;
+  margin: -20px -20px 1px;
+}
+.modal .nav-tabs a,
+.modal .uploadImage {
+  margin-right: 5px;
+  line-height: 14px;
+  border: none!important;
+  padding: 4px 8px 7px;
+  max-width: 230px;
+  height: 22px;
+  overflow: hidden;
+  font-weight: bold;
+  color: #45688E;
+  font-size: 11px;
+  border-radius: 2px;
+  -webkit-font-smoothing: antialiased;
+}
+.modal .bodyWithTabs {
+  padding-top: 20px;
+}
+.modal .modal-footer {
+  text-align: center;
+  background: #FAFAFA;
+  background: rgba(250, 250, 250, 0.95);
+  border-top: 1px solid #EEE;
+  padding: 16px;
+  width: 558px;
+  bottom: 0px;
+  z-index: 20;
+}
 html,
 body {
   height: 100%;
@@ -25,6 +136,7 @@ body {
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
   background-color: #F0F2F5;
+  font-size: 12px;
 }
 body.loaded .window {
   transform: scale(1);
@@ -63,31 +175,114 @@ a:hover {
   visibility: hidden;
   transform: scale(0.9);
   transition: 0.2s;
-  width: 752px;
+  width: 960px;
   margin: 40px auto;
   padding-bottom: 300px;
+}
+.window h2 {
+  font-size: 17px;
+  margin: 45px 0 10px;
+}
+.window h3 {
+  margin: 20px 0 5px;
+  font-size: 12px;
 }
 .window header .sharePhrase {
   position: relative;
   top: 2px;
 }
+.window footer {
+  margin-top: 40px;
+}
+.window footer .controls-list {
+  display: inline-block;
+  margin-left: 10px;
+}
+.window .leftColumn {
+  float: left;
+  width: 580px;
+  background: #FFF;
+  box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
+  padding: 25px;
+}
+.window .rightColumn {
+  float: left;
+  width: 160px;
+  margin-left: 30px;
+  position: relative;
+  background: #FFF;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
+}
+.window .rightColumn h4 {
+  font-size: 12px;
+  margin-top: 0px;
+  margin-bottom: 10px;
+  color: #999;
+}
+.window .rightColumn .attachsButtons {
+  margin-top: 9px;
+}
+.window .rightColumn .attachsButtons div {
+  color: #2B587A;
+  transition: 0.2s;
+  margin-bottom: 7px;
+  opacity: 0.8;
+}
+.window .rightColumn .attachsButtons div:hover {
+  opacity: 1;
+  cursor: pointer;
+  color: #222;
+}
+.window .rightColumn .attachsButtons div .fa {
+  width: 22px;
+  top: 1px;
+  position: relative;
+}
+.window .rightColumn .attachsButtons div .fa-camera {
+  font-size: 16px;
+  left: 1px;
+}
+.window .rightColumn .attachsButtons div .fa-music {
+  font-size: 17px;
+  top: 2px;
+  left: 1px;
+}
+.window .rightColumn .attachsButtons div .fa-film {
+  font-size: 15px;
+  left: 2px;
+}
+.window .rightColumn .attachsButtons div .fa-bar-chart {
+  font-size: 16px;
+  left: 1px;
+  top: 2px;
+}
+.window .rightColumn .attachsButtons div .fa-file {
+  font-size: 16px;
+  left: 3px;
+}
+.window .rightColumn .attachsButtons div span {
+  font-size: 12px;
+}
+.window .rightColumn .lastAttachCount {
+  color: #aaa;
+  margin-top: 15px;
+  font-size: 10px;
+}
 .window .body {
   margin: 20px 0;
 }
-.window .body h2 {
-  font-size: 17px;
-  margin: 25px 0 10px;
-}
 .window .body .postArea {
-  width: 577px;
+  width: 100%;
   padding: 10px;
   border: 1px solid #DDD;
   background: #FFF;
-  height: 120px;
+  height: 133px;
   font-size: 12px;
   word-wrap: break-word;
   line-height: 18px;
   outline: none;
+  margin-bottom: 10px;
 }
 .window .body .separator {
   height: 1px solid #eee;
@@ -113,19 +308,6 @@ a:hover {
 .relative {
   position: relative;
 }
-.lastAttachCount {
-  position: absolute;
-  left: 100%;
-  top: 0;
-}
-.lastAttachCount strong {
-  font-size: 20px;
-  display: block;
-  margin: 10px 10px;
-}
-.lastAttachCount .tooltip {
-  width: 200px;
-}
 .attaches {
   margin: -5px;
 }
@@ -136,8 +318,8 @@ a:hover {
   margin: 5px;
   position: relative;
   transition: 0.2s;
-  box-shadow: 0px 0px 0px 1px #CCC;
   background: #000;
+  cursor: pointer;
 }
 .attaches .attach.processing .process {
   opacity: 1;
@@ -146,13 +328,13 @@ a:hover {
 .attaches .attach .process {
   opacity: 0;
   position: absolute;
-  font-size: 30px;
+  font-size: 21px;
   left: 0;
   right: 0;
   text-align: center;
   top: 0;
   bottom: 0;
-  line-height: 132px;
+  line-height: 106px;
   visibility: hidden;
   transition: 0.2s;
   z-index: 2;
@@ -165,56 +347,48 @@ a:hover {
   position: absolute;
   width: 100%;
   height: 100%;
+  z-index: 1;
 }
-.attaches .attach .image .actions {
-  opacity: 0;
-  visibility: hidden;
-  transition: 0.2s;
-}
-.attaches .attach .image .actions .lay {
+.attaches .attach .lower {
+  z-index: 2;
+  background-color: rgba(0, 0, 0, 0.7);
   position: absolute;
-  height: 100%;
-  top: 0;
-  width: 50%;
-  background-color: rgba(255, 255, 255, 0.9);
-  cursor: pointer;
-  transition: 0.2s;
-  text-align: center;
-  font-size: 20px;
-  color: #000;
-  line-height: 98px;
-}
-.attaches .attach .image .actions .lay.right {
-  right: 0px;
-  width: 52px;
-}
-.attaches .attach .image .actions .lay.left {
-  left: 0px;
-  width: 51px;
-}
-.attaches .attach .image .actions .lay.full {
-  width: 100%;
   left: 0;
   right: 0;
-}
-.attaches .attach .image .actions .lay.removeFromPost,
-.attaches .attach .image .actions .lay.check {
+  top: 0;
+  bottom: 0;
+  transition: 0.3s;
   visibility: hidden;
   opacity: 0;
 }
-.attaches .attach .image .actions .lay.check {
-  visibility: visible;
-  opacity: 1;
+.attaches .attach .actions {
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s;
+  background-color: rgba(0, 0, 0, 0.7);
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  z-index: 3;
 }
-.attaches .attach .image .actions .lay.showen {
-  visibility: visible;
+.attaches .attach .actions .lay {
+  color: #eee;
+  left: 0;
+  bottom: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  text-align: center;
+  line-height: 24px;
+  transition: 0.2s;
+  opacity: 0.5;
+  font-size: 15px;
+  cursor: pointer;
+}
+.attaches .attach .actions .lay:hover {
   opacity: 0.8;
-}
-.attaches .attach .image:hover .actions {
-  opacity: 0.8;
-}
-.attaches .attach .image:hover .actions .lay:hover {
-  opacity: 1;
 }
 .attaches .attach .info {
   position: absolute;
@@ -222,52 +396,34 @@ a:hover {
   right: 0px;
   color: #EEE;
   font-size: 10px;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   padding: 2px 5px;
   transition: 0.2s;
 }
 .attaches .attach .info .gray {
   color: #aaa;
 }
-.attaches .attach.selected {
-  box-shadow: 0px 0px 0px 3px #00A8FF;
+.attaches .attach.selected .lower {
+  opacity: 0.5;
+  visibility: visible;
 }
-.attaches .attach.selected .actions .lay.check {
-  opacity: 0;
-  visibility: hidden;
-}
-.attaches .attach.selected .actions .lay.removeFromPost {
+.attaches .attach.selected .actions {
   opacity: 1;
   visibility: visible;
+  background-color: transparent;
+}
+.attaches .attach.selected .actions .lay {
+  opacity: 1;
 }
 .attaches .attach.selected .info {
   opacity: 0;
   visibility: hidden;
 }
+.attaches .attach:hover .actions {
+  opacity: 1;
+  visibility: visible;
+}
 .pointer {
-  cursor: pointer;
-}
-.bg-panel {
-  background-color: #FFF;
-  border: 1px solid #F0F0F0;
-  padding: 10px;
-  border-radius: 2px;
-}
-.nav-tabs > li.active > a:hover {
-  border-color: #F0F0F0;
-  border-bottom-color: rgba(0, 0, 0, 0);
-}
-.nav-tabs > li.active > a {
-  border-color: #F0F0F0;
-  border-bottom-color: rgba(0, 0, 0, 0);
-}
-.up-level-tabs .nav-tabs {
-  position: relative;
-  top: 1px;
-  border-color: #F0F0F0;
-}
-.nav-tabs a {
-  color: #444;
   cursor: pointer;
 }
 .popover {
@@ -283,11 +439,17 @@ a:hover {
 .mt20 {
   margin-top: 20px;
 }
+.groupSelect {
+  font-size: 12px;
+}
 .groupSelect .select2-container .select2-choice {
   border: 1px solid #C3CBD4;
   border-radius: 0px;
   background: #FFF;
   box-shadow: none!important;
+  height: 33px;
+  line-height: 33px;
+  font-size: 12px;
 }
 .groupSelect .select2-container .select2-choice .select2-arrow {
   border: none;
@@ -297,6 +459,14 @@ a:hover {
 .groupSelect .select2-container .select2-choice .select2-arrow b:after {
   content: "\f107";
 }
+.groupSelect .select2-results {
+  padding: 0 0 0 0px;
+  margin: 5px 0px 0px 0;
+}
+.groupSelect .select2-results .select2-highlighted {
+  background: #2B587A;
+  color: #FFF;
+}
 .groupSelect .select2-drop-active {
   border: 1px solid #C3CBD4;
   border-radius: 0px;
@@ -304,6 +474,10 @@ a:hover {
 }
 .groupSelect .select2 {
   min-width: 300px;
+}
+.groupSelect .select2 .select2-search {
+  padding-left: 9px;
+  padding-right: 9px;
 }
 .groupSelect .ui-select-choices-row {
   position: relative;
@@ -318,13 +492,171 @@ a:hover {
   background-repeat: no-repeat;
   position: absolute;
   top: 50%;
-  left: 6px;
+  left: 10px;
   margin-top: -13px;
 }
 .groupSelect .name {
   display: inline-block;
-  margin-left: 32px;
+  margin-left: 38px;
   margin-top: 0px;
+  font-size: 12px;
+}
+.uploadImage {
+  float: right;
+  position: relative;
+  top: 0px;
+  margin: 0!important;
+}
+.dateArea {
+  margin-top: 40px;
+}
+.dateArea .addTimer {
+  color: #2B587A;
+  cursor: pointer;
+}
+.dateArea .calendar,
+.dateArea .in,
+.dateArea .timec {
+  display: inline-block;
+}
+.dateArea .in {
+  position: relative;
+  font-size: 12px;
+}
+.dateArea .timec {
+  position: relative;
+  top: 8px;
+}
+.timelineArea {
+  margin-top: 20px;
+}
+.controls-list label {
+  display: block;
+  position: relative;
+  cursor: pointer;
+}
+.controls-list input {
+  width: 1px;
+  height: 1px;
+  visibility: hidden;
+  opacity: 0;
+}
+.controls-list input:checked + span:after {
+  opacity: 1;
+}
+.controls-list span {
+  display: inline-block;
+  margin-left: 20px;
+  font-weight: normal;
+  font-size: 12px;
+}
+.controls-list span:before {
+  width: 12px;
+  height: 12px;
+  box-shadow: 0px 0px 1px #000;
+  left: 5px;
+  top: 5px;
+  content: '';
+  position: absolute;
+  display: block;
+  background-color: #fff;
+}
+.controls-list span:after {
+  width: 8px;
+  height: 8px;
+  left: 7px;
+  top: 7px;
+  background: #358CE0;
+  opacity: 0;
+  transition: 0.2s;
+  content: '';
+  position: absolute;
+  display: block;
+}
+.controls-list.radioList span:after,
+.controls-list.radioList span:before {
+  border-radius: 50%;
+}
+.noResults {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+}
+.postsTimeline {
+  position: relative;
+}
+.postsTimeline .refresh {
+  position: absolute;
+  color: #2B587A;
+  font-size: 25px;
+  right: 12px;
+  top: 0;
+  transition: 0.2s;
+  transform: scale(0.9) translateY(3px);
+  opacity: 0;
+  visibility: hidden;
+}
+.postsTimeline .refresh.active {
+  transform: scale(1) translateY(0px);
+  opacity: 0.5;
+  visibility: visible;
+}
+.photobankSearch .fa-search {
+  position: absolute;
+  top: 10px;
+  z-index: 4;
+  color: #AAA;
+  left: 10px;
+}
+.photobankSearch .searchField .search {
+  width: 100%!important;
+  padding-left: 26px;
+  display: block;
+}
+.photobankSearch .searchField .info {
+  position: absolute;
+  padding-right: 0px;
+  right: 9px;
+  z-index: 22;
+  top: 0px;
+}
+.timeSelect .sep {
+  position: relative;
+  top: -8px;
+  display: inline-block;
+  margin: 0 -3px;
+}
+.dateButton {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+}
+.dateButton .hidden-input {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  height: 0;
+  display: none;
+}
+.dateButton .form-control {
+  height: 25px;
+  padding: 3px 7px;
+  width: 156px;
+}
+.dateButton .fa {
+  position: absolute;
+  right: 6px;
+  top: 5px;
+  color: #2B587A;
+}
+.dateButton .dropdown-menu {
+  top: 28px!important;
+  left: 0px!important;
+  width: 210px!important;
+  overflow: hidden;
+  border-radius: 0px;
+  background: #FFF;
+  box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
 }
 .jcropArea .image {
   padding: 20px;
@@ -403,10 +735,9 @@ a:hover {
 }
 .calendar .btn.btn-default {
   padding: 0px 3px;
-  font-size: 14px;
+  font-size: 11px;
   outline: none;
   border: none;
-  line-height: 16px;
   color: #000;
   border-radius: 0px;
 }
@@ -426,11 +757,10 @@ a:hover {
   outline: none!important;
 }
 .calendar table tr:first-child th {
-  background-color: #e7e7e7;
+  background-color: transparent;
   overflow: hidden;
-  font-size: 16px;
-  line-height: 43px;
-  height: 43px;
+  line-height: 32px;
+  height: 32px;
   text-align: center;
   padding: 0;
   min-width: 34px;
@@ -444,9 +774,10 @@ a:hover {
   width: 184px;
 }
 .calendar table tr:first-child th:nth-child(2) .btn {
-  font-size: 14px;
-  background: #e7e7e7!important;
+  font-size: 12px;
+  background: #FFF!important;
   cursor: default!important;
+  box-shadow: none!important;
 }
 .calendar table tr:first-child th:nth-child(1) i:before {
   content: "\f104" !important;
@@ -469,9 +800,9 @@ a:hover {
   width: 100%;
 }
 .calendar table tr:first-child th .btn i {
-  padding: 0 10px;
+  padding: 0 0px;
   font-family: FontAwesome!important;
-  font-size: 32px;
+  font-size: 22px;
   color: #707070;
 }
 .calendar table tr:last-child th {
@@ -482,12 +813,11 @@ a:hover {
   padding: 4px;
 }
 .calendar table td {
-  border: 1px solid #E3E3E3;
+  border: 1px solid #F7F7F7;
   background-color: #FFF;
   text-align: center;
-  height: 32px;
+  height: 27px;
   width: 32px;
-  font-size: 14px;
   padding: 0;
 }
 .calendar table td .btn {

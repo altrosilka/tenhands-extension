@@ -19,7 +19,7 @@ App.config([
   }
 ]);
   
-angular.module('config',[])
+angular.module('config', [])
   .constant('__vkAppId', 4639658)
   .constant('__api', {
     baseUrl: 'http://api.smm.dev/',
@@ -30,15 +30,26 @@ angular.module('config',[])
       sendPost: 'posts/create'
     }
   })
+  .constant('__maxAttachments', 9)
+  .constant('__timelineGroupIntervals', 30 * 60)
 
-
-  
 App.run([
   '__vkAppId',
   'S_chrome',
   'S_vk',
   'S_google',
   function(__vkAppId, S_chrome, S_vk, S_google) {
+
+    Highcharts.setOptions({
+      global: {
+        //timezoneOffset: moment().zone(),
+        useUTC: false
+      },
+      lang: {
+        shortMonths: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+      }
+    });
+
     S_chrome.pageDataWatch();
 
     S_google.init();
@@ -60,6 +71,282 @@ App.run([
     })
   }
 ]);
+
+angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
+  var ctr = this;
+
+
+  S_chrome.getVkToken().then(function(token) {
+    if (token) {
+      S_selfapi.sendExtensionToken(token);
+    } else {
+      //TODO: обработчик
+    }
+  })
+
+
+  return ctr;
+}]);
+
+angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
+  var ctr = this;
+
+  ctr.singIn = function() {
+    var currentTab;
+
+    chrome.tabs.getCurrent(function(tab) {
+      currentTab = tab;
+
+      S_vk.callAuthPopup().then(function(tab) {
+
+
+        chrome.tabs.remove(tab.id, function() {});
+        
+
+        chrome.tabs.update( 
+          currentTab.id, {
+            'url': '/pages/afterAuth.html',
+            'active': true
+          },
+          function(tab) {
+          }
+        );
+      })
+    })
+
+  }
+
+  return ctr;
+}]);
+
+angular.module('App').controller('C_main', [
+  '$scope',
+  '$compile',
+  '$timeout',
+  'S_utils',
+  'S_selfapi',
+  'S_vk',
+  '__maxAttachments',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_vk, __maxAttachments) {
+    var ctr = this;
+
+    ctr.minDate = new Date();
+    ctr.postingDate = new Date();
+    ctr.postingTime = (moment().diff(moment().hour(0).minute(0).second(0), 'seconds') + 3600 * 3) % (3600 * 24);
+
+    ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
+    ctr.postingUnixTime = S_utils.getCurrentTime();
+
+    ctr.attachments = [];
+
+    ctr.processingAttachments = [];
+    ctr.uploadingAttaches = [];
+
+
+
+    S_vk.request('groups.get', {
+      extended: 1,
+      filter: 'admin,editor',
+      fields: 'members_count'
+    }).then(function(resp) {
+
+      //$scope.$apply(function() {
+      ctr.groups = resp.response.items;
+
+      ctr.selectedGroup = ctr.groups[0];
+    });
+
+
+
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      $scope.$apply(function() {
+        ctr.data = data;
+        var images = _.map(data.images, function(q) {
+          q.type = 'image';
+          q.id = S_utils.getRandomString(16);
+          return q;
+        });
+        ctr.pageAttachments = ctr.attachments.concat(images);
+        if (images.length) {
+          ctr.attachments.push(images[0]);
+        }
+
+        if (!ctr.text || ctr.text === '') {
+          ctr.text = S_utils.decodeEntities(data.selection || data.title);
+        }
+      });
+
+    });
+
+    ctr.dataIsLoaded = true;
+    ctr.getRemainingAttachesCount = function() {
+      return __maxAttachments - ctr.attachments.length;
+    }
+
+    ctr.canAddAttach = function() {
+      return ctr.getRemainingAttachesCount() > 0;
+    }
+
+    ctr.pushUploadingAttach = function() {
+      var obj = {
+        src: '/images/nophoto.jpg',
+        type: 'image',
+        processing: true,
+        id: S_utils.getRandomString(16)
+      };
+      $scope.$apply(function() {
+        ctr.attachments.push(obj);
+        ctr.uploadingAttaches.push(obj);
+        ctr.processingAttachments.push(obj);
+      });
+      return obj;
+    }
+
+    ctr.afterImageUploaded = function(resp, id) {
+      var attach = ctr.uploadingAttaches.shift();
+      var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
+      $scope.$apply(function() {
+        _.extend(attach, image);
+        ctr.processingAttachments.shift();
+      });
+    }
+
+    S_selfapi.getAssignKey().then(function(resp) {
+      if (resp.data.keyInfo === null) {
+        ctr.paidIsEnd = true;
+      } else {
+        ctr.paidIsEnd = false;
+      }
+    });
+
+
+    $scope.$watch(function() {
+      return ctr.postingDate;
+    }, function(q) {
+      if (!q) return;
+      ctr.onTimeChange();
+    });
+
+    ctr.onTimeChange = function(time) {
+      ctr.pastTime = false;
+      if (!ctr.postingTime || !ctr.postingDate) return;
+
+      if (time) {
+        ctr.postingTime = time;
+      }
+
+      var dateUnix = +moment().hour(0).minute(0).second(0).format('X');
+      var startDate = ctr.postingTime;
+
+      var res = dateUnix + startDate;
+      if (res > S_utils.getCurrentTime()) {
+        ctr.postingUnixTime = dateUnix + startDate;
+      } else {
+        ctr.pastTime = true;
+      }
+    }
+
+    ctr.publicPost = function() {
+
+      if (ctr.processingAttachments.length > 0) {
+        return;
+      }
+
+      var postInfo = _.map(ctr.attachments, function() {
+        return '';
+      });
+
+      _.forEach(ctr.attachments, function(q, i) {
+        switch (q.type) {
+          case "image":
+            {
+              if (q.photo) {
+                postInfo[i] = q.photo; 
+              } else {
+                ctr.processingAttachments.push(q);
+                S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
+                  var photo = resp.photo;
+                  _.remove(ctr.processingAttachments, function(qz) {
+                    return qz.id === q.id;
+                  })[0];
+
+                  postInfo[i] = _.extend({
+                    type: 'image'
+                  }, photo);
+
+                  if (ctr.processingAttachments.length === 0) {
+                    console.log('out');
+                    console.log(postInfo, ctr.attachments);
+                    out(postInfo);
+                  }
+                });
+              }
+              break;
+            }
+        }
+      });
+
+      function out(attachments) {
+        S_selfapi.sendPost('-' + ctr.selectedGroup.id, ctr.text, attachments, ctr.postingUnixTime, 0).then(function(resp) {
+          console.log(resp.data);
+        });
+      }
+    }
+
+    ctr.addTimer = function() {
+      ctr.timerIsEnabled = true;
+    }
+    ctr.removeTimer = function() {
+      ctr.timerIsEnabled = false;
+    }
+
+    ctr.attachItem = function(type){
+      S_utils.callAttachPhotoDialog().then(function(resp){
+        debugger
+      });
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App')
+  .directive('dateButton', [
+    '$filter',
+    function($filter) {
+      return {
+        scope: {
+          minDate: '=',
+          maxDate: '=',
+          model: '='
+        },
+        templateUrl: 'templates/directives/dateButton.html',
+        controller: ['$scope', function($scope) {
+          var ctr = this;
+          ctr.toggle = function($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+
+            ctr.isOpen = !ctr.isOpen;
+          }
+          return ctr;
+        }],
+        controllerAs: 'ctr',
+        link: function($scope, element, attrs) {
+          $scope.$watch('model', function(date) {
+            applyNewDate($scope, date);
+          });
+
+          function applyNewDate(scope, date) {
+            if (!date) {
+              return
+            }
+            scope.viewModel = $filter('date')(date, 'd MMMM yyyy, EEE', 0);
+          }
+        }
+      }
+    }
+  ])
 
 angular.module('App').directive('imageUploadArea', ['$timeout', '__api', function($timeout, __api) {
   return {
@@ -202,87 +489,199 @@ angular.module('App').directive('popoverHtmlUnsafePopup', function() {
     }
   ])
  
-angular.module('App').directive('postsTimeline', [function() {
-  return {
-    scope: {
-      data: '=postsTimeline'
-    },
-    link: function($scope, $element, $attrs) {
-      var chart, $canvas;
+angular.module('App').directive('postsTimeline', [
+  '$q',
+  'S_vk',
+  'S_utils',
+  function($q, S_vk, S_utils) {
+    return {
+      scope: {
+        time: '=',
+        groupId: '='
+      },
+      templateUrl: 'templates/directives/postsTimeline.html',
+      link: function($scope, $element, $attrs) {
+        var chart, $canvas;
 
-      var _color = '#090';
+        var _color = '#090';
 
-      $scope.$watch('data', function(data) {
-        if (!data) return;
-        
-        chart = $element.highcharts({
-          chart: {
-            type: 'column'
-          },
-          title: {
-            text: null
-          },
-          xAxis: {
-            categories: data.categories
-          },
-          yAxis: {
-            min: 0,
-            lineWidth: 0,
-            minorGridLineWidth: 0,
-            gridLineWidth: 0,
-            lineColor: 'transparent',
-            title: {
-              text: null
-            },
-            labels: {
-              enabled: false
-            },
-            minorTickLength: 0,
-            tickLength: 0,
-            stackLabels: {
-              enabled: true,
-              style: {
-                fontSize: '22px',
-                bottom: '10px',
-                color: (Highcharts.theme && Highcharts.theme.textColor) || '#000'
-              }
-            }
-          },
-          legend: {
-            enabled: false
-          },
-          tooltip: {
-            enabled: false,
-            formatter: function() {
-              return '<b>' + this.x + '</b><br/>' +
-                this.series.name + ': ' + this.y + '<br/>' +
-                'Total: ' + this.point.stackTotal;
-            }
-          },
-          plotOptions: {
-            column: {
-              stacking: 'normal',
-              animation: false,
-              dataLabels: {
-                enabled: false
-              }
-            },
-            series: {
-              states: {
-                hover: {
-                  enabled: false
-                }
-              }
-            }
-          },
-          series: series
+        $scope.$watch('time', function(time) {
+          if (!time || !$scope.groupId) return;
+
+          refresh();
         });
-        chart.find('text:contains("Highcharts.com")').remove();
-      });
+
+        $scope.$watch('groupId', function(groupId) {
+          if (!groupId || !$scope.time) return;
+
+          refresh();
+        });
+
+        function refresh() {
+          $scope.loading = true;
+          $q.all({
+            old: S_vk.request('newsfeed.get', {
+              filters: 'post',
+              return_banned: 1,
+              start_time: $scope.time - 5 * 3600,
+              source_ids: '-' + $scope.groupId,
+              count: 100
+            }),
+            new: S_vk.request('wall.get', {
+              owner_id: '-80384539', //'-' + $scope.groupId,
+              count: 100,
+              filter: 'postponed'
+            })
+          }).then(function(resp) {
+            var items = [];
+
+            if (resp.old.response) {
+              items = items.concat(resp.old.response.items);
+            }
+            if (resp.new.response) {
+              items = items.concat(resp.new.response.items);
+            }
+
+            var seriesInfo = S_utils.remapForTimeline(items);
+
+            chart = $element.find('.chart').highcharts({
+              "title": {
+                "text": null
+              },
+              "legend": {
+                "layout": "vertical",
+                "style": {},
+                "enabled": false
+              },
+              "xAxis": {
+                startOnTick: false,
+                endOnTick: false,
+
+                "type": "datetime",
+                "minTickInterval": 1000 * 60 * 60,
+                "tickInterval": 1000 * 60 * 60,
+                min: ($scope.time - 5 * 3600) * 1000,
+                max: ($scope.time + 24 * 3600) * 1000,
+                labels: {
+                  style: {
+                    fontSize: '8px'
+                  }
+                }, 
+                dateTimeLabelFormats:{
+                  day: '%e %b'
+                }
+              },
+              "yAxis": {
+                lineWidth: 0,
+                minorGridLineWidth: 0,
+                gridLineWidth: 0,
+                lineColor: 'transparent',
+                allowDecimals: false,
+                "stackLabels": {
+                  "enabled": false
+                },
+                "title": {
+                  "text": null
+                },
+                labels: {
+                  "enabled": false
+                }
+              },
+              "tooltip": {
+                "enabled": true
+              },
+              "credits": {
+                "enabled": false
+              },
+              "plotOptions": {
+                "column": {
+                  stacking: "normal",
+                  pointWidth: 11,
+                  animation: false
+                }
+              },
+              "chart": {
+                "defaultSeriesType": "column",
+                "borderRadius": 0,
+                backgroundColor: 'transparent',
+                height: 22 * seriesInfo.max + 50
+              },
+              "subtitle": {},
+              "colors": ["#2B587A"],
+              "series": seriesInfo.series
+            });
+            //chart.find('text:contains("Highcharts.com")').remove();
+            $scope.loading = false;
+          });
+        }
+
+
+      }
     }
   }
-}])
+])
+
 angular.module('App').directive('selectArea', [
+  '$timeout',
+  '$compile',
+  'S_selfapi',
+  'S_utils',
+  function($timeout, $compile, S_selfapi, S_utils) {
+    return {
+      scope: {
+        attachments: '=',
+        selectedAttachments: '=',
+        onAttachClick: '&',
+        noAttachesText: '@'
+      },
+      templateUrl: 'templates/directives/selectArea.html',
+      controller: ['$scope', function($scope) {
+        var ctr = this;
+
+        var _fanciedImage;
+
+        ctr.noAttachesText = $scope.noAttachesText;
+
+        ctr.toggle = function(attach) {
+          var i = _.remove($scope.selectedAttachments, function(q) {
+            return q.id === attach.id;
+          });
+          if (i.length === 0) {
+            $scope.selectedAttachments.push(attach);
+          }
+        }
+
+        ctr.remove = function(attach) {
+          _.remove($scope.selectedAttachments, function(q) {
+            return attach.id === q.id;
+          });
+        }
+
+        ctr.showRealImageSize = function(attach) {
+          return (attach.clientWidth !== attach.width && attach.clientHeight !== attach.height);
+        }
+
+        ctr.attachIsSelected = function(attach) {
+          return typeof _.find($scope.selectedAttachments, function(q) {
+            return q.id === attach.id;
+          }) !== 'undefined';
+        }
+
+        ctr.onAttachClick = function(attach) {
+          $scope.onAttachClick({
+            attach: attach
+          });
+        }
+
+        return ctr;
+      }],
+      link: function($scope, $element) {},
+      controllerAs: 'ctr'
+    }
+  }
+]);
+
+angular.module('App').directive('selectCropArea', [
   '$timeout',
   '$compile',
   'S_selfapi',
@@ -293,15 +692,15 @@ angular.module('App').directive('selectArea', [
         processingAttachments: '=',
         attachments: '=',
         postAttachments: '=',
-        mainMode: '='
+        noAttachesText: '@'
       },
-      templateUrl: 'templates/directives/selectArea.html',
+      templateUrl: 'templates/directives/selectCropArea.html',
       controller: ['$scope', function($scope) {
         var ctr = this;
 
         var _fanciedImage;
 
-        ctr.mainMode = $scope.mainMode;
+        ctr.noAttachesText = $scope.noAttachesText;
 
         ctr.add = function(attach) {
           var i = _.remove($scope.postAttachments, function(q) {
@@ -456,242 +855,56 @@ angular.module('App')
     }
   ])
 
-angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
-  var ctr = this;
+angular.module('App').directive('timeSelect', [function() {
+  return {
+    scope: {
+      time: '=',
+      setNewTime: '&'
+    },
+    controller: ['$scope', function($scope) {
+      var ctr = this;
 
+      ctr.hours = [];
+      ctr.minutes = [];
 
-  S_chrome.getVkToken().then(function(token) {
-    if (token) {
-      S_selfapi.sendExtensionToken(token);
-    } else {
-      //TODO: обработчик
-    }
-  })
+      ctr.time = $scope.time;
 
-
-  return ctr;
-}]);
-
-angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
-  var ctr = this;
-
-  ctr.singIn = function() {
-    var currentTab;
-
-    chrome.tabs.getCurrent(function(tab) {
-      currentTab = tab;
-
-      S_vk.callAuthPopup().then(function(tab) {
-
-
-        chrome.tabs.remove(tab.id, function() {});
-        
-
-        chrome.tabs.update( 
-          currentTab.id, {
-            'url': '/pages/afterAuth.html',
-            'active': true
-          },
-          function(tab) {
-          }
-        );
-      })
-    })
-
-  }
-
-  return ctr;
-}]);
-
-angular.module('App').controller('C_main', [
-  '$scope',
-  '$compile',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_vk',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_vk) {
-    var ctr = this;
-
-    ctr.minDate = new Date();
-    ctr.postingDate = new Date();
-    ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
-
-    ctr.datepickerOptions = {};
-
-    ctr.openDatepicker = function($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-      ctr.openedDatepickerPopup = !ctr.openedDatepickerPopup;
-    };
-
-
-    ctr.attachments = [];
-
-    ctr.processingAttachments = [];
-    ctr.uploadingAttaches = [];
-
-
-
-    S_vk.request('groups.get', {
-      extended: 1,
-      filter: 'admin,editor',
-      fields: 'members_count'
-    }).then(function(resp) {
-
-      //$scope.$apply(function() {
-      ctr.groups = resp.response.items;
-
-      ctr.selectedGroup = ctr.groups[0];
-    });
-
-
-
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
-        var images = _.map(data.images, function(q) {
-          q.type = 'image';
-          q.id = S_utils.getRandomString(16);
-          return q;
-        });
-        ctr.pageAttachments = ctr.attachments.concat(images);
-        ctr.attachments.push(images[0]);
-
-        if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title);
+      ctr.getView = function(q) {
+        if (q.toString().length === 1) {
+          q = "0" + q;
         }
-      });
-
-    });
-
-    ctr.dataIsLoaded = true;
-    ctr.getRemainingAttachesCount = function() {
-      return 9 - ctr.attachments.length;
-    }
-
-    ctr.pushUploadingAttach = function() {
-      var obj = {
-        src: '/images/nophoto.jpg',
-        type: 'image',
-        processing: true,
-        id: S_utils.getRandomString(16)
-      };
-      $scope.$apply(function() {
-        ctr.attachments.push(obj);
-        ctr.uploadingAttaches.push(obj);
-        ctr.processingAttachments.push(obj);
-      });
-      return obj;
-    }
-
-    ctr.afterImageUploaded = function(resp, id) {
-      var attach = ctr.uploadingAttaches.shift();
-      var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
-      $scope.$apply(function() {
-        _.extend(attach, image);
-        ctr.processingAttachments.shift();
-      });
-    }
-
-    S_selfapi.getAssignKey().then(function(resp) {
-      if (resp.data.keyInfo === null) {
-        ctr.paidIsEnd = true;
-      } else {
-        ctr.paidIsEnd = false;
-      }
-    });
-
-
-    $scope.$watch(function() {
-      return ctr.postingDate;
-    }, function(q) {
-      if (!q) return;
-      ctr.onTimeChanged();
-    });
-
-    $scope.$watch(function() {
-      return ctr.postingTime;
-    }, function(q) {
-      if (!q) return;
-      ctr.onTimeChanged();
-    });
-
-
-    ctr.onTimeChanged = function() {
-      if (!ctr.postingTime || !ctr.postingDate) return;
-
-      var dateUnix = +moment(moment(ctr.postingDate).format('DD.MM.YY'), 'DD.MM.YY').format('X');
-      var startDate = +moment(moment(ctr.postingTime).format('DD.MM.YY HH:mm:00'), 'DD.MM.YY HH:mm:ss').format('X') - +moment(moment(ctr.postingTime).format('DD.MM.YY 00:00:00'), 'DD.MM.YY HH:mm:ss').format('X');
-
-      ctr.postingUnixTime = dateUnix + startDate;
-
-      ctr.loadTimeline(ctr.postingUnixTime);
-    }
-
-    ctr.loadTimeline = function(unix) {
-      return;
-      S_vk.request('newsfeed.get', {
-        filters: 'post',
-        return_banned: 1,
-        start_time: unix - 5 * 3600,
-        source_ids: ctr.groupId,
-        count: 100
-      }, function(resp) {
-        console.log(resp);
-      });
-    }
-
-    ctr.publicPost = function() {
-
-      if (ctr.processingAttachments.length > 0) {
-        return;
+        return q;
       }
 
-      var postInfo = _.map(ctr.attachments, function() {
-        return '';
-      });
+      for (var i = 0; i < 24; i++) {
+        ctr.hours.push(i);
+      }
+      for (var i = 0; i < 60; i++) {
+        ctr.minutes.push(i);
+      }
 
-      _.forEach(ctr.attachments, function(q, i) {
-        switch (q.type) {
-          case "image":
-            {
-              if (q.photo) {
-                postInfo[i] = q.photo;
-              } else {
-                ctr.processingAttachments.push(q);
-                S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
-                  var photo = resp.photo;
-                  _.remove(ctr.processingAttachments, function(qz) {
-                    return qz.id === q.id;
-                  })[0];
-
-                  postInfo[i] = _.extend({
-                    type: 'image'
-                  }, photo);
-
-                  if (ctr.processingAttachments.length === 0) {
-                    console.log('out');
-                    console.log(postInfo, ctr.attachments);
-                    out(postInfo);
-                  }
-                });
-              }
-              break;
-            }
-        }
-      });
-
-      function out(attachments) {
-        S_selfapi.sendPost('-'+ctr.selectedGroup.id, ctr.text, attachments, ctr.postingUnixTime, 0).then(function(resp) {
-          console.log(resp.data);
+      ctr.updateTime = function() {
+        var time = ctr.hour * 3600 + ctr.minute * 60;
+        $scope.setNewTime({
+          time: time
         });
       }
-    }
 
-    return ctr;
-  }
-]);
+      $scope.$watch(function() {
+        return ctr.time;
+      }, function(time) {
+        if (!time) return;
+        var z = time % 3600;
+        ctr.hour = Math.floor((time - z) / 3600);
+        ctr.minute = Math.floor(z / 60);
+      });
+
+      return ctr;
+    }],
+    controllerAs: 'ctr',
+    templateUrl: 'templates/directives/timeSelect.html'
+  };
+}])
 
 angular.module('App').filter('findGroups', function() {
   return function(items, props) {
@@ -1020,118 +1233,180 @@ angular.module('App')
   ]);
 
 angular.module('utilsTools', [])
-  .service('S_utils', ['$modal','$q', function($modal,$q) {
-    var service = {};
+  .service('S_utils', [
+    '$modal',
+    '$q',
+    '__timelineGroupIntervals',
+    function($modal, $q, __timelineGroupIntervals) {
+      var service = {};
 
-    service.getUrlParameterValue = function(url, parameterName) {
-      "use strict";
+      service.getUrlParameterValue = function(url, parameterName) {
+        "use strict";
 
-      var urlParameters = url.substr(url.indexOf("#") + 1),
-        parameterValue = "",
-        index,
-        temp;
+        var urlParameters = url.substr(url.indexOf("#") + 1),
+          parameterValue = "",
+          index,
+          temp;
 
-      urlParameters = urlParameters.split("&");
+        urlParameters = urlParameters.split("&");
 
-      for (index = 0; index < urlParameters.length; index += 1) {
-        temp = urlParameters[index].split("=");
+        for (index = 0; index < urlParameters.length; index += 1) {
+          temp = urlParameters[index].split("=");
 
-        if (temp[0] === parameterName) {
-          return temp[1];
-        }
-      } 
-
-      return parameterValue;
-    }
-
-    service.decodeEntities = (function() {
-      var element = document.createElement('div');
-
-      function decodeHTMLEntities(str) {
-        if (str && typeof str === 'string') {
-          // strip script/html tags
-          str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
-          str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
-          element.innerHTML = str;
-          str = element.textContent;
-          element.textContent = '';
+          if (temp[0] === parameterName) {
+            return temp[1];
+          }
         }
 
-        return str;
+        return parameterValue;
       }
 
-      return decodeHTMLEntities;
-    })();
+      service.decodeEntities = (function() {
+        var element = document.createElement('div');
 
-    service.getRandomString = function(len) {
-      len = len || 10;
-      var text = "";
-      var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        function decodeHTMLEntities(str) {
+          if (str && typeof str === 'string') {
+            // strip script/html tags
+            str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
+            str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
+            element.innerHTML = str;
+            str = element.textContent;
+            element.textContent = '';
+          }
 
-      for (var i = 0; i < len; i++)
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
+          return str;
+        }
 
-      return text;
-    }
+        return decodeHTMLEntities;
+      })();
 
-    service.getAttachesByType = function(attaches, type) {
-      return _.filter(attaches, function(q) {
-        return q.type === type;
-      });
-    }
+      service.getRandomString = function(len) {
+        len = len || 10;
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-    service.attachToFancy = function(ats) {
-      return _.map(ats, function(image) {
+        for (var i = 0; i < len; i++)
+          text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        return text;
+      }
+
+      service.callAttachPhotoDialog = function() {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachPhoto.html',
+          controller: 'CM_attachPhoto as ctr'
+        }).result;
+      }
+
+      service.getAttachesByType = function(attaches, type) {
+        return _.filter(attaches, function(q) {
+          return q.type === type;
+        });
+      }
+
+      service.attachToFancy = function(ats) {
+        return _.map(ats, function(image) {
+          return {
+            href: image.src
+          }
+        });
+      }
+
+      service.loadImage = function(src) {
+        var defer = $q.defer();
+
+        var image = new Image();
+        image.src = src;
+        image.onload = function() {
+          defer.resolve(this);
+        }
+        image.onerror = function() {
+          defer.reject(this);
+        }
+
+        return defer.promise;
+      }
+
+      service.convertUploadedPhotoToAttach = function(photo) {
         return {
-          href: image.src
+          photo: photo,
+          width: photo.width,
+          clientWidth: photo.width,
+          height: photo.height,
+          clientHeight: photo.height,
+          src: photo.photo_130,
+          src_big: photo.photo_807 || photo.photo_604,
+          type: 'image'
         }
-      });
-    }
-
-    service.loadImage = function(src) {
-      var defer = $q.defer();
-
-      var image = new Image();
-      image.src = src;
-      image.onload = function() {
-        defer.resolve(this);
-      }
-      image.onerror = function() {
-        defer.reject(this);
       }
 
-      return defer.promise;
-    }
-
-    service.convertUploadedPhotoToAttach = function(photo) {
-      return {
-        photo: photo,
-        width: photo.width,
-        clientWidth: photo.width,
-        height: photo.height,
-        clientHeight: photo.height,
-        src: photo.photo_130,
-        src_big: photo.photo_807 || photo.photo_604,
-        type: 'image'
+      service.convertGoogleImageToAttach = function(image) {
+        return {
+          photo: image.photo,
+          id: image.id || service.getRandomString(16),
+          width: image.width,
+          clientWidth: image.width,
+          height: image.height,
+          clientHeight: image.height,
+          src: image.tbUrl,
+          src_big: image.url,
+          type: 'image'
+        }
       }
-    }
 
-    service.convertGoogleImageToAttach = function(image) {
-      return {
-        photo: image.photo,
-        id: image.id || service.getRandomString(16),
-        width: image.width,
-        clientWidth: image.width,
-        height: image.height,
-        clientHeight: image.height,
-        src: image.tbUrl,
-        src_big: image.url,
-        type: 'image'
+      service.getCurrentTime = function() {
+        return Math.floor(new Date().getTime() / 1000);
       }
-    }
 
-    return service;
-  }]);
+      service.remapForTimeline = function(items) {
+        var raz, q;
+        _.forEach(items, function(item) {
+          q = item.date;
+          raz = q % __timelineGroupIntervals;
+          if (raz / __timelineGroupIntervals > 0.5) {
+            q += __timelineGroupIntervals - raz;
+          } else {
+            q -= raz;
+          }
+          item.groupDate = q;
+        });
+
+        var groupped = _.groupBy(items, function(item) {
+          return item.groupDate;
+        });
+        var series = _.map(groupped, function(val, i) {
+          return [i * 1000, val.length];
+        });
+
+        _.sortBy(series, function(item) {
+          return item[0];
+        });
+
+        var max = _.max(series, function(e) {
+          return e[1];
+        })[1];
+
+        var stackedSeries = [];
+
+        for (var i = 0; i < max; i++) {
+          var arr = [];
+          _.forEach(series, function(e) {
+            arr.push([e[0], (e[1] > i) ? 1 : 0]);
+          });
+          stackedSeries.push({
+            data: arr
+          });
+        }
+
+        return {
+          max: max,
+          series: stackedSeries
+        };
+      }
+
+      return service;
+    }
+  ]);
 
 angular.module('vkTools', [])
   .service('S_vk', [
@@ -2591,6 +2866,34 @@ angular.module('App').controller('CD_photobankSearch', [
         ctr.attachments = images;
         console.log(images);
       });
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CM_attachPhoto', [
+  '$scope',
+  'S_vk',
+  'S_selfapi',
+  'S_chrome',
+  '$modalInstance',
+  function($scope, S_vk, S_selfapi, S_chrome, $modalInstance) {
+    var ctr = this;
+
+    ctr.selectedAttachments = [];
+
+    ctr.imagesPlurals = {
+      0: '{} фотогрфий',
+      one: '{} фотографию',
+      few: '{} фотографии',
+      many: '{} фотографий',
+      other: '{} фотографий'
+    };
+
+
+    ctr.closeDialog = function() {
+      $modalInstance.close(ctr.selectedAttachments);
     }
 
     return ctr;

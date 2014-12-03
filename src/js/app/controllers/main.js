@@ -5,21 +5,16 @@ angular.module('App').controller('C_main', [
   'S_utils',
   'S_selfapi',
   'S_vk',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_vk) {
+  '__maxAttachments',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_vk, __maxAttachments) {
     var ctr = this;
 
     ctr.minDate = new Date();
     ctr.postingDate = new Date();
+    ctr.postingTime = (moment().diff(moment().hour(0).minute(0).second(0), 'seconds') + 3600 * 3) % (3600 * 24);
+
     ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
-
-    ctr.datepickerOptions = {};
-
-    ctr.openDatepicker = function($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-      ctr.openedDatepickerPopup = !ctr.openedDatepickerPopup;
-    };
-
+    ctr.postingUnixTime = S_utils.getCurrentTime();
 
     ctr.attachments = [];
 
@@ -51,7 +46,9 @@ angular.module('App').controller('C_main', [
           return q;
         });
         ctr.pageAttachments = ctr.attachments.concat(images);
-        ctr.attachments.push(images[0]);
+        if (images.length) {
+          ctr.attachments.push(images[0]);
+        }
 
         if (!ctr.text || ctr.text === '') {
           ctr.text = S_utils.decodeEntities(data.selection || data.title);
@@ -62,7 +59,11 @@ angular.module('App').controller('C_main', [
 
     ctr.dataIsLoaded = true;
     ctr.getRemainingAttachesCount = function() {
-      return 9 - ctr.attachments.length;
+      return __maxAttachments - ctr.attachments.length;
+    }
+
+    ctr.canAddAttach = function() {
+      return ctr.getRemainingAttachesCount() > 0;
     }
 
     ctr.pushUploadingAttach = function() {
@@ -102,39 +103,26 @@ angular.module('App').controller('C_main', [
       return ctr.postingDate;
     }, function(q) {
       if (!q) return;
-      ctr.onTimeChanged();
+      ctr.onTimeChange();
     });
 
-    $scope.$watch(function() {
-      return ctr.postingTime;
-    }, function(q) {
-      if (!q) return;
-      ctr.onTimeChanged();
-    });
-
-
-    ctr.onTimeChanged = function() {
+    ctr.onTimeChange = function(time) {
+      ctr.pastTime = false;
       if (!ctr.postingTime || !ctr.postingDate) return;
 
-      var dateUnix = +moment(moment(ctr.postingDate).format('DD.MM.YY'), 'DD.MM.YY').format('X');
-      var startDate = +moment(moment(ctr.postingTime).format('DD.MM.YY HH:mm:00'), 'DD.MM.YY HH:mm:ss').format('X') - +moment(moment(ctr.postingTime).format('DD.MM.YY 00:00:00'), 'DD.MM.YY HH:mm:ss').format('X');
+      if (time) {
+        ctr.postingTime = time;
+      }
 
-      ctr.postingUnixTime = dateUnix + startDate;
+      var dateUnix = +moment().hour(0).minute(0).second(0).format('X');
+      var startDate = ctr.postingTime;
 
-      ctr.loadTimeline(ctr.postingUnixTime);
-    }
-
-    ctr.loadTimeline = function(unix) {
-      return;
-      S_vk.request('newsfeed.get', {
-        filters: 'post',
-        return_banned: 1,
-        start_time: unix - 5 * 3600,
-        source_ids: ctr.groupId,
-        count: 100
-      }, function(resp) {
-        console.log(resp);
-      });
+      var res = dateUnix + startDate;
+      if (res > S_utils.getCurrentTime()) {
+        ctr.postingUnixTime = dateUnix + startDate;
+      } else {
+        ctr.pastTime = true;
+      }
     }
 
     ctr.publicPost = function() {
@@ -152,7 +140,7 @@ angular.module('App').controller('C_main', [
           case "image":
             {
               if (q.photo) {
-                postInfo[i] = q.photo;
+                postInfo[i] = q.photo; 
               } else {
                 ctr.processingAttachments.push(q);
                 S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
@@ -178,10 +166,23 @@ angular.module('App').controller('C_main', [
       });
 
       function out(attachments) {
-        S_selfapi.sendPost('-'+ctr.selectedGroup.id, ctr.text, attachments, ctr.postingUnixTime, 0).then(function(resp) {
+        S_selfapi.sendPost('-' + ctr.selectedGroup.id, ctr.text, attachments, ctr.postingUnixTime, 0).then(function(resp) {
           console.log(resp.data);
         });
       }
+    }
+
+    ctr.addTimer = function() {
+      ctr.timerIsEnabled = true;
+    }
+    ctr.removeTimer = function() {
+      ctr.timerIsEnabled = false;
+    }
+
+    ctr.attachItem = function(type){
+      S_utils.callAttachPhotoDialog().then(function(resp){
+        debugger
+      });
     }
 
     return ctr;

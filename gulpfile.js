@@ -39,7 +39,8 @@ var vendorLibs = [
   './bower_components/blueimp-file-upload/js/jquery.fileupload.js',
   './bower_components/momentjs/moment.js',
   './bower_components/angular-i18n/angular-locale_ru.js',
-  './bower_components/angular-ui-select/dist/select.js'
+  './bower_components/angular-ui-select/dist/select.js',
+  './bower_components/highcharts/highcharts.src.js'
 ];
 
 var vendorLibsCss = [

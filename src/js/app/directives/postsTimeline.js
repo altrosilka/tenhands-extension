@@ -1,80 +1,131 @@
-angular.module('App').directive('postsTimeline', [function() {
-  return {
-    scope: {
-      data: '=postsTimeline'
-    },
-    link: function($scope, $element, $attrs) {
-      var chart, $canvas;
+angular.module('App').directive('postsTimeline', [
+  '$q',
+  'S_vk',
+  'S_utils',
+  function($q, S_vk, S_utils) {
+    return {
+      scope: {
+        time: '=',
+        groupId: '='
+      },
+      templateUrl: 'templates/directives/postsTimeline.html',
+      link: function($scope, $element, $attrs) {
+        var chart, $canvas;
 
-      var _color = '#090';
+        var _color = '#090';
 
-      $scope.$watch('data', function(data) {
-        if (!data) return;
-        
-        chart = $element.highcharts({
-          chart: {
-            type: 'column'
-          },
-          title: {
-            text: null
-          },
-          xAxis: {
-            categories: data.categories
-          },
-          yAxis: {
-            min: 0,
-            lineWidth: 0,
-            minorGridLineWidth: 0,
-            gridLineWidth: 0,
-            lineColor: 'transparent',
-            title: {
-              text: null
-            },
-            labels: {
-              enabled: false
-            },
-            minorTickLength: 0,
-            tickLength: 0,
-            stackLabels: {
-              enabled: true,
-              style: {
-                fontSize: '22px',
-                bottom: '10px',
-                color: (Highcharts.theme && Highcharts.theme.textColor) || '#000'
-              }
-            }
-          },
-          legend: {
-            enabled: false
-          },
-          tooltip: {
-            enabled: false,
-            formatter: function() {
-              return '<b>' + this.x + '</b><br/>' +
-                this.series.name + ': ' + this.y + '<br/>' +
-                'Total: ' + this.point.stackTotal;
-            }
-          },
-          plotOptions: {
-            column: {
-              stacking: 'normal',
-              animation: false,
-              dataLabels: {
-                enabled: false
-              }
-            },
-            series: {
-              states: {
-                hover: {
-                  enabled: false
-                }
-              }
-            }
-          },
-          series: series
+        $scope.$watch('time', function(time) {
+          if (!time || !$scope.groupId) return;
+
+          refresh();
         });
-        chart.find('text:contains("Highcharts.com")').remove();
-      });
+
+        $scope.$watch('groupId', function(groupId) {
+          if (!groupId || !$scope.time) return;
+
+          refresh();
+        });
+
+        function refresh() {
+          $scope.loading = true;
+          $q.all({
+            old: S_vk.request('newsfeed.get', {
+              filters: 'post',
+              return_banned: 1,
+              start_time: $scope.time - 5 * 3600,
+              source_ids: '-' + $scope.groupId,
+              count: 100
+            }),
+            new: S_vk.request('wall.get', {
+              owner_id: '-80384539', //'-' + $scope.groupId,
+              count: 100,
+              filter: 'postponed'
+            })
+          }).then(function(resp) {
+            var items = [];
+
+            if (resp.old.response) {
+              items = items.concat(resp.old.response.items);
+            }
+            if (resp.new.response) {
+              items = items.concat(resp.new.response.items);
+            }
+
+            var seriesInfo = S_utils.remapForTimeline(items);
+
+            chart = $element.find('.chart').highcharts({
+              "title": {
+                "text": null
+              },
+              "legend": {
+                "layout": "vertical",
+                "style": {},
+                "enabled": false
+              },
+              "xAxis": {
+                startOnTick: false,
+                endOnTick: false,
+
+                "type": "datetime",
+                "minTickInterval": 1000 * 60 * 60,
+                "tickInterval": 1000 * 60 * 60,
+                min: ($scope.time - 5 * 3600) * 1000,
+                max: ($scope.time + 24 * 3600) * 1000,
+                labels: {
+                  style: {
+                    fontSize: '8px'
+                  }
+                }, 
+                dateTimeLabelFormats:{
+                  day: '%e %b'
+                }
+              },
+              "yAxis": {
+                lineWidth: 0,
+                minorGridLineWidth: 0,
+                gridLineWidth: 0,
+                lineColor: 'transparent',
+                allowDecimals: false,
+                "stackLabels": {
+                  "enabled": false
+                },
+                "title": {
+                  "text": null
+                },
+                labels: {
+                  "enabled": false
+                }
+              },
+              "tooltip": {
+                "enabled": true
+              },
+              "credits": {
+                "enabled": false
+              },
+              "plotOptions": {
+                "column": {
+                  stacking: "normal",
+                  pointWidth: 11,
+                  animation: false
+                }
+              },
+              "chart": {
+                "defaultSeriesType": "column",
+                "borderRadius": 0,
+                backgroundColor: 'transparent',
+                height: 22 * seriesInfo.max + 50
+              },
+              "subtitle": {},
+              "colors": ["#2B587A"],
+              "series": seriesInfo.series
+            });
+            //chart.find('text:contains("Highcharts.com")').remove();
+            $scope.loading = false;
+          });
+        }
+
+
+      }
     }
   }
-}])
+])
