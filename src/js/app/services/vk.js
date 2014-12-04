@@ -120,7 +120,19 @@ angular.module('vkTools', [])
         return defer.promise;
       }
 
-
+      service.createPoll = function(attach, group_id) {
+        return service.request('polls.create', {
+          question: attach.question,
+          is_anonymous: (attach.is_anonymous) ? 1 : 0,
+          owner_id: "-"+group_id,
+          add_answers: JSON.stringify(_.uniq(_.reduce(attach.variants,function(max, q){
+            if (q.text && q.text !== ''){
+              max.push(q.text);
+            }
+            return max;
+          },[])))
+        });
+      }
 
       service.getToken = function() {
         var defer = $q.defer();

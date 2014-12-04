@@ -51,6 +51,14 @@ angular.module('App').directive('postsTimeline', [
               items = items.concat(resp.new.response.items);
             }
 
+            if (items.length === 0){
+              $element.find('.chart').html('<div class="empty">Нет данных за выбранный период<span>Это значит, что последние 5 часов в группе не было записей и мы не нашли отложенных постов</span></div>');
+              $scope.loading = false;
+              return;
+            } else {
+              $element.find('.chart').html();
+            }
+
             var seriesInfo = S_utils.remapForTimeline(items);
 
             chart = $element.find('.chart').highcharts({

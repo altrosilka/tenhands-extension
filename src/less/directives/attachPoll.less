@@ -1,0 +1,57 @@
+.attachPoll {
+  padding: 0 20px;
+  width: 557px;
+  .fa {
+    color: #A0B4CA;
+  }
+  h3 {
+    position: relative;
+    font-weight: bold;
+    color: #45688E;
+    font-size: 12px;
+    margin: 16px 0 9px;
+    .removeIcon {
+      left: 100%;
+      margin-left: 4px;
+      font-size: 16px;
+      top: -2px!important;
+      cursor: pointer;
+    }
+    .pollIcon {
+      right: 100%;
+      margin-right: 2px;
+    }
+    .pollIcon, .removeIcon {
+      position: absolute;
+      top: 1px;
+    }
+  }
+  input[type="text"] {
+    height: 25px;
+  }
+  .variants {
+    .variant {
+      margin-bottom: 10px;
+      position: relative;
+      .remove {
+        opacity: 0;
+        position: absolute;
+        left: 100%;
+        padding-left: 5px;
+        top: 1px;
+        font-size: 16px;
+        transition: 0.2s;
+        cursor: pointer;
+      }
+      &:hover {
+        .remove {
+          opacity: 1;
+          visibility: visible;
+        }
+      }
+    }
+  }
+  .checkboxList {
+    margin-left: -4px;
+  }
+}

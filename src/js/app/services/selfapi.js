@@ -37,6 +37,16 @@ angular.module('App')
         });
       }
 
+      service.getOverrideKey = function(groupId) {
+        return $http({
+          url: base + __api.paths.getOverrideKey,
+          method: 'GET',
+          params:{
+            groupId: groupId
+          }
+        });
+      }
+
       var _uploadImageToVkStack = [];
       service.uploadImageToVk = function(url, c, w, h, id) {
         var defer = $q.defer();

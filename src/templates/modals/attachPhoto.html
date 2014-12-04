@@ -8,7 +8,7 @@
         <tab heading="со страницы" active="true">
 
           <div class="bodyWithTabs">
-            <div select-area post-attachments="ctr.attachments" processing-attachments="ctr.processingAttachments" attachments="ctr.pageAttachments" no-attaches-text="Нет подходящих изображений"></div>
+            <div select-area selected-attachments="ctr.selectedAttachments" attachments="ctr.pageAttachments" on-attach-click="ctr.sendAttach(attach)" no-attaches-text="Нет подходящих изображений"></div>
           </div>
         </tab>
         <tab heading="из фотобанка">
@@ -19,7 +19,7 @@
 
         <label class="uploadImage">
           <span>загрузить с компьютера</span>
-          <div class="gogoleft" image-upload-area on-upload-start="ctr.pushUploadingAttach" after-image-uploaded="ctr.afterImageUploaded"></div>
+          <div class="gogoleft" image-upload-area on-upload-start="ctr.beforeUploading" after-image-uploaded="ctr.afterUploading"></div>
         </label>
       </tabset>
 
@@ -28,9 +28,9 @@
   </div>
   <div class="modal-footer fixed-footer">
     <button class="btn btn-primary" ng-click="ctr.closeDialog()">прикрепить
-      <ng-pluralize count="ctr.selectedImages.length" when="ctr.imagesPlurals">
-      </ng-pluralize>
+      <span ng-pluralize count="ctr.selectedAttachments.length" when="ctr.imagesPlurals">
+      </span>
     </button>
-    <button class="btn btn-link pull-right" ng-click="$dismiss()">отмена</button>
+    <button class="btn btn-link pull-right fixRight" ng-click="$dismiss()">отмена</button>
   </div>
 </section>

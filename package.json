@@ -1,6 +1,6 @@
 {
   "name": "extension",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "",
   "main": "gulpfile.js",
   "scripts": {
@@ -26,5 +26,8 @@
     "lodash": "^2.4.1",
     "moment": "^2.8.3",
     "semver": "^4.0.3"
+  },
+  "devDependencies": {
+    "gulp-livereload": "^2.1.1"
   }
 }

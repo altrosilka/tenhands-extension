@@ -9,6 +9,7 @@ var gulp = require("gulp"),
   bump = require('gulp-bump'),
   git = require('gulp-git'),
   less = require('gulp-less'),
+  //livereload = require('gulp-livereload'),
   moment = require('moment'),
   templateCache = require('gulp-angular-templatecache');
 
@@ -163,6 +164,7 @@ gulp.task('dist-pages', function() {
 
 
 gulp.task("watch", function() {
+  //livereload.listen();
   gulp.watch('./src/js/**', ["scripts", "dist-enviroment"]);
   gulp.watch('./src/less/**', ["less"]);
   gulp.watch('./src/less/page.less', ["less-page"]);
@@ -172,6 +174,7 @@ gulp.task("watch", function() {
   gulp.watch('./src/pages/**', ["dist-pages"]);
   gulp.watch('./src/templates/**', ["templates"]);
   gulp.watch('./src/js/*.js', ["background-scripts"]);
+  //gulp.watch('./public/pack//**').on('change', livereload.changed);
 });
 
 gulp.task('build', [

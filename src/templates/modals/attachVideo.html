@@ -1,0 +1,87 @@
+<section class="attachVideo">
+  <div class="modal-header">
+    <h3 class="modal-title">Прикрепление видеозаписи</h3>
+  </div>
+  <div class="modal-body">
+    <div class="up-level-tabs">
+      <tabset>
+        <tab heading="поиск" active="true">
+          <div class="bodyWithTabs">
+            <form class="mb10" ng-submit="ctr.search()">
+              <div class="relative fsSearchBlock">
+                <i class="fa fa-search"></i>
+                <input autofocus="autofocus" class="form-control search" type="text" ng-model="ctr.q" placeholder="котики или тест-драйв">
+                <div class="filters">
+                  <div class="checkboxList controls-list">
+                    <label>
+                      <input type="checkbox" ng-model="ctr.hd" ng-change="ctr.search()">
+                      <span>HD</span>
+                    </label>
+                    <label tooltip="фильтровать взрослый контент">
+                      <input type="checkbox" ng-model="ctr.adult" ng-change="ctr.search()">
+                      <span>Фильтр</span>
+                    </label>
+                  </div>
+                  <span class="selectWrapper">
+                  <select ng-model="ctr.sort" class="form-control" ng-change="ctr.search()">
+                    <option value="2" selected="">по релевантности</option>
+                    <option value="0">по дате добавления</option>
+                    <option value="1">по длительности</option>
+                  </select>
+                </span>
+                </div>
+              </div>
+              <input type="submit" class="gogoleft">
+
+
+            </form>
+            <div class="relative">
+              <div class="lineLoader" ng-class="{'active':ctr.searchInProgress}">
+                <i class="fa fa-spin fa-circle-o-notch"></i>
+              </div>
+            </div>
+            <div class="videoList clearfix" ng-hide="ctr.searchInProgress">
+              <div video-cover ng-click="ctr.selectVideo(video)" ng-repeat="video in ctr.searchedVideos"></div>
+            </div>
+          </div>
+        </tab>
+        <tab heading="видео сообщества" ng-click="ctr.loadGroupVideos()">
+          <div class="bodyWithTabs">
+            <div class="relative">
+              <div class="lineLoader" ng-class="{'active':ctr.loadGroupVideosInProgress}">
+                <i class="fa fa-spin fa-circle-o-notch"></i>
+              </div>
+            </div>
+            <div class="videoList clearfix" ng-hide="ctr.loadGroupVideosInProgress">
+              <div video-cover ng-click="ctr.selectVideo(video)" ng-repeat="video in ctr.groupVideos"></div>
+            </div>
+            <div class="noResults" ng-show="ctr.groupSearchError" ng-bind="ctr.groupSearchError"></div>
+            <div class="noResults" ng-show="ctr.groupVideos.length === 0">Нет ни одной видеозаписи</div>
+          </div>
+        </tab>
+        <tab heading="мои видео" ng-click="ctr.loadUserVideos()">
+          <div class="bodyWithTabs">
+            <div class="relative">
+              <div class="lineLoader" ng-class="{'active':ctr.loadUserVideosInProgress}">
+                <i class="fa fa-spin fa-circle-o-notch"></i>
+              </div>
+            </div>
+            <div class="videoList clearfix" ng-hide="ctr.loadUserVideosInProgress">
+              <div video-cover ng-click="ctr.selectVideo(video)" ng-repeat="video in ctr.userVideos"></div>
+            </div>
+            <div class="noResults" ng-show="ctr.userSearchError" ng-bind="ctr.userSearchError"></div>
+            <div class="noResults" ng-show="ctr.userVideos.length === 0">Нет ни одной видеозаписи</div>
+          </div>
+        </tab>
+      </tabset>
+    </div>
+
+  </div>
+  <div class="modal-footer fixed-footer ng-hide">
+    <button class="btn btn-primary" ng-click="ctr.closeDialog()">прикрепить
+      <span ng-pluralize count="ctr.selectedAttachments.length" when="ctr.imagesPlurals">
+      </span>
+    </button>
+    <button class="btn btn-link pull-right fixRight" ng-click="$dismiss()">отмена</button>
+  </div>
+</section>

@@ -34,7 +34,7 @@ angular.module('App').directive('timeSelect', [function() {
       }
 
       $scope.$watch(function() {
-        return ctr.time;
+        return $scope.time;
       }, function(time) {
         if (!time) return;
         var z = time % 3600;

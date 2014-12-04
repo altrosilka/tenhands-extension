@@ -5,11 +5,11 @@ html, body {
 body {
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
-  background-color: #F0F2F5;
+  background-color: transparent;
   font-size: 12px;
   &.loaded {
-    .window {
-      transform: scale(1);
+    .filterArea {
+      transform: translateY(0px);
       opacity: 1;
       visibility: visible;
     }
@@ -42,11 +42,56 @@ a {
   text-decoration: none!important;
   cursor: default!important;
 }
-.window {
+.layerFs {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 1;
   opacity: 0;
   visibility: hidden;
-  transform: scale(0.9);
   transition: 0.2s;
+  #fountainG {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -36px 0 0 -60px;
+  }
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .info {
+    position: absolute;
+    top: 50%;
+    text-align: center;
+    left: 0;
+    right: 0;
+    font-size: 14px;
+    color: #567CA4;
+    font-weight: bold;
+    .gray {
+      display: block;
+      font-size: 10px;
+      font-weight: normal;
+    }
+  }
+}
+.filterArea {
+  border-top: 1px solid #4F73AB;
+  background-color: #F0F2F5;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(100px);
+  transition: 0.4s;
+  &.blur {
+    -webkit-filter: blur(3px) grayscale(1);
+    opacity: 0.4;
+  }
+}
+.window {
   width: 960px;
   margin: 40px auto;
   padding-bottom: 300px;
@@ -63,17 +108,53 @@ a {
       position: relative;
       top: 2px;
     }
+    .fromApp {
+      display: inline-block;
+      position: relative;
+      top: 1px;
+      transition: 0.4s;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-15px);
+      &.active {
+        transform: translateX(0px);
+        opacity: 1;
+        visibility: visible;
+      }
+      .sharePhrase {
+        color: #AAA;
+        margin-left: 11px;
+        font-size: 10px;
+        top: 0px;
+      }
+      img {
+        height: 25px;
+        position: relative;
+        top: -1px;
+      }
+      .title {
+        font-size: 10px;
+        font-weight: bold;
+        position: relative;
+        top: 0px;
+        color: #666;
+      }
+    }
   }
   footer {
     margin-top: 40px;
     .controls-list {
       display: inline-block;
       margin-left: 10px;
+      label {
+        display: inline-block;
+        margin-right: 10px;
+      }
     }
   }
   .leftColumn {
     float: left;
-    width: 580px;
+    width: 608px;
     background: #FFF;
     box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
     padding: 25px;
@@ -149,7 +230,7 @@ a {
       padding: 10px;
       border: 1px solid #DDD;
       background: #FFF;
-      height: 133px;
+      height: 103px;
       font-size: 12px;
       word-wrap: break-word;
       line-height: 18px;
@@ -186,8 +267,8 @@ a {
   margin: -5px;
   .attach {
     float: left;
-    width: 103px;
-    height: 103px;
+    width: 132px;
+    height: 132px;
     margin: 5px;
     position: relative;
     transition: 0.2s;
@@ -202,16 +283,16 @@ a {
     .process {
       opacity: 0;
       position: absolute;
-      font-size: 21px;
+      font-size: 22px;
       left: 0;
       right: 0;
       text-align: center;
       top: 0;
       bottom: 0;
-      line-height: 106px;
+      line-height: 132px;
       visibility: hidden;
       transition: 0.2s;
-      z-index: 2;
+      z-index: 6;
       background-color: rgba(255, 255, 255, 0.8);
     }
     .image {
@@ -270,18 +351,21 @@ a {
       position: absolute;
       bottom: 0px;
       right: 0px;
+      left: 0px;
       color: #EEE;
-      font-size: 10px;
+      font-size: 8px;
       background-color: rgba(0, 0, 0, 0.7);
       padding: 2px 5px;
       transition: 0.2s;
+      z-index: 5;
+      opacity: 0.8;
       .gray {
         color: #aaa;
       }
     }
     &.selected {
       .lower {
-        opacity: 0.5;
+        opacity: 0.8;
         visibility: visible;
       }
       .actions {
@@ -292,16 +376,39 @@ a {
           opacity: 1;
         }
       }
-      .info {
-        opacity: 0;
-        visibility: hidden;
-      }
     }
     &:hover {
       .actions {
         opacity: 1;
         visibility: visible;
       }
+      .playButton {
+        opacity: 1;
+      }
+    }
+    .playButton {
+      position: absolute;
+      left: 0px;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 2;
+      line-height: 132px;
+      font-size: 49px;
+      text-align: center;
+      color: #FFF;
+      opacity: 0.8;
+      transition: 0.2s;
+      text-shadow: 0px 2px 7px #000;
+    }
+    &[data-type="poll"] {
+      float: none;
+      clear: both;
+      width: 100%;
+      height: auto;
+      background: rgba(0, 0, 0, 0);
+      cursor: default;
+      padding-top: 1px;
     }
   }
 }
@@ -432,23 +539,24 @@ a {
     margin-left: 20px;
     font-weight: normal;
     font-size: 12px;
+    color: #555;
   }
   span:before {
-    width: 12px;
-    height: 12px;
-    box-shadow: 0px 0px 1px #000;
-    left: 5px;
-    top: 5px;
+    width: 14px;
+    height: 14px;
+    left: 4px;
+    top: 1px;
     content: '';
     position: absolute;
     display: block;
-    background-color: #fff;
+    background-color: #FFF;
+    border: 1px solid #C3CBD4;
   }
   span:after {
     width: 8px;
     height: 8px;
     left: 7px;
-    top: 7px;
+    top: 4px;
     background: #358CE0;
     opacity: 0;
     transition: 0.2s;
@@ -459,9 +567,81 @@ a {
   &.radioList span:after, &.radioList span:before {
     border-radius: 50%;
   }
+  &.checkboxList span:after {
+    font-family: FontAwesome;
+    content: "\f00c";
+    background: rgba(0, 0, 0, 0);
+    top: 1px;
+    left: 6px;
+    font-size: 11px;
+    color: #567CA4;
+  }
 }
 .noResults {
   padding: 40px;
   text-align: center;
   color: #888;
+}
+.fancybox-overlay {
+  background: none;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+.fancybox-skin {
+  border-radius: 0px;
+}
+.fsSearchBlock {
+  margin: -21px -20px 19px;
+  .fa-search {
+    position: absolute;
+    top: 13px;
+    z-index: 4;
+    color: #E0D8D8;
+    left: 20px;
+    font-size: 16px;
+  }
+  .search {
+    width: 100%!important;
+    padding-left: 45px;
+    display: block;
+    height: 40px;
+    line-height: 40px;
+    border: 0px;
+    border-bottom: 1px solid #EEE;
+    border-top: 1px solid #EEE;
+    -webkit-font-smoothing: antialiased;
+    font-size: 12px;
+    background: #FCFCFC;
+  }
+  .info {
+    position: absolute;
+    padding-right: 0px;
+    right: 20px;
+    z-index: 22;
+    top: 7px;
+    font-size: 10px;
+  }
+}
+.lineLoader {
+  position: absolute;
+  opacity: 0;
+  transition: 0.2s;
+  overflow: hidden;
+  text-align: center;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: 20px;
+  font-size: 16px;
+  transform: translateY(-10px);
+  &.active {
+    position: relative;
+    transform: translateY(0px);
+    opacity: 1;
+    visibility: visible;
+  }
+}
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

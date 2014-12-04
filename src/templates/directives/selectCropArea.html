@@ -1,0 +1,42 @@
+<div class="attaches clearfix">
+  <div class="attach" ng-repeat="attach in attachments" ng-class="{'processing':ctr.attachIsProcessing(attach), selected: ctr.attachIsSelected(attach)}" data-type="{{attach.type}}">
+    <section ng-if="attach.type ==='image'">
+      <div class="process">
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+      </div>
+      <div class="image" ng-click="ctr.edit(attach)" ng-style="{'background-image':'url('+attach.src+')'}">
+      </div>
+      <div class="actions">
+        <div class="check lay" ng-click="ctr.remove(attach)">
+          <i class="fa fa-remove"></i>
+        </div>
+      </div>
+ 
+      <div class="info" ng-show="attach.clientWidth || attach.width">
+        <span tooltip-placement="left" tooltip="Видимый размер изображения">
+              {{attach.clientWidth}}x{{attach.clientHeight}} 
+            </span>
+        <span class="gray" ng-if="ctr.showRealImageSize(attach)" tooltip-placement="left" tooltip="Оригинальный резмер изображения">
+              ({{attach.width}}x{{attach.height}})
+            </span>
+      </div>
+    </section>
+    <section ng-if="attach.type ==='video'">
+      <div class="playButton" ng-click="ctr.openVideo(attach)">
+        <i class="fa fa-play-circle"></i>
+      </div>
+      <div class="image" ng-click="ctr.openVideo(attach)" ng-style="{'background-image':'url('+attach.src+')'}"></div>
+      <div class="actions">
+        <div class="check lay" ng-click="ctr.remove(attach)">
+          <i class="fa fa-remove"></i>
+        </div>
+      </div>
+      <div class="info">
+        <span ng-bind="attach.duration | toGIS"></span>
+      </div>
+    </section>
+    <section ng-if="attach.type ==='poll'" attach-poll="attach" destroy="ctr.remove(attach)">
+
+    </section>
+  </div>
+</div>

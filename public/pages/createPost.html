@@ -9,114 +9,139 @@
 </head>
 
 <body data-ng-app="App" data-ng-controller="C_main as ctr" data-ng-class="{'loaded': ctr.dataIsLoaded}">
-  <div class="toppanel">
+  <div class="layerFs" ng-class="{'active':ctr.postingProcess}">
+    <div class="info">
+      Публикуем запись
 
-  </div>
-  <section class="window">
-    <header>
-      <span class="sharePhrase">Поделиться записью в</span>
-      <span class="groupSelect">
-        <ui-select ng-model="ctr.selectedGroup" theme="select2">
-          <ui-select-match placeholder="Выбери группу, в которую нужно разместить запись">
-            {{$select.selected.name}}
-          </ui-select-match>
-          <ui-select-choices repeat="group in ctr.groups | findGroups: {name: $select.search}">
-            <div class="image" ng-style="{'background-image':'url('+group.photo_50+')'}"></div>
-            <div class="name" ng-bind-html="group.name | highlight: $select.search"></div>
-          </ui-select-choices>
-        </ui-select>
+      <span class="gray">
+        еще 
+        <span ng-pluralize count="ctr.processingAttachments.length + 1" when="ctr.stepsPlural"></span>
       </span>
-
-    </header>
-
-
-
-    <section class="body clearfix">
-
-      <div class="leftColumn">
-        <textarea class="postArea" ng-model="ctr.text"></textarea>
-        <div class=" content relative">
-
-          <div select-area selected-attachments="ctr.selectedAttachments" processing-attachments="ctr.processingAttachments" attachments="ctr.attachments" main-mode="true"></div>
-        </div>
+    </div>
+    <div id="fountainG">
+      <div id="fountainG_1" class="fountainG">
       </div>
-
- 
-
-
-      <div class="rightColumn">
-        <h4>Прикрепить</h4>
-        <div class="attachsButtons">
-          <div ng-click="ctr.attachItem('photo')">
-            <i class="fa fa-camera"></i>
-            <span>Фотографию</span>
-          </div>
-          <div ng-click="ctr.attachItem('photo')">
-            <i class="fa fa-film"></i>
-            <span>Видеозапись</span>
-          </div>
-          <div ng-click="ctr.attachItem('photo')">
-            <i class="fa fa-music"></i>
-            <span>Аудиозапись</span>
-          </div>
-          <div ng-click="ctr.attachItem('photo')">
-            <i class="fa fa-bar-chart"></i>
-            <span>Опрос</span>
-          </div>
-          <div ng-click="ctr.attachItem('photo')">
-            <i class="fa fa-file"></i>
-            <span>Документ</span>
-          </div>
-        </div>
-
-        <div class="lastAttachCount">
-          <span ng-show="ctr.canAddAttach()">
-          к посту можно прикрепить еще <strong ng-bind="ctr.getRemainingAttachesCount()" tooltip-placement="right"></strong> материалов
-          </span>
-          <span ng-show="!ctr.canAddAttach()">
-          к посту больше нельзя ничего прикрепить
-          </span>
-        </div>
-
+      <div id="fountainG_2" class="fountainG">
       </div>
-    </section>
+      <div id="fountainG_3" class="fountainG">
+      </div>
+      <div id="fountainG_4" class="fountainG">
+      </div>
+      <div id="fountainG_5" class="fountainG">
+      </div>
+      <div id="fountainG_6" class="fountainG">
+      </div>
+      <div id="fountainG_7" class="fountainG">
+      </div>
+      <div id="fountainG_8" class="fountainG">
+      </div>
+    </div>
+  </div>
+  <div class="filterArea" ng-class="{'blur':ctr.postingProcess}">
+    <section class="window">
+      <header>
+        <span class="sharePhrase">Поделиться записью в</span>
+        <span class="groupSelect">
+          <ui-select ng-model="ctr.selectedGroup" theme="select2">
+            <ui-select-match placeholder="Выбери группу, в которую нужно разместить запись">
+              {{$select.selected.name}}
+            </ui-select-match>
+            <ui-select-choices repeat="group in ctr.groups | findGroups: {name: $select.search}">
+              <div class="image" ng-style="{'background-image':'url('+group.photo_50+')'}"></div>
+              <div class="name" ng-bind-html="group.name | highlight: $select.search"></div>
+            </ui-select-choices>
+          </ui-select>
+        </span>
+        <span class="fromApp" ng-class="{'active':ctr.postingApp}">
+          <span class="sharePhrase">от приложения</span>
+          <img ng-src="{{ctr.postingApp.icon_50}}">
+          <span class="title" ng-bind="ctr.postingApp.title"></span>
+        </span>
+      </header>
 
-    <div class="dateArea">
-      <h3 ng-hide="ctr.timerIsEnabled">Разместить запись <strong>сейчас</strong> / <span class="addTimer" ng-click="ctr.addTimer()">добавить таймер</span></h3>
-      <h3 ng-show="ctr.timerIsEnabled">Разместить отложенную запись / <span class="addTimer" ng-click="ctr.removeTimer()">разместить сейчас</span></h3>
-      <span ng-show="ctr.timerIsEnabled">
+      <section class="body clearfix">
+        <div class="leftColumn">
+          <textarea class="postArea" ng-model="ctr.text"></textarea>
+          <div class="relative">
+
+            <div select-crop-area selected-attachments="ctr.selectedAttachments" processing-attachments="ctr.processingAttachments" attachments="ctr.attachments" main-mode="true"></div>
+          </div>
+        </div>
+
+        <div class="rightColumn">
+          <h4>Прикрепить</h4>
+          <div class="attachsButtons">
+            <div ng-click="ctr.attachItem('photo')">
+              <i class="fa fa-camera"></i>
+              <span>Фотографию</span>
+            </div>
+            <div ng-click="ctr.attachItem('video')">
+              <i class="fa fa-film"></i>
+              <span>Видеозапись</span>
+            </div>
+            <div class="ng-hide" ng-click="ctr.attachItem('audio')">
+              <i class="fa fa-music"></i>
+              <span>Аудиозапись</span>
+            </div>
+            <div ng-click="ctr.attachItem('poll')">
+              <i class="fa fa-bar-chart"></i>
+              <span>Опрос</span>
+            </div>
+            <div class="ng-hide" ng-click="ctr.attachItem('doc')">
+              <i class="fa fa-file"></i>
+              <span>Документ</span>
+            </div>
+          </div>
+
+          <div class="lastAttachCount">
+            <span ng-show="ctr.canAddAttach()">
+          еще <strong ng-bind="ctr.getRemainingAttachesCount()" tooltip-placement="right"></strong> материалов
+          </span>
+            <span ng-show="!ctr.canAddAttach()">
+          больше нельзя ничего прикрепить
+          </span>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="dateArea">
+        <h3 ng-hide="ctr.timerIsEnabled">Разместить запись <strong>сейчас</strong> / <span class="addTimer" ng-click="ctr.addTimer()">добавить таймер</span></h3>
+        <h3 ng-show="ctr.timerIsEnabled">Разместить отложенную запись / <span class="addTimer" ng-click="ctr.removeTimer()">разместить сейчас</span></h3>
+        <span ng-show="ctr.timerIsEnabled">
         <div class="calendar" date-button min-date="ctr.minDate" max-date="ctr.maxDate" data-model="ctr.postingDate" class="picker_inputs"></div>
         <span class="in">в</span>
         <div class="timec" time-select time="ctr.postingTime" set-new-time="ctr.onTimeChange(time)"></div>
 
         <span class="text-danger" ng-show="ctr.pastTime">в прошлое постить не умеем :(</span>
-      </span>
+        </span>
 
-    </div>
-    <div class="timelineArea">
-      <h3 class="ng-hide">Лента записей в группе</h3>
-      <div posts-timeline time="ctr.postingUnixTime" group-id="'755816'"></div>
-    </div>
+      </div>
+      <div class="timelineArea">
+        <h3 class="ng-hide">Лента записей в группе</h3>
+        <div posts-timeline time="ctr.postingUnixTime" now="ctr.postingNow" group-id="'755816'"></div>
+      </div>
 
 
-    <footer>
-      
+      <footer>
+
         <button type="button" class="btn btn-primary" ng-disabled="ctr.paidIsEnd || ctr.processingAttachments.length" ng-click="ctr.publicPost()">
           отправить
         </button>
 
-
         <div class="checkboxList controls-list">
           <label>
             <input type="checkbox" ng-model="ctr.assigned">
-            <span>подпись</span>
+            <span tooltip="под записью появится подпись этого аккаунта" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true">Подпись</span>
+          </label>
+          <label>
+            <input type="checkbox" ng-model="ctr.notClose">
+            <span tooltip="например, можно запостить то же самое в другую группу" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true">Не закрывать</span>
           </label>
         </div>
-
-
-    </footer>
-  </section>
-
+      </footer>
+    </section>
+  </div>
 
   <script type="text/javascript" src="/pack/vendor.js"></script>
   <script type="text/javascript" src="/pack/templates.js"></script>

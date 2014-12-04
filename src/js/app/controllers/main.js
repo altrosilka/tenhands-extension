@@ -10,13 +10,22 @@ angular.module('App').controller('C_main', [
     var ctr = this;
 
     ctr.minDate = new Date();
-    ctr.postingDate = new Date();
-    ctr.postingTime = (moment().diff(moment().hour(0).minute(0).second(0), 'seconds') + 3600 * 3) % (3600 * 24);
+    ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
+    ctr.postingNow = true;
+    ctr.postingTime = new Date();
+    ctr.stepsPlural = {
+      0: '',
+      one: 'еще {} шаг',
+      few: 'еще {} шага',
+      many: 'еще {} шагов',
+      other: 'еще {} шагов'
+    };
 
     ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
     ctr.postingUnixTime = S_utils.getCurrentTime();
 
     ctr.attachments = [];
+    ctr.selectedGroup = {};
 
     ctr.processingAttachments = [];
     ctr.uploadingAttaches = [];
@@ -28,18 +37,60 @@ angular.module('App').controller('C_main', [
       filter: 'admin,editor',
       fields: 'members_count'
     }).then(function(resp) {
-
-      //$scope.$apply(function() {
       ctr.groups = resp.response.items;
-
       ctr.selectedGroup = ctr.groups[0];
     });
 
+    $scope.$watch(function() {
+      return ctr.postingNow;
+    }, function(q) {
+      if (typeof q === 'undefined') return;
 
+      if (q === false) {
+        var secondsFromStart = moment().diff(moment().hour(0).minute(0).second(0), 'seconds');
+        var daySeconds = 3600 * 24;
+        var offset = secondsFromStart + 3600 * 3;
+        if (offset > daySeconds) {
+          ctr.postingTime = offset - daySeconds;
+          ctr.postingDate = moment(ctr.postingDate).add(1, 'days').toDate();
+        } else {
+          ctr.postingTime = offset;
+        }
+        ctr.onTimeChange(ctr.postingTime);
+      } else {
+        ctr.postingUnixTime = S_utils.getCurrentTime();
+      }
+    });
+
+    $scope.$watch(function() {
+      return ctr.selectedGroup.id;
+    }, function(groupId) {
+      if (!groupId) return;
+      ctr.postingApp = undefined;
+      ctr.postingToken = undefined;
+      S_selfapi.getOverrideKey(groupId).then(function(resp) {
+        if (resp.data.settings !== null) {
+          ctr.postingToken = resp.data.settings.token;
+          S_vk.request('apps.get', {
+            app_id: resp.data.settings.appId
+          }).then(function(resp) {
+            ctr.postingApp = resp.response;
+          });
+        }
+      });
+    });
 
     $scope.$on('loadedDataFromTab', function(event, data) {
       $scope.$apply(function() {
         ctr.data = data;
+
+        if (data.imageSrc && data.imageSrc !== '') {
+          data.images.unshift({
+            src: data.imageSrc,
+            big_src: data.imageSrc
+          });
+        }
+
         var images = _.map(data.images, function(q) {
           q.type = 'image';
           q.id = S_utils.getRandomString(16);
@@ -54,10 +105,12 @@ angular.module('App').controller('C_main', [
           ctr.text = S_utils.decodeEntities(data.selection || data.title);
         }
       });
-
     });
 
-    ctr.dataIsLoaded = true;
+    $timeout(function() {
+      ctr.dataIsLoaded = true;
+    }, 100);
+
     ctr.getRemainingAttachesCount = function() {
       return __maxAttachments - ctr.attachments.length;
     }
@@ -108,16 +161,18 @@ angular.module('App').controller('C_main', [
 
     ctr.onTimeChange = function(time) {
       ctr.pastTime = false;
+
       if (!ctr.postingTime || !ctr.postingDate) return;
 
       if (time) {
         ctr.postingTime = time;
       }
 
-      var dateUnix = +moment().hour(0).minute(0).second(0).format('X');
+      var dateUnix = +moment(ctr.postingDate).format('X');
       var startDate = ctr.postingTime;
 
       var res = dateUnix + startDate;
+
       if (res > S_utils.getCurrentTime()) {
         ctr.postingUnixTime = dateUnix + startDate;
       } else {
@@ -135,12 +190,16 @@ angular.module('App').controller('C_main', [
         return '';
       });
 
+      ctr.postingProcess = true;
+
       _.forEach(ctr.attachments, function(q, i) {
         switch (q.type) {
           case "image":
             {
               if (q.photo) {
-                postInfo[i] = q.photo; 
+                postInfo[i] = _.extend({
+                  type: 'image'
+                }, q.photo);
               } else {
                 ctr.processingAttachments.push(q);
                 S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
@@ -154,8 +213,34 @@ angular.module('App').controller('C_main', [
                   }, photo);
 
                   if (ctr.processingAttachments.length === 0) {
-                    console.log('out');
-                    console.log(postInfo, ctr.attachments);
+                    out(postInfo);
+                  }
+                });
+              }
+              break;
+            }
+          case "video":
+            {
+              postInfo[i] = q;
+              break;
+            }
+          case "poll":
+            {
+              if (q.poll) {
+                postInfo[i] = q.poll;
+              } else {
+                ctr.processingAttachments.push(q);
+                S_vk.createPoll(q, ctr.selectedGroup.id).then(function(resp) {
+                  var poll = resp.response;
+                  _.remove(ctr.processingAttachments, function(qz) {
+                    return qz.type === 'poll';
+                  })[0];
+
+                  postInfo[i] = _.extend({
+                    type: 'poll'
+                  }, poll);
+
+                  if (ctr.processingAttachments.length === 0) {
                     out(postInfo);
                   }
                 });
@@ -165,24 +250,99 @@ angular.module('App').controller('C_main', [
         }
       });
 
+      if (ctr.processingAttachments.length === 0) {
+        out([]);
+      }
+
       function out(attachments) {
-        S_selfapi.sendPost('-' + ctr.selectedGroup.id, ctr.text, attachments, ctr.postingUnixTime, 0).then(function(resp) {
-          console.log(resp.data);
+        console.log(attachments);
+
+        var owner_id = '-' + ctr.selectedGroup.id;
+        var text = ctr.text;
+        var postingTime = ctr.postingUnixTime;
+        var assigned = (ctr.assigned) ? 1 : 0;
+
+
+
+
+
+        if (ctr.postingNow) {
+          var attas = S_utils.getAttachmentsString(attachments);
+
+          var oldToken;
+          if (ctr.postingApp) {
+            S_vk.getToken().then(function(token) {
+              oldToken = token;
+
+              if (ctr.postingApp) {
+                S_vk.setToken(ctr.postingToken);
+              }
+
+              S_vk.request('wall.post', {
+                owner_id: owner_id,
+                from_group: 1,
+                signed: assigned,
+                message: text,
+                attachments: attas
+              }).then(function(resp) {
+                S_vk.setToken(oldToken);
+                if (ctr.notClose) {
+                  ctr.postingProcess = false;
+                } else {
+                  parent.postMessage("EjvibWvh837VRRHd_close", "*");
+                }
+              });
+            });
+          }
+        }
+
+        S_selfapi.sendPost(owner_id, text, attachments, postingTime, assigned).then(function(resp) {
+          if (ctr.notClose) {
+            ctr.postingProcess = false;
+          } else {
+            parent.postMessage("EjvibWvh837VRRHd_close", "*");
+          }
         });
       }
     }
 
     ctr.addTimer = function() {
       ctr.timerIsEnabled = true;
+      ctr.postingNow = false;
     }
     ctr.removeTimer = function() {
       ctr.timerIsEnabled = false;
+      ctr.postingNow = true;
     }
 
-    ctr.attachItem = function(type){
-      S_utils.callAttachPhotoDialog().then(function(resp){
-        debugger
-      });
+    ctr.attachItem = function(type) {
+      switch (type) {
+        case 'photo':
+          {
+            S_utils.callAttachPhotoDialog(ctr.pageAttachments, {
+              before: ctr.pushUploadingAttach,
+              after: ctr.afterImageUploaded
+            }).then(function(resp) {
+              ctr.attachments = S_utils.sortAttachments(_.uniq(ctr.attachments.concat(resp), 'id'));
+            });
+            break;
+          }
+        case 'video':
+          {
+            S_utils.callAttachVideoDialog(ctr.selectedGroup.id).then(function(resp) {
+              var video = S_utils.wrapVideo(resp[0]);
+              ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(video));
+            });
+            break;
+          }
+        case 'poll':
+          {
+            var poll = S_utils.createEmptyPoll();
+            ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(poll));
+            break;
+          }
+      }
+
     }
 
     return ctr;

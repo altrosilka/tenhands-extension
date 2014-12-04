@@ -24,7 +24,6 @@ angular.module('App').controller('CD_photobankSearch', [
           return S_utils.convertGoogleImageToAttach(q);
         });
         ctr.attachments = images;
-        console.log(images);
       });
     }
 

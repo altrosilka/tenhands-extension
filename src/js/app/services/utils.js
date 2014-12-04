@@ -57,10 +57,47 @@ angular.module('utilsTools', [])
         return text;
       }
 
-      service.callAttachPhotoDialog = function() {
+      service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
         return $modal.open({
           templateUrl: 'templates/modals/attachPhoto.html',
-          controller: 'CM_attachPhoto as ctr'
+          controller: 'CM_attachPhoto as ctr',
+          resolve: {
+            pageAttachments: function() {
+              return fromPage;
+            },
+            uploadCallbacks: function() {
+              return uploadCallbacks;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callAttachVideoDialog = function(group_id) {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachVideo.html',
+          controller: 'CM_attachVideo as ctr',
+          resolve: {
+            group_id: function() {
+              return group_id;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callVideoPlayerDialog = function(title, videoSrc) {
+        return $modal.open({
+          templateUrl: 'templates/modals/videoPlayer.html',
+          controller: 'CM_videoPlayer as ctr',
+          resolve: {
+            videoSrc: function() {
+              return videoSrc;
+            },
+            title: function() {
+              return title;
+            }
+          }
         }).result;
       }
 
@@ -106,6 +143,16 @@ angular.module('utilsTools', [])
         }
       }
 
+      service.wrapVideo = function(video) {
+        return {
+          video: video,
+          id: service.getRandomString(16),
+          duration: video.duration,
+          src: video.photo_320,
+          type: 'video'
+        }
+      }
+
       service.convertGoogleImageToAttach = function(image) {
         return {
           photo: image.photo,
@@ -120,8 +167,73 @@ angular.module('utilsTools', [])
         }
       }
 
+      service.createEmptyPoll = function() {
+        return {
+          id: service.getRandomString(16),
+          type: 'poll'
+        }
+      }
+
+
+      service.getVideoQuality = function(video) {
+        if (video.files.mp4_1080) {
+          return '1080';
+        }
+        if (video.files.mp4_720) {
+          return '720';
+        }
+        if (video.files.mp4_480) {
+          return '480';
+        }
+        if (video.files.mp4_360) {
+          return '360';
+        }
+        if (video.files.mp4_240) {
+          return '240';
+        }
+      }
+
       service.getCurrentTime = function() {
         return Math.floor(new Date().getTime() / 1000);
+      }
+
+      service.sortAttachments = function(attaches) {
+        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
+        return _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0;
+          }
+        });
+      }
+
+      service.getAttachmentsString = function(attaches) {
+        var ret = [];
+        _.forEach(attaches, function(attach) {
+          switch (attach.type) {
+            case "image":
+              {
+                ret.push('photo' + attach.owner_id + '_' + attach.id);
+                break;
+              }
+            case "video":
+              {
+                ret.push('video' + attach.video.owner_id + '_' + attach.video.id);
+                break;
+              }
+            case "poll":
+              {
+                ret.push('poll' + attach.owner_id + '_' + attach.id);
+                break;
+              }
+          }
+        });
+
+        return ret.join(',');
       }
 
       service.remapForTimeline = function(items) {

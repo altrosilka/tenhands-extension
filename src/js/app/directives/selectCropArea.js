@@ -17,15 +17,6 @@ angular.module('App').directive('selectCropArea', [
 
         var _fanciedImage;
 
-        ctr.noAttachesText = $scope.noAttachesText;
-
-        ctr.add = function(attach) {
-          var i = _.remove($scope.postAttachments, function(q) {
-            return q.id === attach.id;
-          });
-          $scope.postAttachments.push(attach);
-        }
-
         ctr.showRealImageSize = function(attach) {
           return (attach.clientWidth !== attach.width && attach.clientHeight !== attach.height);
         }
@@ -42,13 +33,7 @@ angular.module('App').directive('selectCropArea', [
           }) !== 'undefined';
         }
 
-        ctr.removeFromPost = function(attach){
-          _.remove($scope.postAttachments,function(q){
-            return attach.id === q.id;
-          });
-        }
-
-        ctr.removeAttach = function(attach){
+        ctr.remove = function(attach){
           _.remove($scope.attachments,function(q){
             return attach.id === q.id;
           });
@@ -65,8 +50,8 @@ angular.module('App').directive('selectCropArea', [
             })[0];
 
             _.extend(image, {
-              photo: photo,
-              width: photo.width,
+              photo: photo, 
+              width: photo.width, 
               clientWidth: photo.width,
               height: photo.height,
               clientHeight: photo.height,
@@ -76,7 +61,7 @@ angular.module('App').directive('selectCropArea', [
           });
         }
 
-        ctr.openFullImage = function(image) {
+        ctr.edit = function(image) {
           _fanciedImage = image;
           var src = image.src_big || image.src;
 
@@ -98,6 +83,10 @@ angular.module('App').directive('selectCropArea', [
             });
             $('.fancybox-wrap').addClass('showed');
           });
+        }
+
+        ctr.openVideo = function(attach){
+          S_utils.callVideoPlayerDialog(attach.video.title, attach.video.player);
         }
 
         return ctr;

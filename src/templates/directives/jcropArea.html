@@ -1,11 +1,15 @@
-<div class="jcropArea">
-  <div class="image">
-    <img id="cropImage" ng-src="{{ctr.image}}" ng-style="{'maxHeight':ctr.maxHeight}">
-  </div>
-  <div class="submits" ng-show="ctr.disableActions">
-    <div class="text-center mb10" ng-show="ctr.editType === 'crop'">
-      <span class="btn btn-default" ng-click="ctr.cancelCrop()">закрыть</span>
-      <span class="btn btn-success" ng-click="ctr.applyCrop(ctr.coords)">сохранить</span>
+<div class="modal-header">
+  <h3>Редактирование фотографии</h3>
+</div>
+<div class="modal-body">
+  <div class="jcropArea">
+    <div class="image">
+      <img id="cropImage" ng-src="{{ctr.image}}" ng-style="{'maxHeight':ctr.maxHeight}">
     </div>
+
   </div>
+</div>
+<div class="modal-footer">
+  <span class="btn btn-primary" ng-click="ctr.applyCrop(ctr.coords)">сохранить</span>
+  <button class="btn btn-link pull-right fixRight" ng-click="ctr.cancelCrop()">отмена</button>
 </div>

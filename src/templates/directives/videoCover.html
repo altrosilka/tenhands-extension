@@ -1,0 +1,7 @@
+<div class="videoCover" ng-class="{'odd':$odd}">
+  <div class="image" ng-style="{'background-image':'url('+video.photo_320+')'}"></div>
+  <div class="info">
+    <span class="duration" ng-bind="video.duration | toGIS"></span>
+    <div class="title" ng-bind="video.title"></div>
+  </div>
+</div>
