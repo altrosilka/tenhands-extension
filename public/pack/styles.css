@@ -1237,3 +1237,73 @@ a:hover {
   display: inline-block;
   margin-right: 7px;
 }
+.highcharts-container {
+  overflow: visible !important;
+  z-index: 10!important;
+}
+.highcharts-tooltip > span {
+  box-shadow: 0px 0px 2px rgba(88, 88, 88, 0.6) !important;
+  padding: 10px;
+  background: #fff;
+}
+.highcharts-tooltip .tooltipArrow {
+  left: 50%;
+  position: absolute;
+  margin-left: -4px;
+  top: 100%;
+  margin-top: 0px;
+}
+.highcharts-tooltip .tooltipArrow:before {
+  content: '';
+  width: 0px;
+  height: 0px;
+  border: 8px solid transparent;
+  border-top-color: #ccc;
+  margin-left: -4px;
+  position: absolute;
+}
+.highcharts-tooltip .tooltipArrow:after {
+  content: '';
+  width: 0px;
+  height: 0px;
+  border: 7px solid transparent;
+  border-top-color: #fff;
+  position: absolute;
+  margin-left: -3px;
+}
+.timeLinePostTooltip {
+  width: 390px;
+}
+.timeLinePostTooltip .post {
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 5px;
+}
+.timeLinePostTooltip .post .left {
+  float: left;
+  width: 120px;
+}
+.timeLinePostTooltip .post .left .image {
+  width: 100%;
+  max-height: 100px;
+  background: #eee;
+}
+.timeLinePostTooltip .post .right {
+  float: left;
+  width: 260px;
+  font-size: 10px;
+  white-space: normal;
+  word-wrap: break-word;
+  margin-left: 10px;
+}
+.timeLinePostTooltip .post .text {
+  margin-bottom: 5px;
+}
+.timeLinePostTooltip .post .text .emoji {
+  width: 16px;
+}
+.timeLinePostTooltip .post:last-child {
+  padding-bottom: 0px;
+  border-bottom: none;
+  margin-bottom: 0;
+}

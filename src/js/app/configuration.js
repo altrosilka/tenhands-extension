@@ -12,4 +12,8 @@ angular.module('config', [])
   })
   .constant('__maxPollVariants', 10)
   .constant('__maxAttachments', 9)
-  .constant('__timelineGroupIntervals', 30 * 60)
+  .constant('__timelinePeriods', {
+    grouppingInterval: 30 * 60,
+    minOffset: -5 * 3600,
+    maxOffset: 24 * 3600,
+  })

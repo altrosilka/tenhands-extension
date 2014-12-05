@@ -1,0 +1,11 @@
+<div class="timeLinePostTooltip">
+  <div class="post clearfix" ng-repeat="post in posts">
+    <section ng-if="post.post_type">
+      <div class="left" vk-post-attachments="getAttachments(post)" first="true"></div>
+      <div class="right">
+        <div class="text" ng-bind-html="getText(post) | substring : 200 | parseVkText : true"></div>
+        <span class="date gray" ng-bind="post.date * 1000 | date : 'HH:mm'"></span>
+      </div>
+    </section>
+  </div>
+</div>

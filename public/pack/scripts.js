@@ -33,7 +33,11 @@ angular.module('config', [])
   })
   .constant('__maxPollVariants', 10)
   .constant('__maxAttachments', 9)
-  .constant('__timelineGroupIntervals', 30 * 60)
+  .constant('__timelinePeriods', {
+    grouppingInterval: 30 * 60,
+    minOffset: -5 * 3600,
+    maxOffset: 24 * 3600,
+  })
 App.run([
   '__vkAppId',
   'S_chrome',
@@ -72,61 +76,6 @@ App.run([
     })
   }
 ]);
-
-angular.module('App').filter('findGroups', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) { 
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  }
-});
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
-angular.module('App').filter('toGIS', function() {
-  return function(time) {
-    if (!time) {
-      return '';
-    }
-    var out = '';
-    var s_last = time % 60;
-    var s_minutes = (time - s_last) / 60;
-    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
-    return out;
-  }
-});
 
 angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
   var ctr = this;
@@ -723,7 +672,8 @@ angular.module('App').directive('postsTimeline', [
   '$q',
   'S_vk',
   'S_utils',
-  function($q, S_vk, S_utils) {
+  '__timelinePeriods',
+  function($q, S_vk, S_utils, __timelinePeriods) {
     return {
       scope: {
         time: '=',
@@ -753,7 +703,7 @@ angular.module('App').directive('postsTimeline', [
             old: S_vk.request('newsfeed.get', {
               filters: 'post',
               return_banned: 1,
-              start_time: $scope.time - 5 * 3600,
+              start_time: $scope.time + __timelinePeriods.minOffset,
               source_ids: '-' + $scope.groupId,
               count: 100
             }),
@@ -765,6 +715,9 @@ angular.module('App').directive('postsTimeline', [
           }).then(function(resp) {
             var items = [];
 
+            var min = S_utils.roundToHour($scope.time + __timelinePeriods.minOffset);
+            var max = S_utils.roundToHour($scope.time + __timelinePeriods.maxOffset);
+
             if (resp.old.response) {
               items = items.concat(resp.old.response.items);
             }
@@ -772,15 +725,22 @@ angular.module('App').directive('postsTimeline', [
               items = items.concat(resp.new.response.items);
             }
 
-            if (items.length === 0){
-              $element.find('.chart').html('<div class="empty">Нет данных за выбранный период<span>Это значит, что последние 5 часов в группе не было записей и мы не нашли отложенных постов</span></div>');
+            items = S_utils.itemsInInterval(items, min, max);
+
+            if (items.length === 0) {
+              $element.find('.chart').html('<div class="empty">Нет данных за выбранный период<span>Это значит, что в интервале с '+S_utils.unixTo($scope.time + __timelinePeriods.minOffset,'HH:mm / D.MM')+' по '+S_utils.unixTo($scope.time + __timelinePeriods.maxOffset,'HH:mm / D.MM')+' мы не нашли опубликованных или отложенных записей</span></div>');
               $scope.loading = false;
               return;
             } else {
               $element.find('.chart').html();
             }
 
-            var seriesInfo = S_utils.remapForTimeline(items);
+
+
+
+
+
+            var seriesInfo = S_utils.remapForTimeline(items, min, max);
 
             chart = $element.find('.chart').highcharts({
               "title": {
@@ -792,20 +752,21 @@ angular.module('App').directive('postsTimeline', [
                 "enabled": false
               },
               "xAxis": {
-                startOnTick: false,
-                endOnTick: false,
-
+                startOnTick: true,
+                endOnTick: true,
+                minPadding: 0,
+                minPadding: 0,
                 "type": "datetime",
                 "minTickInterval": 1000 * 60 * 60,
                 "tickInterval": 1000 * 60 * 60,
-                min: ($scope.time - 5 * 3600) * 1000,
-                max: ($scope.time + 24 * 3600) * 1000,
+                min: min * 1000,
+                max: max * 1000,
                 labels: {
                   style: {
                     fontSize: '8px'
                   }
-                }, 
-                dateTimeLabelFormats:{
+                },
+                dateTimeLabelFormats: {
                   day: '%e %b'
                 }
               },
@@ -825,35 +786,60 @@ angular.module('App').directive('postsTimeline', [
                   "enabled": false
                 }
               },
-              "tooltip": {
-                "enabled": true
+              tooltip: {
+                shared: true,
+                backgroundColor: '#fff',
+                formatter: function() {
+                  return S_utils.formatterTimelineTooltip(this.x, seriesInfo.groupped);
+                },
+                useHTML: true,
+                borderColor: 'transparent',
+                backgroundColor: 'transparent',
+                borderRadius: 0,
+                shadow: false
               },
               "credits": {
                 "enabled": false
               },
               "plotOptions": {
                 "column": {
-                  stacking: "normal",
                   pointWidth: 11,
-                  animation: false
+                  animation: false,
+                  states: {
+                    hover: {
+                      color: '#990000'
+                    }
+                  }
                 }
               },
               "chart": {
                 "defaultSeriesType": "column",
                 "borderRadius": 0,
                 backgroundColor: 'transparent',
-                height: 22 * seriesInfo.max + 50
+                height: 22 * seriesInfo.max + 50,
+                events: {
+                  load: function() {
+                    var ren = this.renderer,
+                      color = 'rgba(255,0,0,0.2)';
+
+                    var offset = this.xAxis[0].left + 5 + ($scope.time * 1000 - this.xAxis[0].min) / (this.xAxis[0].max - this.xAxis[0].min) * this.xAxis[0].width;
+
+                    ren.path(['M', offset, 0, 'L', offset, 185])
+                      .attr({
+                        'stroke-width': 2,
+                        stroke: color
+                      })
+                      .add();
+                  }
+                }
               },
               "subtitle": {},
               "colors": ["#2B587A"],
               "series": seriesInfo.series
             });
-            //chart.find('text:contains("Highcharts.com")').remove();
             $scope.loading = false;
           });
         }
-
-
       }
     }
   }
@@ -1138,6 +1124,125 @@ angular.module('App').directive('videoCover', function() {
       templateUrl: 'templates/directives/videoCover.html'
     };
   });
+angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_utils) {
+  return {
+    scope:{
+      attachments: '=vkPostAttachments',
+      first: '='
+    },
+    templateUrl: 'templates/directives/vkPostAttachments.html',
+    link: function($scope, $element) {
+      if ($scope.first === true){
+        $scope.attach = S_utils.findFirstAttach($scope.attachments);
+      }
+    }
+  }
+}]);
+ 
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
+
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
+
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  }
+});
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('App').filter('parseVkText', [function() {
+  return function(input, removeLink) {
+    if (!input) {
+      return;
+    }
+
+    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
+    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
+
+
+
+    var bytes = [];
+
+    for (var i = 0; i < input.length; ++i) {
+      bytes.push(input.charCodeAt(i));
+    }
+
+    var ranges = [
+      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
+      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
+      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
+    ];
+
+    input = emojiParseInText(input);
+      
+    var text = input;
+
+    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
+    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
+
+    return text;
+  }
+}]);
+
+angular.module('App').filter('substring', [function() {
+  return function(text, len) {
+    len = len || 100;
+    if (!text) {
+      return;
+    } 
+
+    if (text.length > len){
+      return text.substring(0,len);
+    } else {
+      return text;
+    }
+  }
+}]);
+ 
+angular.module('App').filter('toGIS', function() {
+  return function(time) {
+    if (!time) {
+      return '';
+    }
+    var out = '';
+    var s_last = time % 60;
+    var s_minutes = (time - s_last) / 60;
+    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
+    return out;
+  }
+});
+
 angular.module('chromeTools', [])
   .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
     var service = {};
@@ -1436,8 +1541,11 @@ angular.module('utilsTools', [])
   .service('S_utils', [
     '$modal',
     '$q',
-    '__timelineGroupIntervals',
-    function($modal, $q, __timelineGroupIntervals) {
+    '$templateCache',
+    '$compile',
+    '$rootScope',
+    '__timelinePeriods',
+    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods) {
       var service = {};
 
       service.getUrlParameterValue = function(url, parameterName) {
@@ -1670,20 +1778,80 @@ angular.module('utilsTools', [])
         return ret.join(',');
       }
 
-      service.remapForTimeline = function(items) {
-        var raz, q;
+      service.formatterTimelineTooltip = function(x, groupped) {
+        var info = groupped[Math.round(x/1000)];
+
+        if (!info){
+          return 'Не можем получить данные :(';
+        }
+
+        var scope = $rootScope.$new();
+        scope.posts = info;
+        
+        scope.getAttachments = function(post){
+          return post.attachments || post.copy_history[0].attachments;
+        }
+
+        scope.getText = function(post){
+          return post.text || post.copy_history[0].text;
+        }
+
+        var el = $compile($templateCache.get('templates/other/timeLinePostTooltip.html'))(scope);
+        scope.$digest();
+        return el[0].outerHTML;
+      }
+
+      service.findFirstAttach = function(attaches){
+        if (!attaches || attaches.length === 0){
+          return;
+        }
+
+        var priority = ['photo', 'video', 'poll'];
+        _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0; 
+          }
+        });
+        console.log(attaches[0]);
+        return attaches[0];
+      }
+
+      service.roundToHour = function(time){
+        var inter = 3600; 
+        var raz = time % inter;
+        return time - raz;
+      }
+
+      service.itemsInInterval = function(items, min, max){
+        return _.filter(items,function(item){
+          return item.date >= min && item.date <= max;
+        });
+      }
+
+      service.remapForTimeline = function(items, min, max) {
+        var raz, q, inter = __timelinePeriods.grouppingInterval;
+        var itemsFilterd = [];
         _.forEach(items, function(item) {
           q = item.date;
-          raz = q % __timelineGroupIntervals;
-          if (raz / __timelineGroupIntervals > 0.5) {
-            q += __timelineGroupIntervals - raz;
+          if (q > max || q < min){
+            return;
+          }
+          raz = q % inter;
+          if (raz / inter > 0.5) {
+            q += inter - raz;
           } else {
             q -= raz;
           }
           item.groupDate = q;
+          itemsFilterd.push(item);
         });
 
-        var groupped = _.groupBy(items, function(item) {
+        var groupped = _.groupBy(itemsFilterd, function(item) {
           return item.groupDate;
         });
         var series = _.map(groupped, function(val, i) {
@@ -1706,14 +1874,20 @@ angular.module('utilsTools', [])
             arr.push([e[0], (e[1] > i) ? 1 : 0]);
           });
           stackedSeries.push({
-            data: arr
+            data: arr,
+            stacking: "normal"
           });
         }
 
         return {
           max: max,
-          series: stackedSeries
+          series: stackedSeries,
+          groupped: groupped
         };
+      }
+
+      service.unixTo = function(time, format){
+        return moment(time, 'X').format(format);
       }
 
       return service;
@@ -1871,6 +2045,162 @@ angular.module('vkTools', [])
       return service;
     }
   ]);
+
+(function replaceEmojiWithImages(root) {
+
+  var REGIONAL_INDICATOR_A = parseInt("1f1e6", 16),
+    REGIONAL_INDICATOR_Z = parseInt("1f1ff", 16),
+    IMAGE_HOST = "assets.github.com",
+    IMAGE_PATH = "/images/icons/emoji/unicode/",
+    IMAGE_EXT = ".png";
+
+  // String.fromCodePoint is super helpful
+  if (!String.fromCodePoint) {
+    /*!
+     * ES6 Unicode Shims 0.1
+     * (c) 2012 Steven Levithan <http://slevithan.com/>
+     * MIT License
+     **/
+    String.fromCodePoint = function fromCodePoint() {
+      var chars = [],
+        point, offset, units, i;
+      for (i = 0; i < arguments.length; ++i) {
+        point = arguments[i];
+        offset = point - 0x10000;
+        units = point > 0xFFFF ? [0xD800 + (offset >> 10), 0xDC00 + (offset & 0x3FF)] : [point];
+        chars.push(String.fromCharCode.apply(null, units));
+      }
+      return chars.join("");
+    }
+  }
+
+  /**
+   * Create a treewalker to walk an element and return an Array of Text Nodes.
+   * This function is (hopefully) smart enough to exclude unwanted text nodes
+   * like whitespace and script tags.
+   * https://gist.github.com/mwunsch/4693383
+   */
+  function getLegitTextNodes(element) {
+    if (!document.createTreeWalker) return [];
+
+    var blacklist = ['SCRIPT', 'OPTION', 'TEXTAREA'],
+      textNodes = [],
+      walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        function excludeBlacklistedNodes(node) {
+          if (blacklist.indexOf(node.parentElement.nodeName.toUpperCase()) >= 0) return NodeFilter.FILTER_REJECT;
+          if (String.prototype.trim && !node.nodeValue.trim().length) return NodeFilter.FILTER_SKIP;
+          return NodeFilter.FILTER_ACCEPT;
+        },
+        false
+      );
+
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    return textNodes;
+  }
+
+  /**
+   * Determine if this browser supports emoji.
+   */
+  function doesSupportEmoji() {
+    var context, smiley;
+    if (!document.createElement('canvas').getContext) return;
+    context = document.createElement('canvas').getContext('2d');
+    if (typeof context.fillText != 'function') return;
+    smile = String.fromCodePoint(0x1F604); // :smile: String.fromCharCode(55357) + String.fromCharCode(56835)
+
+    context.textBaseline = "top";
+    context.font = "32px Arial";
+    context.fillText(smile, 0, 0);
+    return context.getImageData(16, 16, 1, 1).data[0] !== 0;
+  }
+
+  /**
+   * For a UTF-16 (JavaScript's preferred encoding...kinda) surrogate pair,
+   * return a Unicode codepoint.
+   */
+  function surrogatePairToCodepoint(lead, trail) {
+    return (lead - 0xD800) * 0x400 + (trail - 0xDC00) + 0x10000;
+  }
+
+  /**
+   * Get an Image element for an emoji codepoint (in hex).
+   */
+  function getImageForCodepoint(hex) {
+    var img = document.createElement('IMG');
+    
+    img.src = "http://" + IMAGE_HOST + IMAGE_PATH + hex + IMAGE_EXT;
+    img.className = "emoji";
+    return img;
+  }
+
+  /**
+   * Convert an HTML string into a DocumentFragment, for insertion into the dom.
+   */
+  function fragmentForString(htmlString) {
+    var tmpDoc = document.createElement('DIV'),
+      fragment = document.createDocumentFragment(),
+      childNode;
+
+    tmpDoc.innerHTML = htmlString;
+
+    while (childNode = tmpDoc.firstChild) {
+      fragment.appendChild(childNode);
+    }
+    return fragment;
+  }
+
+  /**
+   * Iterate through a list of nodes, find emoji, replace with images.
+   */
+  function emojiReplace(nodes) {
+    var PATTERN = /([\ud800-\udbff])([\udc00-\udfff])/g;
+
+    nodes.forEach(function(node) {
+      var replacement,
+        value = node.nodeValue,
+        matches = value.match(PATTERN);
+ 
+      if (matches) {
+        replacement = value.replace(PATTERN, function(match, p1, p2) {
+          var codepoint = surrogatePairToCodepoint(p1.charCodeAt(0), p2.charCodeAt(0)),
+            img = getImageForCodepoint(codepoint.toString(16));
+          return img.outerHTML;
+        });
+
+        node.parentNode.replaceChild(fragmentForString(replacement), node);
+      }
+    });
+  }
+
+
+  function emojiReplaceText(value) {
+    var PATTERN = /([\ud800-\udbff])([\udc00-\udfff])/g;
+
+    var replacement,
+      matches = value.match(PATTERN);
+
+    if (matches) {
+      replacement = value.replace(PATTERN, function(match, p1, p2) {
+        var codepoint = surrogatePairToCodepoint(p1.charCodeAt(0), p2.charCodeAt(0)),
+          img = getImageForCodepoint(codepoint.toString(16));
+        return img.outerHTML;
+      });
+      value = replacement;
+    }
+    return value;
+  }
+ 
+  // Call everything we've defined
+  //if (!doesSupportEmoji()) {
+  //  emojiReplace(getLegitTextNodes(document.body));
+  //}
+
+  window.emojiParseInText = emojiReplaceText;
+
+}(this));
 
 if (!window['googleLT_']) {
   window['googleLT_'] = (new Date()).getTime();
