@@ -2,8 +2,9 @@ angular.module('App').directive('postsTimeline', [
   '$q',
   'S_vk',
   'S_utils',
+  'S_selfapi',
   '__timelinePeriods',
-  function($q, S_vk, S_utils, __timelinePeriods) {
+  function($q, S_vk, S_utils, S_selfapi, __timelinePeriods) {
     return {
       scope: {
         time: '=',
@@ -28,7 +29,16 @@ angular.module('App').directive('postsTimeline', [
         });
 
         function refresh() {
+
+          if ($scope.loading){
+            return;
+          }
           $scope.loading = true;
+
+
+          var min = S_utils.roundToHour($scope.time + __timelinePeriods.minOffset);
+          var max = S_utils.roundToHour($scope.time + __timelinePeriods.maxOffset);
+
           $q.all({
             old: S_vk.request('newsfeed.get', {
               filters: 'post',
@@ -41,12 +51,11 @@ angular.module('App').directive('postsTimeline', [
               owner_id: '-80384539', //'-' + $scope.groupId,
               count: 100,
               filter: 'postponed'
-            })
+            }),
+            fromServer: S_selfapi.getPostsInPeriod(80384539, S_utils.getCurrentTime(), max)
           }).then(function(resp) {
-            var items = [];
-
-            var min = S_utils.roundToHour($scope.time + __timelinePeriods.minOffset);
-            var max = S_utils.roundToHour($scope.time + __timelinePeriods.maxOffset);
+            //debugger
+            var items = S_utils.serverPostsToVkLike(resp.fromServer.data.posts);
 
             if (resp.old.response) {
               items = items.concat(resp.old.response.items);
@@ -58,17 +67,12 @@ angular.module('App').directive('postsTimeline', [
             items = S_utils.itemsInInterval(items, min, max);
 
             if (items.length === 0) {
-              $element.find('.chart').html('<div class="empty">Нет данных за выбранный период<span>Это значит, что в интервале с '+S_utils.unixTo($scope.time + __timelinePeriods.minOffset,'HH:mm / D.MM')+' по '+S_utils.unixTo($scope.time + __timelinePeriods.maxOffset,'HH:mm / D.MM')+' мы не нашли опубликованных или отложенных записей</span></div>');
+              $element.find('.chart').html('<div class="empty">Нет данных за выбранный период<span>Это значит, что в интервале с ' + S_utils.unixTo($scope.time + __timelinePeriods.minOffset, 'HH:mm / D.MM') + ' по ' + S_utils.unixTo($scope.time + __timelinePeriods.maxOffset, 'HH:mm / D.MM') + ' мы не нашли опубликованных или отложенных записей</span></div>');
               $scope.loading = false;
               return;
             } else {
               $element.find('.chart').html();
             }
-
-
-
-
-
 
             var seriesInfo = S_utils.remapForTimeline(items, min, max);
 

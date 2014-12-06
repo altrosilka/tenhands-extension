@@ -8,7 +8,9 @@
   <title></title>
 </head>
 
-<body data-ng-app="App" data-ng-controller="C_main as ctr" data-ng-class="{'loaded': ctr.dataIsLoaded}">
+<body data-ng-app="App" data-ng-controller="C_main as ctr" data-ng-class="{'loaded': ctr.dataIsLoaded, 'min':ctr.minState}">
+
+
   <div class="layerFs" ng-class="{'active':ctr.postingProcess}">
     <div class="info">
       Публикуем запись
@@ -38,6 +40,15 @@
     </div>
   </div>
   <div class="filterArea" ng-class="{'blur':ctr.postingProcess}">
+
+    <div class="resizer" ng-click="ctr.resizeIframe()" tooltip="изменить размер окна расширения" tooltip-placement="bottom" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
+      <i class="fa fa-bars"></i>
+    </div>
+
+    <div class="remover" ng-click="ctr.closeIframe()" tooltip="закрыть расширение" tooltip-placement="left" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
+      <i class="fa fa-times"></i>
+    </div>
+
     <section class="window">
       <header>
         <span class="sharePhrase">Поделиться записью в</span>
@@ -54,14 +65,14 @@
         </span>
         <span class="fromApp" ng-class="{'active':ctr.postingApp}">
           <span class="sharePhrase">от приложения</span>
-          <img ng-src="{{ctr.postingApp.icon_50}}">
-          <span class="title" ng-bind="ctr.postingApp.title"></span>
+        <img ng-src="{{ctr.postingApp.icon_50}}">
+        <span class="title" ng-bind="ctr.postingApp.title"></span>
         </span>
       </header>
 
       <section class="body clearfix">
         <div class="leftColumn">
-          <textarea class="postArea" ng-model="ctr.text"></textarea>
+          <textarea class="postArea" autosize-textarea ng-model="ctr.text"></textarea>
           <div class="relative">
 
             <div select-crop-area selected-attachments="ctr.selectedAttachments" processing-attachments="ctr.processingAttachments" attachments="ctr.attachments" main-mode="true"></div>
@@ -132,11 +143,11 @@
         <div class="checkboxList controls-list">
           <label>
             <input type="checkbox" ng-model="ctr.assigned">
-            <span tooltip="под записью появится подпись этого аккаунта" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true">Подпись</span>
+            <span tooltip="под записью появится подпись этого аккаунта" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Подпись</span>
           </label>
           <label>
             <input type="checkbox" ng-model="ctr.notClose">
-            <span tooltip="например, можно запостить то же самое в другую группу" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true">Не закрывать</span>
+            <span tooltip="например, можно запостить то же самое в другую группу" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Не закрывать</span>
           </label>
         </div>
       </footer>

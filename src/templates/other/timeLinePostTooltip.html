@@ -1,6 +1,6 @@
 <div class="timeLinePostTooltip">
   <div class="post clearfix" ng-repeat="post in posts">
-    <section ng-if="post.post_type">
+    <section>
       <div class="left" vk-post-attachments="getAttachments(post)" first="true"></div>
       <div class="right">
         <div class="text" ng-bind-html="getText(post) | substring : 200 | parseVkText : true"></div>

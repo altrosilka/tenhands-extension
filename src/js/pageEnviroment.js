@@ -2,6 +2,7 @@
 (function(w, d) {
 
   var __id = 'smm-UEe9vE-';
+  var __postMessagePrepend = 'Ejiw9494WvweejgreWCEGHeeE_FF_';
 
   var oldEvent;
 
@@ -13,17 +14,12 @@
     layout.setAttribute("id", id);
     layout.setAttribute("class", __id + "layout");
     layout.setAttribute("style", "");
-    var contolButtons = d.createElement("div");
-    contolButtons.setAttribute("class", __id + 'contolButtons');
-    layout.appendChild(contolButtons);
-    var mover = d.createElement("div");
-    mover.innerHTML = 'свернуть';
-    mover.setAttribute("class", __id + 'mover');
-    contolButtons.appendChild(mover);
-    var closer = d.createElement("div");
-    closer.innerHTML = 'закрыть';
-    closer.setAttribute("class", __id + "closer");
-    contolButtons.appendChild(closer);
+
+    var paddingArea = d.createElement("div");
+    paddingArea.setAttribute("style", "height:" + (window.innerHeight/2) + "px");
+    paddingArea.setAttribute("id", __id + "additionalPadding");
+    d.body.appendChild(paddingArea);
+
     var iframe = d.createElement("iframe");
     iframe.src = chrome.extension.getURL("pages/createPost.html");
     iframe.setAttribute("style", "width:100%;height:100%;z-index:1;position:relative;");
@@ -48,18 +44,6 @@
     layout.appendChild(selectHelper);
 
 
-    mover.addEventListener('click', function() {
-      var q = layout.getAttribute('data-small-view');
-      if (q === null) {
-        layout.setAttribute('data-small-view', 'true');
-        layout.style.height = "50%";
-      } else {
-        layout.removeAttribute('data-small-view');
-        layout.style.height = "100%";
-      }
-    });
-
-    closer.addEventListener('click', close);
 
     document.body.addEventListener("mousedown", function(e) {
       oldEvent = e;
@@ -116,11 +100,22 @@
     var key = e.message ? "message" : "data";
     var data = e[key];
 
-    if (data === 'EjvibWvh837VRRHd_close') {
+    if (data === isMessage('close')) {
       close();
-      setTimeout(function(){
+      setTimeout(function() {
         d.body.removeChild(layout);
-      },450);
+      }, 450);
+    }
+
+    if (data === isMessage('toggle')) {
+      var q = layout.getAttribute('data-small-view');
+      if (q === null) {
+        layout.setAttribute('data-small-view', 'true');
+        layout.style.height = "50%";
+      } else {
+        layout.removeAttribute('data-small-view');
+        layout.style.height = "100%";
+      }
     }
   }, false);
 
@@ -129,7 +124,7 @@
     elem.innerHTML = text;
     elem.setAttribute('style', "background-color: #EEE; display: inline-block; margin: 0 5px; padding: 3px 6px; border: 1px solid #AAA; cursor: pointer;");
     elem.addEventListener("click", function(e) {
-      
+
     });
     return elem;
   }
@@ -155,8 +150,13 @@
     layout.style.transform = 'translateY(100px)';
     layout.style.opacity = '0';
     layout.style.visibility = 'hidden';
+    d.removeChild(d.getElementById(__id + "additionalPadding"));
     setTimeout(function() {
       layout.style.display = 'none';
     }, 400);
+  }
+
+  function isMessage(code) {
+    return __postMessagePrepend + code;
   }
 })(window, document);

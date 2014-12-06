@@ -7,9 +7,11 @@ angular.module('config', [])
       getAssignKey: 'user/getAssignKey',
       uploadPhoto: 'posts/uploadImage',
       sendPost: 'posts/create',
-      getOverrideKey: 'groups/getOverrideKey'
+      getOverrideKey: 'groups/getOverrideKey',
+      getPostsInPeriod: 'posts/getInPeriod'
     }
   })
+  .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
   .constant('__maxPollVariants', 10)
   .constant('__maxAttachments', 9)
   .constant('__timelinePeriods', {

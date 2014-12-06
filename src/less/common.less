@@ -7,6 +7,16 @@ body {
   font-weight: 300;
   background-color: transparent;
   font-size: 12px;
+  &:before {
+    content: '';
+    height: 1px;
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    background: #4F73AB;
+    z-index: 2000;
+  }
   &.loaded {
     .filterArea {
       transform: translateY(0px);
@@ -80,20 +90,53 @@ a {
   }
 }
 .filterArea {
-  border-top: 1px solid #4F73AB;
   background-color: #F0F2F5;
   opacity: 0;
   visibility: hidden;
+  padding: 60px 0;
   transform: translateY(100px);
   transition: 0.4s;
+  position: relative;
   &.blur {
     -webkit-filter: blur(3px) grayscale(1);
     opacity: 0.4;
   }
+  .resizer, .remover {
+    opacity: 0.4;
+    transition: 0.2s;
+    &:hover {
+      opacity: 1;
+      cursor: pointer;
+    }
+  }
+  .resizer {
+    position: absolute;
+    width: 40px;
+    margin-left: -20px;
+    top: 10px;
+    left: 50%;
+    text-align: center;
+    font-size: 14px;
+  }
+  .remover {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 16px;
+  }
+}
+body.min {
+  .filterArea {
+    /*background-color: rgba(250, 250, 255, 0.94);*/
+    
+    .resizer {
+      color: #4F73AB;
+    }
+  }
 }
 .window {
+  margin: auto;
   width: 960px;
-  margin: 40px auto;
   padding-bottom: 300px;
   h2 {
     font-size: 17px;
@@ -236,6 +279,9 @@ a {
       line-height: 18px;
       outline: none;
       margin-bottom: 10px;
+      resize: none;
+      max-height: 400px;
+      overflow: auto!important;
     }
     .separator {
       height: 1px solid #eee;

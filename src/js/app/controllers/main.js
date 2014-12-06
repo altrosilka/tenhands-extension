@@ -4,9 +4,10 @@ angular.module('App').controller('C_main', [
   '$timeout',
   'S_utils',
   'S_selfapi',
+  'S_eventer',
   'S_vk',
   '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_vk, __maxAttachments) {
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
     var ctr = this;
 
     ctr.minDate = new Date();
@@ -194,12 +195,13 @@ angular.module('App').controller('C_main', [
 
       _.forEach(ctr.attachments, function(q, i) {
         switch (q.type) {
-          case "image":
+          case "photo":
             {
               if (q.photo) {
-                postInfo[i] = _.extend({
-                  type: 'image'
-                }, q.photo);
+                postInfo[i] = {
+                  type: 'photo',
+                  photo: q.photo
+                };
               } else {
                 ctr.processingAttachments.push(q);
                 S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
@@ -208,9 +210,10 @@ angular.module('App').controller('C_main', [
                     return qz.id === q.id;
                   })[0];
 
-                  postInfo[i] = _.extend({
-                    type: 'image'
-                  }, photo);
+                  postInfo[i] = {
+                    type: 'photo',
+                    photo: photo
+                  };
 
                   if (ctr.processingAttachments.length === 0) {
                     out(postInfo);
@@ -221,7 +224,10 @@ angular.module('App').controller('C_main', [
             }
           case "video":
             {
-              postInfo[i] = q;
+              postInfo[i] = {
+                type: 'video',
+                video: q.video
+              };
               break;
             }
           case "poll":
@@ -236,9 +242,10 @@ angular.module('App').controller('C_main', [
                     return qz.type === 'poll';
                   })[0];
 
-                  postInfo[i] = _.extend({
-                    type: 'poll'
-                  }, poll);
+                  postInfo[i] = {
+                    type: 'poll',
+                    poll: poll
+                  };
 
                   if (ctr.processingAttachments.length === 0) {
                     out(postInfo);
@@ -261,10 +268,6 @@ angular.module('App').controller('C_main', [
         var text = ctr.text;
         var postingTime = ctr.postingUnixTime;
         var assigned = (ctr.assigned) ? 1 : 0;
-
-
-
-
 
         if (ctr.postingNow) {
           var attas = S_utils.getAttachmentsString(attachments);
@@ -289,20 +292,20 @@ angular.module('App').controller('C_main', [
                 if (ctr.notClose) {
                   ctr.postingProcess = false;
                 } else {
-                  parent.postMessage("EjvibWvh837VRRHd_close", "*");
+                  S_eventer.sayToFrame('close');
                 }
               });
             });
           }
+        } else {
+          S_selfapi.sendPost(owner_id, text, attachments, postingTime, assigned).then(function(resp) {
+            if (ctr.notClose) {
+              ctr.postingProcess = false;
+            } else {
+              S_eventer.sayToFrame('close');
+            }
+          });
         }
-
-        S_selfapi.sendPost(owner_id, text, attachments, postingTime, assigned).then(function(resp) {
-          if (ctr.notClose) {
-            ctr.postingProcess = false;
-          } else {
-            parent.postMessage("EjvibWvh837VRRHd_close", "*");
-          }
-        });
       }
     }
 
@@ -343,6 +346,17 @@ angular.module('App').controller('C_main', [
           }
       }
 
+    }
+
+
+    /* enviroment */
+    ctr.resizeIframe = function() {
+      ctr.minState = !ctr.minState;
+      S_eventer.sayToFrame('toggle');
+    }
+
+    ctr.closeIframe = function() {
+      S_eventer.sayToFrame('close');
     }
 
     return ctr;

@@ -26219,8 +26219,11 @@ angular.module('utilsTools', [])
   .service('S_utils', [
     '$modal',
     '$q',
-    '__timelineGroupIntervals',
-    function($modal, $q, __timelineGroupIntervals) {
+    '$templateCache',
+    '$compile',
+    '$rootScope',
+    '__timelinePeriods',
+    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods) {
       var service = {};
 
       service.getUrlParameterValue = function(url, parameterName) {
@@ -26453,20 +26456,80 @@ angular.module('utilsTools', [])
         return ret.join(',');
       }
 
-      service.remapForTimeline = function(items) {
-        var raz, q;
+      service.formatterTimelineTooltip = function(x, groupped) {
+        var info = groupped[Math.round(x/1000)];
+
+        if (!info){
+          return 'Не можем получить данные :(';
+        }
+
+        var scope = $rootScope.$new();
+        scope.posts = info;
+        
+        scope.getAttachments = function(post){
+          return post.attachments || post.copy_history[0].attachments;
+        }
+
+        scope.getText = function(post){
+          return post.text || post.copy_history[0].text;
+        }
+
+        var el = $compile($templateCache.get('templates/other/timeLinePostTooltip.html'))(scope);
+        scope.$digest();
+        return el[0].outerHTML;
+      }
+
+      service.findFirstAttach = function(attaches){
+        if (!attaches || attaches.length === 0){
+          return;
+        }
+
+        var priority = ['photo', 'video', 'poll'];
+        _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0; 
+          }
+        });
+        console.log(attaches[0]);
+        return attaches[0];
+      }
+
+      service.roundToHour = function(time){
+        var inter = 3600; 
+        var raz = time % inter;
+        return time - raz;
+      }
+
+      service.itemsInInterval = function(items, min, max){
+        return _.filter(items,function(item){
+          return item.date >= min && item.date <= max;
+        });
+      }
+
+      service.remapForTimeline = function(items, min, max) {
+        var raz, q, inter = __timelinePeriods.grouppingInterval;
+        var itemsFilterd = [];
         _.forEach(items, function(item) {
           q = item.date;
-          raz = q % __timelineGroupIntervals;
-          if (raz / __timelineGroupIntervals > 0.5) {
-            q += __timelineGroupIntervals - raz;
+          if (q > max || q < min){
+            return;
+          }
+          raz = q % inter;
+          if (raz / inter > 0.5) {
+            q += inter - raz;
           } else {
             q -= raz;
           }
           item.groupDate = q;
+          itemsFilterd.push(item);
         });
 
-        var groupped = _.groupBy(items, function(item) {
+        var groupped = _.groupBy(itemsFilterd, function(item) {
           return item.groupDate;
         });
         var series = _.map(groupped, function(val, i) {
@@ -26489,14 +26552,20 @@ angular.module('utilsTools', [])
             arr.push([e[0], (e[1] > i) ? 1 : 0]);
           });
           stackedSeries.push({
-            data: arr
+            data: arr,
+            stacking: "normal"
           });
         }
 
         return {
           max: max,
-          series: stackedSeries
+          series: stackedSeries,
+          groupped: groupped
         };
+      }
+
+      service.unixTo = function(time, format){
+        return moment(time, 'X').format(format);
       }
 
       return service;
@@ -26511,12 +26580,18 @@ angular.module('config', [])
       saveExtensionToken: 'user/saveExtensionToken',
       getAssignKey: 'user/getAssignKey',
       uploadPhoto: 'posts/uploadImage',
-      sendPost: 'posts/create'
+      sendPost: 'posts/create',
+      getOverrideKey: 'groups/getOverrideKey'
     }
   })
+  .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
   .constant('__maxPollVariants', 10)
   .constant('__maxAttachments', 9)
-  .constant('__timelineGroupIntervals', 30 * 60)
+  .constant('__timelinePeriods', {
+    grouppingInterval: 30 * 60,
+    minOffset: -5 * 3600,
+    maxOffset: 24 * 3600,
+  })
 angular.module('mock', [])
 .service('S_eventer', [function() {}])
 .service('$modal', [function() {}]);

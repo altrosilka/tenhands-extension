@@ -37,11 +37,23 @@ angular.module('App')
         });
       }
 
+      service.getPostsInPeriod = function(groupId, from, to) {
+        return $http({
+          url: base + __api.paths.getPostsInPeriod,
+          method: 'GET',
+          params: {
+            groupId: groupId,
+            from: from,
+            to: to
+          }
+        });
+      }
+
       service.getOverrideKey = function(groupId) {
         return $http({
           url: base + __api.paths.getOverrideKey,
           method: 'GET',
-          params:{
+          params: {
             groupId: groupId
           }
         });

@@ -41,7 +41,8 @@ var vendorLibs = [
   './bower_components/momentjs/moment.js',
   './bower_components/angular-i18n/angular-locale_ru.js',
   './bower_components/angular-ui-select/dist/select.js',
-  './bower_components/highcharts/highcharts.src.js'
+  './bower_components/highcharts/highcharts.src.js',
+  './bower_components/jquery-autosize/jquery.autosize.js'
 ];
 
 var vendorLibsCss = [
