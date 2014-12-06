@@ -96,6 +96,8 @@
   var id = 'smm-layout-ekniERgebe39EWee';
   var layout = d.getElementById(id);
 
+  //d.body.classList.add(__id+'noscoll');
+
   if (layout === null) {
     layout = d.createElement("div");
     layout.setAttribute("id", id);

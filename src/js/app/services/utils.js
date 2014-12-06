@@ -220,7 +220,7 @@ angular.module('utilsTools', [])
           switch (attach.type) {
             case "photo":
               {
-                ret.push('photo' + attach.owner_id + '_' + attach.id);
+                ret.push('photo' + attach.photo.owner_id + '_' + attach.photo.id);
                 break;
               }
             case "video":

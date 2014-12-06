@@ -26359,7 +26359,7 @@ angular.module('utilsTools', [])
           clientHeight: photo.height,
           src: photo.photo_130,
           src_big: photo.photo_807 || photo.photo_604,
-          type: 'image'
+          type: 'photo'
         }
       }
 
@@ -26381,9 +26381,9 @@ angular.module('utilsTools', [])
           clientWidth: image.width,
           height: image.height,
           clientHeight: image.height,
-          src: image.tbUrl,
+          src: image.url,
           src_big: image.url,
-          type: 'image'
+          type: 'photo'
         }
       }
 
@@ -26418,7 +26418,7 @@ angular.module('utilsTools', [])
       }
 
       service.sortAttachments = function(attaches) {
-        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
+        var priority = ['photo', 'video', 'doc', 'audio', 'poll'];
         return _.sortBy(attaches, function(attach) {
           var i = _.findIndex(priority, function(q) {
             return q === attach.type;
@@ -26435,9 +26435,9 @@ angular.module('utilsTools', [])
         var ret = [];
         _.forEach(attaches, function(attach) {
           switch (attach.type) {
-            case "image":
+            case "photo":
               {
-                ret.push('photo' + attach.owner_id + '_' + attach.id);
+                ret.push('photo' + attach.photo.owner_id + '_' + attach.photo.id);
                 break;
               }
             case "video":
@@ -26457,20 +26457,24 @@ angular.module('utilsTools', [])
       }
 
       service.formatterTimelineTooltip = function(x, groupped) {
-        var info = groupped[Math.round(x/1000)];
+        var info = groupped[Math.round(x / 1000)];
 
-        if (!info){
+        if (!info) {
           return 'Не можем получить данные :(';
         }
 
         var scope = $rootScope.$new();
         scope.posts = info;
-        
-        scope.getAttachments = function(post){
-          return post.attachments || post.copy_history[0].attachments;
+
+        scope.getAttachments = function(post) {
+          if (post.copy_history){
+            return post.copy_history[0].attachments;
+          } else {
+            return post.attachments;
+          }
         }
 
-        scope.getText = function(post){
+        scope.getText = function(post) {
           return post.text || post.copy_history[0].text;
         }
 
@@ -26479,8 +26483,8 @@ angular.module('utilsTools', [])
         return el[0].outerHTML;
       }
 
-      service.findFirstAttach = function(attaches){
-        if (!attaches || attaches.length === 0){
+      service.findFirstAttach = function(attaches) {
+        if (!attaches || attaches.length === 0) {
           return;
         }
 
@@ -26492,21 +26496,21 @@ angular.module('utilsTools', [])
           if (i !== -1) {
             return i;
           } else {
-            return 0; 
+            return 0;
           }
         });
-        console.log(attaches[0]);
+
         return attaches[0];
       }
 
-      service.roundToHour = function(time){
-        var inter = 3600; 
+      service.roundToHour = function(time) {
+        var inter = 3600;
         var raz = time % inter;
         return time - raz;
       }
 
-      service.itemsInInterval = function(items, min, max){
-        return _.filter(items,function(item){
+      service.itemsInInterval = function(items, min, max) {
+        return _.filter(items, function(item) {
           return item.date >= min && item.date <= max;
         });
       }
@@ -26516,7 +26520,7 @@ angular.module('utilsTools', [])
         var itemsFilterd = [];
         _.forEach(items, function(item) {
           q = item.date;
-          if (q > max || q < min){
+          if (q > max || q < min) {
             return;
           }
           raz = q % inter;
@@ -26564,7 +26568,18 @@ angular.module('utilsTools', [])
         };
       }
 
-      service.unixTo = function(time, format){
+      service.serverPostsToVkLike = function(posts) {
+        return _.map(posts, function(q) {
+          return {
+            text: q.message,
+            date: q.publish_date,
+            type: 'own_server',
+            attachments: q.attachments
+          }
+        });
+      }
+
+      service.unixTo = function(time, format) {
         return moment(time, 'X').format(format);
       }
 
@@ -26581,7 +26596,8 @@ angular.module('config', [])
       getAssignKey: 'user/getAssignKey',
       uploadPhoto: 'posts/uploadImage',
       sendPost: 'posts/create',
-      getOverrideKey: 'groups/getOverrideKey'
+      getOverrideKey: 'groups/getOverrideKey',
+      getPostsInPeriod: 'posts/getInPeriod'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')

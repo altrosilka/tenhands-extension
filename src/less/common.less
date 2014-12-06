@@ -2,6 +2,27 @@ html, body {
   height: 100%;
   min-height: 100%;
 }
+::-webkit-scrollbar {
+  width: 0px;
+}
+::-webkit-scrollbar-track {
+  background: #ddd;
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  position: relative;
+  -webkit-transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:before {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  border: 5px solid transparent;
+  border-right: 5px solid #999;
+  content: ' ';
+  width: 1px;
+  height: 1px;
+}
 body {
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;

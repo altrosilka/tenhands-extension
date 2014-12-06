@@ -93,7 +93,7 @@ angular.module('App').controller('C_main', [
         }
 
         var images = _.map(data.images, function(q) {
-          q.type = 'image';
+          q.type = 'photo';
           q.id = S_utils.getRandomString(16);
           return q;
         });
@@ -103,7 +103,7 @@ angular.module('App').controller('C_main', [
         }
 
         if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title);
+          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
         }
       });
     });
