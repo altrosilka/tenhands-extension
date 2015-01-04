@@ -25,6 +25,7 @@
   ],
   "web_accessible_resources": [
     "pages/createPost.html",
+    "pages/afterInstall.html",
     "pack/page.css"
   ],
   "content_scripts": [
@@ -35,6 +36,17 @@
       "css": [
         "pack/page.css"
       ]
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "pack/cabinetExecute.js"
+      ],
+      "run_at": "document_end",
+      "all_frames": false
     }
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://*.vk.com https://*.google.com; object-src 'self'",

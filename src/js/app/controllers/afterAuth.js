@@ -4,12 +4,17 @@ angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 
 
   S_chrome.getVkToken().then(function(token) {
     if (token) {
-      S_selfapi.sendExtensionToken(token);
+      S_selfapi.sendExtensionToken(token).then(function(){
+        ctr.canClose = true;
+      });
     } else {
-      //TODO: обработчик
+      location.href = '/pages/afterInstall.html';
     }
   })
 
+  ctr.closeWindow = function(){
+    window.close();
+  }
 
   return ctr;
 }]);

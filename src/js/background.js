@@ -1,14 +1,13 @@
 angular.module('mock', [])
-.service('S_eventer', [function() {}])
-.service('$modal', [function() {}]);
-
-
+  .service('S_eventer', [function() {}])
+  .service('$modal', [function() {}])
+  .service('__postMessagePrepend', [function() {}]);
 
 var App = angular.module('App', [
   'config',
   'vkTools',
   'chromeTools',
-  'utilsTools', 
+  'utilsTools',
   'mock'
 ]);
 
@@ -19,17 +18,9 @@ App.run([
   function(__vkAppId, S_chrome, S_vk) {
 
 
-
     S_chrome.getVkToken().then(function(token) {
 
       S_vk.setToken(token);
-
-
-
-
-
-
-
 
 
     }, function() {
@@ -45,27 +36,27 @@ App.run([
       "contexts": ["image"],
       "onclick": saveImageToBankFromContext
     });
-
+ 
     chrome.contextMenus.create({
       "contexts": ["selection"],
-      "title":"Офомить пост из выделенного текста '%s'",
+      "title": "Офомить пост из выделенного текста '%s'",
       "onclick": openPostCreationFromContext
     });
 
     chrome.contextMenus.create({
       "contexts": ["image"],
-      "title":"ОФормить пост из изображения",
+      "title": "ОФормить пост из изображения",
       "onclick": openPostCreationFromContext
-    }); 
+    });
 
     chrome.browserAction.onClicked.addListener(function(tab) {
       if (tab) {
-        S_chrome.getVkToken().then(function(token){
+        S_chrome.getVkToken().then(function(token) {
           S_chrome.showExtensionPopup(tab);
-        },function(){
+        }, function() {
           S_chrome.openPreAuthPage();
         });
-        
+
       }
     });
 
@@ -85,99 +76,21 @@ App.run([
       S_chrome.showExtensionPopup(tab, info);
     }
 
+    function onPostMessage(next) {
+      var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+      var eventer = window[eventMethod];
+      var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+      eventer(messageEvent, function(e) {
+        var key = e.message ? "message" : "data";
+        var data = e[key];
 
-    function saveImageToBankFromContext(info, tab) {
+        next(e, data);
+      }, false);
+    }
 
-      var fileName = 'heelo';
-      var imageUrl = info.srcUrl;
-      
-
-      var accToken = S_vk.getToken();
-
-
-      var uploadHttpRequest = new XMLHttpRequest();
-
-      uploadHttpRequest.onload = function() {
-
-        var documentUploadServer = new XMLHttpRequest(),
-          requestFormData,
-          documentUploadRequest;
-
-        documentUploadServer.open('GET', 'https://api.vk.com/method/docs.getUploadServer?access_token=' + accToken);
-
-        documentUploadServer.onload = function() {
-
-          var answer = JSON.parse(documentUploadServer.response);
-
-          if (answer.error !== undefined) {
-            chrome.storage.local.remove('vkaccess_token');
-
-            document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Ops. Something went wrong. Please try again.</h1></center><br/>';
-            setTimeout(function() {
-              window.close();
-            }, 3000);
-
-            return;
-          }
-
-          if (answer.response.upload_url === undefined) {
-            thereIsAnError('documentUploadServer response problem', answer, imageUrl);
-
-            return;
-          }
-
-          requestFormData = new FormData();
-          documentUploadRequest = new XMLHttpRequest();
-
-          requestFormData.append("file", uploadHttpRequest.response, fileName);
-
-          documentUploadRequest.open('POST', answer.response.upload_url, true);
-
-          documentUploadRequest.onload = function() {
-
-            var answer = JSON.parse(documentUploadRequest.response),
-              documentSaveRequest;
-
-            if (answer.file === undefined) {
-              thereIsAnError('Upload blob problem response problem', answer, imageUrl);
-
-              return;
-            }
-
-            documentSaveRequest = new XMLHttpRequest();
-
-            documentSaveRequest.open('GET', 'https://api.vk.com/method/docs.save?file=' + answer.file + '&access_token=' + accToken);
-
-            documentSaveRequest.onload = function() {
-
-              var answer = JSON.parse(documentSaveRequest.response);
-
-              if (answer.response[0].url === undefined) {
-                thereIsAnError('documentSaveRequest - no file in response', answer, imageUrl);
-
-                return;
-              }
-
-              document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Successfully uploaded!</h1></center><br/>';
-              setTimeout(function() {
-                window.close();
-              }, 3000);
-            };
-
-            documentSaveRequest.send();
-          };
-
-          documentUploadRequest.send(requestFormData);
-        };
-
-        documentUploadServer.send();
-      };
-
-      uploadHttpRequest.responseType = 'blob';
-      uploadHttpRequest.open('GET', imageUrl);
-      uploadHttpRequest.send();
-
+    function saveImageToBankFromContext() {
 
     }
+
   }
 ]);

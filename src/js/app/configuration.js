@@ -3,7 +3,7 @@ angular.module('config', [])
   .constant('__api', {
     baseUrl: 'http://api.smm.dev/',
     paths: {
-      saveExtensionToken: 'user/saveExtensionToken',
+      saveExtensionToken: 'vkToken',
       getAssignKey: 'user/getAssignKey',
       uploadPhoto: 'posts/uploadImage',
       sendPost: 'posts/create',

@@ -37,6 +37,8 @@ body {
     left: 0;
     background: #4F73AB;
     z-index: 2000;
+    opacity:0;
+    transition:0.4s;
   }
   &.loaded {
     .filterArea {
@@ -44,6 +46,9 @@ body {
       opacity: 1;
       visibility: visible;
     }
+  }
+  &.min:before{
+    opacity:1;
   }
 }
 a {
@@ -111,7 +116,7 @@ a {
   }
 }
 .filterArea {
-  background-color: #F0F2F5;
+  background-color: #F4F4F4;
   opacity: 0;
   visibility: hidden;
   padding: 60px 0;

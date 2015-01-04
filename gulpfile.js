@@ -76,12 +76,12 @@ gulp.task('background-scripts', function() {
     .pipe(gulp.dest('./public/pack'))
 });
 
+
 gulp.task('dist-enviroment', function() {
   gulp.src(enviromentScripts)
     .pipe(concat('pageEnviroment.js'))
     .pipe(gulp.dest('./public/pack'))
 });
-
 
 
 

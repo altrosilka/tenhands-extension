@@ -186,11 +186,16 @@ body:before {
   left: 0;
   background: #4F73AB;
   z-index: 2000;
+  opacity: 0;
+  transition: 0.4s;
 }
 body.loaded .filterArea {
   transform: translateY(0px);
   opacity: 1;
   visibility: visible;
+}
+body.min:before {
+  opacity: 1;
 }
 a {
   color: #fff;
@@ -257,7 +262,7 @@ a:hover {
   font-weight: normal;
 }
 .filterArea {
-  background-color: #F0F2F5;
+  background-color: #F4F4F4;
   opacity: 0;
   visibility: hidden;
   padding: 60px 0;

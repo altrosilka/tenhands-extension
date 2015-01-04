@@ -6,11 +6,13 @@
   <link rel="stylesheet" type="text/css" href="/pack/styles.css" />
   <title></title>
 </head>
- 
+
 <body data-ng-app="App" data-ng-controller="C_afterAuth as ctr">
 
 
-Ты атворизовался, все круто!
+  Ты авторизовался, все круто!
+
+  <button class="btn btn-primary" ng-click="ctr.closeWindow()" ng-if="ctr.canClose">Закрыть окно</button>
 
   <script type="text/javascript" src="/pack/vendor.js"></script>
   <script type="text/javascript" src="/pack/templates.js"></script>
@@ -18,7 +20,3 @@
 </body>
 
 </html>
-
-
-
-
