@@ -26,10 +26,13 @@ angular.module('config', [])
     paths: {
       saveExtensionToken: 'vkToken',
       getAssignKey: 'user/getAssignKey',
-      uploadPhoto: 'posts/uploadImage',
-      sendPost: 'posts/create',
+      media: 'media',
       getOverrideKey: 'groups/getOverrideKey',
-      getPostsInPeriod: 'posts/getInPeriod'
+      getPostsInPeriod: 'posts/getInPeriod',
+      createPost: 'posts',
+      checkAuth: 'auth/check',
+      signIn: 'auth/signIn',
+      sets: 'sets'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
@@ -45,7 +48,8 @@ App.run([
   'S_chrome',
   'S_vk',
   'S_google',
-  function(__vkAppId, S_chrome, S_vk, S_google) {
+  'S_selfapi',
+  function(__vkAppId, S_chrome, S_vk, S_google, S_selfapi) {
 
     Highcharts.setOptions({
       global: {
@@ -75,7 +79,7 @@ App.run([
       }, function(response) {
         console.log(response.farewell);
       });
-    })
+    });
   }
 ]);
 
@@ -131,6 +135,24 @@ angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($
   return ctr;
 }]);
 
+angular.module('App').controller('C_login', [
+  '$scope',
+  'S_selfapi',
+  function($scope, S_selfapi) {
+    var ctr = this;
+
+    ctr.auth = function(email, password) {
+      S_selfapi.signIn(email, password).then(function(resp) {
+        if (resp.data.success){
+          $scope.ctr.checkAuth();
+        }
+      });
+    }
+
+    return ctr;
+  }
+]);
+
 angular.module('App').controller('C_main', [
   '$scope',
   '$compile',
@@ -142,6 +164,152 @@ angular.module('App').controller('C_main', [
   '__maxAttachments',
   function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
     var ctr = this;
+
+    ctr.checkAuth = function() {
+      S_selfapi.checkAuth().then(function(resp) {
+        if (resp.data.success) {
+          ctr._state = 'post';
+        } else {
+          ctr._state = 'login';
+        }
+      });
+    }
+
+    ctr.showExtension = function(){
+      return ctr._state;
+    }
+
+    ctr.checkAuth();
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_posting', [
+  '$scope',
+  '$compile',
+  '$timeout',
+  'S_utils',
+  'S_selfapi',
+  'S_eventer',
+  'S_vk',
+  '__maxAttachments',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+    var ctr = this;
+
+    ctr.sets = [];
+
+    ctr.selectedSet = {};
+    ctr.attachments = [];
+
+    S_selfapi.getAllSets().then(function(resp) {
+      ctr.sets = resp.data.data;
+      ctr.selectedSet = ctr.sets[0];
+    });
+
+    $scope.$watch(function() {
+      return ctr.selectedSet.id;
+    }, function(setId) {
+      if (!setId) return;
+
+      S_selfapi.getSetInfo(setId).then(function(resp) {
+        ctr.channels = resp.data.data;
+      });
+    });
+
+
+
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      $scope.$apply(function() {
+        ctr.data = data;
+
+        if (data.imageSrc && data.imageSrc !== '') {
+          data.images.unshift({
+            src: data.imageSrc,
+            big_src: data.imageSrc
+          });
+        }
+
+        var images = _.map(data.images, function(q) {
+          q.type = 'photo';
+          q.id = S_utils.getRandomString(16);
+          return q;
+        });
+        ctr.pageAttachments = ctr.attachments.concat(images);
+        if (images.length) {
+          ctr.attachments.push(images[0]);
+        }
+
+        if (!ctr.text || ctr.text === '') {
+          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
+        }
+      });
+    });
+
+    ctr.createPost = function(channel_ids) {
+      var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
+
+      console.log(postInfo);
+
+      S_selfapi.createPost(ctr.selectedSet.id, postInfo).then(function(resp) {
+        var socketUrl = resp.data.data.socketUrl;
+        var socket = io(socketUrl);
+
+        socket.on('post_success', function(data) {
+          var channel = _.find(ctr.channels, function(c) {
+            return c.id === data.channel_id;
+          });
+
+          if (channel) {
+            $scope.$apply(function() {
+              channel.complete = true;
+              channel.post_url = data.post_url;
+            });
+          }
+        });
+
+        socket.on('post_fail', function(data) {
+          var channel = _.find(ctr.channels, function(c) {
+            return c.id === data.channel_id;
+          });
+
+          if (channel) {
+            $scope.$apply(function() {
+              channel.error = true;
+              channel.errorData = data;
+            });
+          }
+        });
+      });
+    }
+
+    ctr.postChannelAgain = function(channel_id){
+      debugger
+      ctr.createPost([channel_id]);
+    }
+
+    ctr.showSetSelect = function() {
+      return ctr.sets.length > 1;
+    }
+
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_posting_back', [
+  '$scope',
+  '$compile',
+  '$timeout',
+  'S_utils',
+  'S_selfapi',
+  'S_eventer',
+  'S_vk',
+  '__maxAttachments',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+    var ctr = this;
+
+    return;
 
     ctr.minDate = new Date();
     ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
@@ -202,6 +370,7 @@ angular.module('App').controller('C_main', [
       if (!groupId) return;
       ctr.postingApp = undefined;
       ctr.postingToken = undefined;
+
       S_selfapi.getOverrideKey(groupId).then(function(resp) {
         if (resp.data.settings !== null) {
           ctr.postingToken = resp.data.settings.token;
@@ -518,6 +687,22 @@ angular.module('App').directive('autosizeTextarea', [function() {
   }
 }]);
   
+angular.module('App').directive('channel', [function() {
+  return {
+    scope:{
+      channel: "=",
+      parsedText: "=",
+      pageAttachments: "=",
+      postChannelAgain: "&"
+    },
+    templateUrl: 'templates/directives/channel.html',
+    controller: 'CD_channel as channel_ctr',
+    link: function($scope, $element) { 
+      
+    }
+  }
+}]);
+ 
 angular.module('App')
   .directive('dateButton', [
     '$filter',
@@ -571,7 +756,7 @@ angular.module('App').directive('imageUploadArea', ['$timeout', '__api', functio
     }],
     link: function($scope, $element) {
       $element.find('input').fileupload({
-        url: __api.baseUrl + __api.paths.uploadPhoto,
+        url: __api.baseUrl + __api.paths.media,
         dataType: 'json',
         singleFileUploads: true,
         limitMultiFileUploads: 1,
@@ -598,6 +783,19 @@ angular.module('App').directive('imageUploadArea', ['$timeout', '__api', functio
   }
 
 
+}]);
+
+angular.module('App').directive('instagramArea', [function() {
+  return {
+    scope:{
+      attach: '=instagramArea'
+    },
+    templateUrl: 'templates/directives/instagramArea.html',
+    controller: 'CD_instagramArea as ctr',
+    link: function($scope, $element) {
+      
+    }
+  }
 }]);
 
 angular.module('App').directive('jcropArea', ['$timeout', function($timeout) {
@@ -697,187 +895,6 @@ angular.module('App').directive('popoverHtmlUnsafePopup', function() {
     }
   ])
  
-angular.module('App').directive('postsTimeline', [
-  '$q',
-  'S_vk',
-  'S_utils',
-  'S_selfapi',
-  '__timelinePeriods',
-  function($q, S_vk, S_utils, S_selfapi, __timelinePeriods) {
-    return {
-      scope: {
-        time: '=',
-        groupId: '='
-      },
-      templateUrl: 'templates/directives/postsTimeline.html',
-      link: function($scope, $element, $attrs) {
-        var chart, $canvas;
-
-        var _color = '#090';
-
-        $scope.$watch('time', function(time) {
-          if (!time || !$scope.groupId) return;
-
-          refresh();
-        });
-
-        $scope.$watch('groupId', function(groupId) {
-          if (!groupId || !$scope.time) return;
-
-          refresh();
-        });
-
-        function refresh() {
-
-          if ($scope.loading){
-            return;
-          }
-          $scope.loading = true;
-
-
-          var min = S_utils.roundToHour($scope.time + __timelinePeriods.minOffset);
-          var max = S_utils.roundToHour($scope.time + __timelinePeriods.maxOffset);
-
-          $q.all({
-            old: S_vk.request('newsfeed.get', {
-              filters: 'post',
-              return_banned: 1,
-              start_time: $scope.time + __timelinePeriods.minOffset,
-              source_ids: '-' + $scope.groupId,
-              count: 100
-            }),
-            new: S_vk.request('wall.get', {
-              owner_id: '-80384539', //'-' + $scope.groupId,
-              count: 100,
-              filter: 'postponed'
-            }),
-            fromServer: S_selfapi.getPostsInPeriod(80384539, S_utils.getCurrentTime(), max)
-          }).then(function(resp) {
-            //debugger
-            var items = S_utils.serverPostsToVkLike(resp.fromServer.data.posts);
-
-            if (resp.old.response) {
-              items = items.concat(resp.old.response.items);
-            }
-            if (resp.new.response) {
-              items = items.concat(resp.new.response.items);
-            }
-
-            items = S_utils.itemsInInterval(items, min, max);
-
-            if (items.length === 0) {
-              $element.find('.chart').html('<div class="empty">Нет данных за выбранный период<span>Это значит, что в интервале с ' + S_utils.unixTo($scope.time + __timelinePeriods.minOffset, 'HH:mm / D.MM') + ' по ' + S_utils.unixTo($scope.time + __timelinePeriods.maxOffset, 'HH:mm / D.MM') + ' мы не нашли опубликованных или отложенных записей</span></div>');
-              $scope.loading = false;
-              return;
-            } else {
-              $element.find('.chart').html();
-            }
-
-            var seriesInfo = S_utils.remapForTimeline(items, min, max);
-
-            chart = $element.find('.chart').highcharts({
-              "title": {
-                "text": null
-              },
-              "legend": {
-                "layout": "vertical",
-                "style": {},
-                "enabled": false
-              },
-              "xAxis": {
-                startOnTick: true,
-                endOnTick: true,
-                minPadding: 0,
-                minPadding: 0,
-                "type": "datetime",
-                "minTickInterval": 1000 * 60 * 60,
-                "tickInterval": 1000 * 60 * 60,
-                min: min * 1000,
-                max: max * 1000,
-                labels: {
-                  style: {
-                    fontSize: '8px'
-                  }
-                },
-                dateTimeLabelFormats: {
-                  day: '%e %b'
-                }
-              },
-              "yAxis": {
-                lineWidth: 0,
-                minorGridLineWidth: 0,
-                gridLineWidth: 0,
-                lineColor: 'transparent',
-                allowDecimals: false,
-                "stackLabels": {
-                  "enabled": false
-                },
-                "title": {
-                  "text": null
-                },
-                labels: {
-                  "enabled": false
-                }
-              },
-              tooltip: {
-                shared: true,
-                backgroundColor: '#fff',
-                formatter: function() {
-                  return S_utils.formatterTimelineTooltip(this.x, seriesInfo.groupped);
-                },
-                useHTML: true,
-                borderColor: 'transparent',
-                backgroundColor: 'transparent',
-                borderRadius: 0,
-                shadow: false
-              },
-              "credits": {
-                "enabled": false
-              },
-              "plotOptions": {
-                "column": {
-                  pointWidth: 11,
-                  animation: false,
-                  states: {
-                    hover: {
-                      color: '#990000'
-                    }
-                  }
-                }
-              },
-              "chart": {
-                "defaultSeriesType": "column",
-                "borderRadius": 0,
-                backgroundColor: 'transparent',
-                height: 22 * seriesInfo.max + 50,
-                events: {
-                  load: function() {
-                    var ren = this.renderer,
-                      color = 'rgba(255,0,0,0.2)';
-
-                    var offset = this.xAxis[0].left + 5 + ($scope.time * 1000 - this.xAxis[0].min) / (this.xAxis[0].max - this.xAxis[0].min) * this.xAxis[0].width;
-
-                    ren.path(['M', offset, 0, 'L', offset, 185])
-                      .attr({
-                        'stroke-width': 2,
-                        stroke: color
-                      })
-                      .add();
-                  }
-                }
-              },
-              "subtitle": {},
-              "colors": ["#2B587A"],
-              "series": seriesInfo.series
-            });
-            $scope.loading = false;
-          });
-        }
-      }
-    }
-  }
-])
-
 angular.module('App').directive('selectArea', [
   '$timeout',
   '$compile',
@@ -1276,6 +1293,896 @@ angular.module('App').filter('toGIS', function() {
     return out;
   }
 });
+
+angular.module('chromeTools', [])
+  .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
+    var service = {};
+
+    service.pageDataWatch = function() {
+ 
+      window.addEventListener('message', function(e) {
+        S_eventer.sendEvent('loadedDataFromTab', e.data);
+      });
+
+      
+      setTimeout(function() {
+        S_eventer.sendEvent('loadedDataFromTab', {
+          "images": [{
+            "alt": "Грелка ",
+            "clientHeight": 450,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 450,
+            "title": "Грелка ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/grelka-_1416265291.jpg"
+          }, {
+            "alt": "Любовь - великая сила ",
+            "clientHeight": 571,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 571,
+            "title": "Любовь - великая сила ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/lyubov-velikaya-sila-_1416314178.jpg"
+          }, {
+            "alt": "Скоро праздники ",
+            "clientHeight": 600,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 600,
+            "title": "Скоро праздники ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/skoro-prazdniki-_1416214236.jpg"
+          }, {
+            "alt": "Фигулька ",
+            "clientHeight": 778,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 778,
+            "title": "Фигулька ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/figulka-_1415910890.jpg"
+          }, {
+            "alt": "Коварная чугунная поня ",
+            "clientHeight": 449,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 449,
+            "title": "Коварная чугунная поня ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/kovarnaya-chugunnaya-ponya-_1416233562.jpg"
+          }, {
+            "alt": "Таблетки для смеха",
+            "clientHeight": 488,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 488,
+            "title": "Таблетки для смеха",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/tabletki-dlya-smeha-_1415531344.jpg"
+          }, {
+            "alt": "Разбуженный грабитель ",
+            "clientHeight": 399,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 399,
+            "title": "Разбуженный грабитель ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/razbuzhennyy-grabitel-_1416233761.jpg"
+          }, {
+            "alt": "Нам бы карася  ",
+            "clientHeight": 429,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 429,
+            "title": "Нам бы карася  ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nam-by-karasya-_1416233413.jpg"
+          }, {
+            "alt": "Нычкарик по призванию ",
+            "clientHeight": 450,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 450,
+            "title": "Нычкарик по призванию ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nychkarik-po-prizvaniyu-_1416232762.jpg"
+          }, {
+            "alt": "Еда с гавкающим названием ",
+            "clientHeight": 800,
+            "clientWidth": 600,
+            "width": 600,
+            "height": 800,
+            "title": "Еда с гавкающим названием ",
+            "src": "http://lolkot.ru/wp-content/uploads/2014/11/yeda-s-gavkayuschim-nazvaniyem-_1416203979.jpg"
+          }, {
+            "alt": "",
+            "clientHeight": 250,
+            "clientWidth": 250,
+            "width": 250,
+            "height": 250,
+            "title": "",
+            "src": "http://static.lolkot.ru/images/usermatrix1416326402.jpg"
+          }, {
+            "alt": "",
+            "clientHeight": 15,
+            "clientWidth": 88,
+            "width": 88,
+            "height": 15,
+            "title": "",
+            "src": "http://counter.yadro.ru/hit?t26.16;rhttp%3A//yandex.ru/clck/jsredir%3Ffrom%…c%3D2.584962500721156;s1280*800*24;uhttp%3A//lolkot.ru/;0.5310913703870028"
+          }],
+          "title": "Смешные картинки кошек с надписями",
+          "url": "http://lolkot.ru/",
+          "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
+        })
+      }, 10000000000);
+    }
+
+
+    service.getVkToken = function() {
+      var defer = $q.defer();
+      chrome.storage.local.get({
+        'vkaccess_token': {}
+      }, function(items) {
+        if (items.vkaccess_token.length !== undefined) {
+          defer.resolve(items.vkaccess_token);
+        } else {
+          defer.reject();
+        }
+      });
+      return defer.promise;
+    }
+
+
+    service.showExtensionPopup = function(tab, info) {
+      chrome.tabs.executeScript(tab.id, {
+        file: "pack/pageEnviroment.js"
+      });
+    }
+
+    service.openPreAuthPage = function() {
+      chrome.tabs.create({
+        url: '/pages/afterInstall.html',
+        selected: true
+      }, function(tab) {});
+    }
+
+
+    return service;
+  }]);
+
+angular.module('App')
+  .service('S_eventer', [
+    '$rootScope',
+    '__postMessagePrepend',
+    function($rootScope, __postMessagePrepend) {
+      var service = {};
+
+      service.sendEvent = function(name, arguments) {
+        $rootScope.$broadcast(name, arguments); 
+      }
+
+      service.sayToFrame = function(code) {
+        parent.postMessage(__postMessagePrepend + code, "*");
+      }
+
+      service.onPostMessage = function(next) {
+        var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+        var eventer = window[eventMethod];
+        var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+        eventer(messageEvent, function(e) {
+          var key = e.message ? "message" : "data";
+          var data = e[key];
+
+          next(e, data);
+        }, false);
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('App')
+  .service('S_google', [
+    '$q',
+    function($q) {
+      var service = {};
+
+      service.init = function() {
+        google.load('search', '1');
+      }
+ 
+      service.loadImages = function(q) {
+        var defer = $q.defer();
+        var imageSearch = new google.search.ImageSearch();
+
+        imageSearch.setRestriction(google.search.ImageSearch.RESTRICT_IMAGESIZE,
+          google.search.ImageSearch.IMAGESIZE_MEDIUM);
+
+        imageSearch.setResultSetSize(8);
+
+        imageSearch.setSearchCompleteCallback(this, function() {
+          defer.resolve(imageSearch);
+        }, null);
+
+        imageSearch.execute(q);
+        return defer.promise;
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('App')
+  .service('S_selfapi', [
+    '$http',
+    '$q',
+    '__api',
+    function($http, $q, __api) {
+      var service = {};
+      var base = __api.baseUrl;
+      service.sendExtensionToken = function(token) {
+        return $http({
+          url: base + __api.paths.saveExtensionToken,
+          method: 'POST',
+          data: {
+            token: token
+          }
+        });
+      }
+
+      service.createPost = function(setId, postInfo) {
+        return $http({
+          url: base + __api.paths.createPost,
+          method: 'POST',
+          data: {
+            setId: setId,
+            postInfo: postInfo
+          }
+        });
+      }
+
+      service.checkAuth = function() {
+        return $http({
+          url: base + __api.paths.checkAuth,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.getAllSets = function() {
+        return $http({
+          url: base + __api.paths.sets,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.getSetInfo = function(setId) {
+        return $http({
+          url: base + __api.paths.sets+'/'+setId,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.signIn = function(email, password) {
+        return $http({
+          withCredentials: true,
+          url: base + __api.paths.signIn,
+          method: 'POST',
+          data: {
+            email: email,
+            password: password
+          }
+        });
+      }
+
+      var _uploadStack = [];
+      service.uploadImage = function(url, c, w, h, id) {
+        var defer = $q.defer();
+
+        var obj = {
+          url: url,
+          id: id
+        };
+
+        if (c) {
+          _.extend(obj, c);
+          obj.originalWidth = w;
+          obj.originalHeight = h;
+        }
+
+        _uploadStack.push({
+          obj: obj,
+          defer: defer
+        });
+
+        if (_uploadStack.length === 1) {
+          uploadImageCall();
+        }
+
+        return defer.promise;
+      }
+
+      function uploadImageCall() {
+        var q = _uploadStack[0];
+        $http({
+          url: base + __api.paths.media,
+          method: 'POST',
+          data: q.obj
+        }).then(function(resp) {
+          _uploadStack.shift();
+          q.defer.resolve({
+            media_id: resp.data.data.media_id,
+            media_url: resp.data.data.media_url,
+            id: q.obj.id
+          });
+
+          if (_uploadStack.length > 0) {
+            uploadImageCall();
+          }
+        });
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('utilsTools', [])
+  .service('S_utils', [
+    '$modal',
+    '$q',
+    '$templateCache',
+    '$compile',
+    '$rootScope',
+    '__timelinePeriods',
+    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods) {
+      var service = {};
+
+      service.getUrlParameterValue = function(url, parameterName) {
+        "use strict";
+
+        var urlParameters = url.substr(url.indexOf("#") + 1),
+          parameterValue = "",
+          index,
+          temp;
+
+        urlParameters = urlParameters.split("&");
+
+        for (index = 0; index < urlParameters.length; index += 1) {
+          temp = urlParameters[index].split("=");
+
+          if (temp[0] === parameterName) {
+            return temp[1];
+          }
+        }
+
+        return parameterValue;
+      }
+
+      service.decodeEntities = (function() {
+        var element = document.createElement('div');
+
+        function decodeHTMLEntities(str) {
+          if (str && typeof str === 'string') {
+            // strip script/html tags
+            str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
+            str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
+            element.innerHTML = str;
+            str = element.textContent;
+            element.textContent = '';
+          }
+
+          return str;
+        }
+
+        return decodeHTMLEntities;
+      })();
+
+      service.getRandomString = function(len) {
+        len = len || 10;
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for (var i = 0; i < len; i++)
+          text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        return text;
+      }
+
+      service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachPhoto.html',
+          controller: 'CM_attachPhoto as ctr',
+          resolve: {
+            pageAttachments: function() {
+              return fromPage;
+            },
+            uploadCallbacks: function() {
+              return uploadCallbacks;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callAttachVideoDialog = function(group_id) {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachVideo.html',
+          controller: 'CM_attachVideo as ctr',
+          resolve: {
+            group_id: function() {
+              return group_id;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callVideoPlayerDialog = function(title, videoSrc) {
+        return $modal.open({
+          templateUrl: 'templates/modals/videoPlayer.html',
+          controller: 'CM_videoPlayer as ctr',
+          resolve: {
+            videoSrc: function() {
+              return videoSrc;
+            },
+            title: function() {
+              return title;
+            }
+          }
+        }).result;
+      }
+
+      service.getAttachesByType = function(attaches, type) {
+        return _.filter(attaches, function(q) {
+          return q.type === type;
+        });
+      }
+
+      service.attachToFancy = function(ats) {
+        return _.map(ats, function(image) {
+          return {
+            href: image.src
+          }
+        });
+      }
+
+      service.loadImage = function(src) {
+        var defer = $q.defer();
+
+        var image = new Image();
+        image.src = src;
+        image.onload = function() {
+          defer.resolve(this);
+        }
+        image.onerror = function() {
+          defer.reject(this);
+        }
+
+        return defer.promise;
+      }
+
+      service.convertUploadedPhotoToAttach = function(media_id, media_url, info) {
+        return {
+          media_id: media_id,
+          width: info.width,
+          clientWidth: info.width,
+          height: info.height,
+          clientHeight: info.height,
+          src: media_url,
+          src_big: media_url,
+          type: 'image'
+        }
+      }
+
+      service.wrapVideo = function(video) {
+        return {
+          video: video,
+          id: service.getRandomString(16),
+          duration: video.duration,
+          src: video.photo_320,
+          type: 'video'
+        }
+      }
+
+      service.convertGoogleImageToAttach = function(image) {
+        return {
+          photo: image.photo,
+          id: image.id || service.getRandomString(16),
+          width: image.width,
+          clientWidth: image.width,
+          height: image.height,
+          clientHeight: image.height,
+          src: image.url,
+          src_big: image.url,
+          type: 'photo'
+        }
+      }
+
+      service.createEmptyPoll = function() {
+        return {
+          id: service.getRandomString(16),
+          type: 'poll'
+        }
+      }
+
+
+      service.getVideoQuality = function(video) {
+        if (video.files.mp4_1080) {
+          return '1080';
+        }
+        if (video.files.mp4_720) {
+          return '720';
+        }
+        if (video.files.mp4_480) {
+          return '480';
+        }
+        if (video.files.mp4_360) {
+          return '360';
+        }
+        if (video.files.mp4_240) {
+          return '240';
+        }
+      }
+
+      service.getCurrentTime = function() {
+        return Math.floor(new Date().getTime() / 1000);
+      }
+
+      service.sortAttachments = function(attaches) {
+        var priority = ['photo', 'video', 'doc', 'audio', 'poll'];
+        return _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0;
+          }
+        });
+      }
+
+      service.getAttachmentsString = function(attaches) {
+        var ret = [];
+        _.forEach(attaches, function(attach) {
+          switch (attach.type) {
+            case "photo":
+              {
+                ret.push('photo' + attach.photo.owner_id + '_' + attach.photo.id);
+                break;
+              }
+            case "video":
+              {
+                ret.push('video' + attach.video.owner_id + '_' + attach.video.id);
+                break;
+              }
+            case "poll":
+              {
+                ret.push('poll' + attach.owner_id + '_' + attach.id);
+                break;
+              }
+          }
+        });
+
+        return ret.join(',');
+      }
+
+      service.formatterTimelineTooltip = function(x, groupped) {
+        var info = groupped[Math.round(x / 1000)];
+
+        if (!info) {
+          return 'Не можем получить данные :(';
+        }
+
+        var scope = $rootScope.$new();
+        scope.posts = info;
+
+        scope.getAttachments = function(post) {
+          if (post.copy_history) {
+            return post.copy_history[0].attachments;
+          } else {
+            return post.attachments;
+          }
+        }
+
+        scope.getText = function(post) {
+          return post.text || post.copy_history[0].text;
+        }
+
+        var el = $compile($templateCache.get('templates/other/timeLinePostTooltip.html'))(scope);
+        scope.$digest();
+        return el[0].outerHTML;
+      }
+
+      service.findFirstAttach = function(attaches) {
+        if (!attaches || attaches.length === 0) {
+          return;
+        }
+
+        var priority = ['photo', 'video', 'poll'];
+        _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0;
+          }
+        });
+
+        return attaches[0];
+      }
+
+      service.roundToHour = function(time) {
+        var inter = 3600;
+        var raz = time % inter;
+        return time - raz;
+      }
+
+      service.itemsInInterval = function(items, min, max) {
+        return _.filter(items, function(item) {
+          return item.date >= min && item.date <= max;
+        });
+      }
+
+      service.remapForTimeline = function(items, min, max) {
+        var raz, q, inter = __timelinePeriods.grouppingInterval;
+        var itemsFilterd = [];
+        _.forEach(items, function(item) {
+          q = item.date;
+          if (q > max || q < min) {
+            return;
+          }
+          raz = q % inter;
+          if (raz / inter > 0.5) {
+            q += inter - raz;
+          } else {
+            q -= raz;
+          }
+          item.groupDate = q;
+          itemsFilterd.push(item);
+        });
+
+        var groupped = _.groupBy(itemsFilterd, function(item) {
+          return item.groupDate;
+        });
+        var series = _.map(groupped, function(val, i) {
+          return [i * 1000, val.length];
+        });
+
+        _.sortBy(series, function(item) {
+          return item[0];
+        });
+
+        var max = _.max(series, function(e) {
+          return e[1];
+        })[1];
+
+        var stackedSeries = [];
+
+        for (var i = 0; i < max; i++) {
+          var arr = [];
+          _.forEach(series, function(e) {
+            arr.push([e[0], (e[1] > i) ? 1 : 0]);
+          });
+          stackedSeries.push({
+            data: arr,
+            stacking: "normal"
+          });
+        }
+
+        return {
+          max: max,
+          series: stackedSeries,
+          groupped: groupped
+        };
+      }
+
+      service.serverPostsToVkLike = function(posts) {
+        return _.map(posts, function(q) {
+          return {
+            text: q.message,
+            date: q.publish_date,
+            type: 'own_server',
+            attachments: q.attachments
+          }
+        });
+      }
+
+      service.getFailDescription = function(data) {
+        var q;
+
+        if (data.network === 'tw' && data.error && data.error.code && data.error.code === 187) {
+          return "Статус повторяется";
+        }
+
+        if (data.network === 'ig') {
+          if (data.error && data.error.code === 'notFull') {
+            return "Необходимо прикрепить изображение"
+          }
+          if (data.error && data.error.code === 'notMedia') {
+            return "Изображение не найдено, повторите загрузку"
+          }
+          if (data.error && data.error.code === 'notSquared') {
+            return "Изображение не квадратное"
+          }
+        }
+
+        return JSON.stringify(data.error);
+      }
+
+      service.configurePostInfo = function(channels, channel_ids) {
+        var postInfo = [];
+        _.forEach(channels, function(channel) {
+          if (channel.disabled || channel.complete) return;
+
+          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1 )) {
+            postInfo.push({
+              channel_id: channel.id,
+              text: channel.text,
+              attachments: channel.attachments
+            });
+          }
+        });
+        return postInfo;
+      }
+
+      service.unixTo = function(time, format) {
+        return moment(time, 'X').format(format);
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('vkTools', [])
+  .service('S_vk', [
+    '$q',
+    '$http',
+    'S_utils',
+    '__vkAppId',
+    function($q, $http, S_utils, __vkAppId) {
+      var service = {};
+
+      service.default = {
+        version: '5.26',
+        language: 'ru'
+      };
+
+      var _requestStack = [];
+
+      function listenerHandler(authenticationTabId, afterAuth) {
+        "use strict";
+
+        return function tabUpdateListener(tabId, changeInfo) {
+          var vkAccessToken,
+            vkAccessTokenExpiredFlag;
+
+          if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
+
+            if (changeInfo.url.indexOf('oauth.vk.com/blank.html') > -1) {
+              authenticationTabId = null;
+              chrome.tabs.onUpdated.removeListener(tabUpdateListener);
+
+              vkAccessToken = S_utils.getUrlParameterValue(changeInfo.url, 'access_token');
+
+              if (vkAccessToken === undefined || vkAccessToken.length === undefined) {
+                displayeAnError('vk auth response problem', 'access_token length = 0 or vkAccessToken == undefined');
+                return;
+              }
+
+              vkAccessTokenExpiredFlag = Number(S_utils.getUrlParameterValue(changeInfo.url, 'expires_in'));
+
+              if (vkAccessTokenExpiredFlag !== 0) {
+                displayeAnError('vk auth response problem', 'vkAccessTokenExpiredFlag != 0' + vkAccessToken);
+                return;
+              }
+              service.setToken(vkAccessToken);
+              chrome.storage.local.set({
+                'vkaccess_token': vkAccessToken
+              }, function() {
+                afterAuth();
+              });
+            }
+          }
+        };
+      }
+
+
+      service.request = function(_method, _params, _response) {
+        var defer = $q.defer();
+
+        service.getToken().then(function(token) {
+
+          var path = '/method/' + _method + '?' + 'access_token=' + service.token;
+          _params['v'] = _params['v'] || service.default.version;
+          _params['lang'] = _params['lang'] || service.default.language;
+
+          for (var key in _params) {
+            if (key === "message") {
+              path += ('&' + key + '=' + encodeURIComponent(_params[key]));
+            } else {
+              path += ('&' + key + '=' + _params[key]);
+            }
+          }
+
+
+          $http.get('https://api.vk.com' + path).then(function(res) {
+            if (typeof _response === 'function') {
+              _response(res.data);
+            } else {
+              defer.resolve(res.data);
+            }
+          });
+        });
+
+        return defer.promise;
+      };
+
+      service.setToken = function(token) {
+        service.token = token;
+        if (_requestStack.length > 0) {
+          angular.forEach(_requestStack, function(request) {
+            request.resolve(token);
+          });
+        }
+      };
+
+      service.testRequest = function() {
+        var defer = $q.defer();
+        service.request('users.get', {}, function(resp) {
+          if (resp.success) {
+            defer.resolve();
+          } else {
+            defer.reject();
+          }
+        })
+        return defer.promise;
+      }
+
+      service.callAuthPopup = function() {
+        var defer = $q.defer();
+        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,email,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
+
+        chrome.tabs.create({
+          url: vkAuthenticationUrl,
+          selected: true
+        }, function(tab) {
+
+          chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
+            defer.resolve(tab);
+          }));
+        });
+
+        return defer.promise;
+      }
+
+      service.createPoll = function(attach, group_id) {
+        return service.request('polls.create', {
+          question: attach.question,
+          is_anonymous: (attach.is_anonymous) ? 1 : 0,
+          owner_id: "-"+group_id,
+          add_answers: JSON.stringify(_.uniq(_.reduce(attach.variants,function(max, q){
+            if (q.text && q.text !== ''){
+              max.push(q.text);
+            }
+            return max;
+          },[])))
+        });
+      }
+
+      service.getToken = function() {
+        var defer = $q.defer();
+
+        if (service.token) {
+          defer.resolve(service.token);
+        } else {
+          _requestStack.push(defer);
+        }
+
+        return defer.promise;
+      };
+
+      return service;
+    }
+  ]);
 
 (function replaceEmojiWithImages(root) {
 
@@ -2723,853 +3630,6 @@ var VKS = function(_options) {
   };
 };
 
-angular.module('chromeTools', [])
-  .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
-    var service = {};
-
-    service.pageDataWatch = function() {
- 
-      window.addEventListener('message', function(e) {
-        S_eventer.sendEvent('loadedDataFromTab', e.data);
-      });
-
-      
-      setTimeout(function() {
-        S_eventer.sendEvent('loadedDataFromTab', {
-          "images": [{
-            "alt": "Грелка ",
-            "clientHeight": 450,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 450,
-            "title": "Грелка ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/grelka-_1416265291.jpg"
-          }, {
-            "alt": "Любовь - великая сила ",
-            "clientHeight": 571,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 571,
-            "title": "Любовь - великая сила ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/lyubov-velikaya-sila-_1416314178.jpg"
-          }, {
-            "alt": "Скоро праздники ",
-            "clientHeight": 600,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 600,
-            "title": "Скоро праздники ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/skoro-prazdniki-_1416214236.jpg"
-          }, {
-            "alt": "Фигулька ",
-            "clientHeight": 778,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 778,
-            "title": "Фигулька ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/figulka-_1415910890.jpg"
-          }, {
-            "alt": "Коварная чугунная поня ",
-            "clientHeight": 449,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 449,
-            "title": "Коварная чугунная поня ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/kovarnaya-chugunnaya-ponya-_1416233562.jpg"
-          }, {
-            "alt": "Таблетки для смеха",
-            "clientHeight": 488,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 488,
-            "title": "Таблетки для смеха",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/tabletki-dlya-smeha-_1415531344.jpg"
-          }, {
-            "alt": "Разбуженный грабитель ",
-            "clientHeight": 399,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 399,
-            "title": "Разбуженный грабитель ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/razbuzhennyy-grabitel-_1416233761.jpg"
-          }, {
-            "alt": "Нам бы карася  ",
-            "clientHeight": 429,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 429,
-            "title": "Нам бы карася  ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nam-by-karasya-_1416233413.jpg"
-          }, {
-            "alt": "Нычкарик по призванию ",
-            "clientHeight": 450,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 450,
-            "title": "Нычкарик по призванию ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nychkarik-po-prizvaniyu-_1416232762.jpg"
-          }, {
-            "alt": "Еда с гавкающим названием ",
-            "clientHeight": 800,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 800,
-            "title": "Еда с гавкающим названием ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/yeda-s-gavkayuschim-nazvaniyem-_1416203979.jpg"
-          }, {
-            "alt": "",
-            "clientHeight": 250,
-            "clientWidth": 250,
-            "width": 250,
-            "height": 250,
-            "title": "",
-            "src": "http://static.lolkot.ru/images/usermatrix1416326402.jpg"
-          }, {
-            "alt": "",
-            "clientHeight": 15,
-            "clientWidth": 88,
-            "width": 88,
-            "height": 15,
-            "title": "",
-            "src": "http://counter.yadro.ru/hit?t26.16;rhttp%3A//yandex.ru/clck/jsredir%3Ffrom%…c%3D2.584962500721156;s1280*800*24;uhttp%3A//lolkot.ru/;0.5310913703870028"
-          }],
-          "title": "Смешные картинки кошек с надписями",
-          "url": "http://lolkot.ru/",
-          "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
-        })
-      }, 10000000000);
-    }
-
-
-    service.getVkToken = function() {
-      var defer = $q.defer();
-      chrome.storage.local.get({
-        'vkaccess_token': {}
-      }, function(items) {
-        if (items.vkaccess_token.length !== undefined) {
-          defer.resolve(items.vkaccess_token);
-        } else {
-          defer.reject();
-        }
-      });
-      return defer.promise;
-    }
-
-
-    service.showExtensionPopup = function(tab, info) {
-      chrome.tabs.executeScript(tab.id, {
-        file: "pack/pageEnviroment.js"
-      });
-    }
-
-    service.openPreAuthPage = function() {
-      chrome.tabs.create({
-        url: '/pages/afterInstall.html',
-        selected: true
-      }, function(tab) {});
-    }
-
-
-    return service;
-  }]);
-
-angular.module('App')
-  .service('S_eventer', [
-    '$rootScope',
-    '__postMessagePrepend',
-    function($rootScope, __postMessagePrepend) {
-      var service = {};
-
-      service.sendEvent = function(name, arguments) {
-        $rootScope.$broadcast(name, arguments); 
-      }
-
-      service.sayToFrame = function(code) {
-        parent.postMessage(__postMessagePrepend + code, "*");
-      }
-
-      service.onPostMessage = function(next) {
-        var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
-        var eventer = window[eventMethod];
-        var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
-        eventer(messageEvent, function(e) {
-          var key = e.message ? "message" : "data";
-          var data = e[key];
-
-          next(e, data);
-        }, false);
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('App')
-  .service('S_google', [
-    '$q',
-    function($q) {
-      var service = {};
-
-      service.init = function() {
-        google.load('search', '1');
-      }
- 
-      service.loadImages = function(q) {
-        var defer = $q.defer();
-        var imageSearch = new google.search.ImageSearch();
-
-        imageSearch.setRestriction(google.search.ImageSearch.RESTRICT_IMAGESIZE,
-          google.search.ImageSearch.IMAGESIZE_MEDIUM);
-
-        imageSearch.setResultSetSize(8);
-
-        imageSearch.setSearchCompleteCallback(this, function() {
-          defer.resolve(imageSearch);
-        }, null);
-
-        imageSearch.execute(q);
-        return defer.promise;
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('App')
-  .service('S_selfapi', [
-    '$http',
-    '$q',
-    '__api',
-    function($http, $q, __api) {
-      var service = {};
-      var base = __api.baseUrl;
-      service.sendExtensionToken = function(token) {
-        return $http({
-          url: base + __api.paths.saveExtensionToken,
-          method: 'POST',
-          data: {
-            token: token
-          }
-        });
-      }
-
-      service.sendPost = function(owner_id, message, attachments, publish_date, signed) {
-        return $http({
-          url: base + __api.paths.sendPost,
-          method: 'POST',
-          data: {
-            owner_id: owner_id,
-            message: message,
-            attachments: attachments,
-            publish_date: publish_date,
-            signed: signed
-          }
-        });
-      }
-
-      service.getAssignKey = function(token) {
-        return $http({
-          url: base + __api.paths.getAssignKey,
-          method: 'GET'
-        });
-      }
-
-      service.getPostsInPeriod = function(groupId, from, to) {
-        return $http({
-          url: base + __api.paths.getPostsInPeriod,
-          method: 'GET',
-          params: {
-            groupId: groupId,
-            from: from,
-            to: to
-          }
-        });
-      }
-
-      service.getOverrideKey = function(groupId) {
-        return $http({
-          url: base + __api.paths.getOverrideKey,
-          method: 'GET',
-          params: {
-            groupId: groupId
-          }
-        });
-      }
-
-      var _uploadImageToVkStack = [];
-      service.uploadImageToVk = function(url, c, w, h, id) {
-        var defer = $q.defer();
-
-        var obj = {
-          url: url,
-          id: id
-        };
-
-        if (c) {
-          _.extend(obj, c);
-          obj.originalWidth = w;
-          obj.originalHeight = h;
-        }
-
-        _uploadImageToVkStack.push({
-          obj: obj,
-          defer: defer
-        });
-
-        if (_uploadImageToVkStack.length === 1) {
-          uploadImageToVkCall();
-        }
-
-        return defer.promise;
-      }
-
-      function uploadImageToVkCall() {
-        var q = _uploadImageToVkStack[0];
-        $http({
-          url: base + __api.paths.uploadPhoto,
-          method: 'POST',
-          data: q.obj
-        }).then(function(resp) {
-          _uploadImageToVkStack.shift();
-          q.defer.resolve({
-            photo: resp.data.response[0],
-            id: q.obj.id
-          });
-
-          if (_uploadImageToVkStack.length > 0) {
-            uploadImageToVkCall();
-          }
-        });
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('utilsTools', [])
-  .service('S_utils', [
-    '$modal',
-    '$q',
-    '$templateCache',
-    '$compile',
-    '$rootScope',
-    '__timelinePeriods',
-    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods) {
-      var service = {};
-
-      service.getUrlParameterValue = function(url, parameterName) {
-        "use strict";
-
-        var urlParameters = url.substr(url.indexOf("#") + 1),
-          parameterValue = "",
-          index,
-          temp;
-
-        urlParameters = urlParameters.split("&");
-
-        for (index = 0; index < urlParameters.length; index += 1) {
-          temp = urlParameters[index].split("=");
-
-          if (temp[0] === parameterName) {
-            return temp[1];
-          }
-        }
-
-        return parameterValue;
-      }
-
-      service.decodeEntities = (function() {
-        var element = document.createElement('div');
-
-        function decodeHTMLEntities(str) {
-          if (str && typeof str === 'string') {
-            // strip script/html tags
-            str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
-            str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
-            element.innerHTML = str;
-            str = element.textContent;
-            element.textContent = '';
-          }
-
-          return str;
-        }
-
-        return decodeHTMLEntities;
-      })();
-
-      service.getRandomString = function(len) {
-        len = len || 10;
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-        for (var i = 0; i < len; i++)
-          text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-        return text;
-      }
-
-      service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
-        return $modal.open({
-          templateUrl: 'templates/modals/attachPhoto.html',
-          controller: 'CM_attachPhoto as ctr',
-          resolve: {
-            pageAttachments: function() {
-              return fromPage;
-            },
-            uploadCallbacks: function() {
-              return uploadCallbacks;
-            }
-          }
-        }).result;
-      }
-
-
-      service.callAttachVideoDialog = function(group_id) {
-        return $modal.open({
-          templateUrl: 'templates/modals/attachVideo.html',
-          controller: 'CM_attachVideo as ctr',
-          resolve: {
-            group_id: function() {
-              return group_id;
-            }
-          }
-        }).result;
-      }
-
-
-      service.callVideoPlayerDialog = function(title, videoSrc) {
-        return $modal.open({
-          templateUrl: 'templates/modals/videoPlayer.html',
-          controller: 'CM_videoPlayer as ctr',
-          resolve: {
-            videoSrc: function() {
-              return videoSrc;
-            },
-            title: function() {
-              return title;
-            }
-          }
-        }).result;
-      }
-
-      service.getAttachesByType = function(attaches, type) {
-        return _.filter(attaches, function(q) {
-          return q.type === type;
-        });
-      }
-
-      service.attachToFancy = function(ats) {
-        return _.map(ats, function(image) {
-          return {
-            href: image.src
-          }
-        });
-      }
-
-      service.loadImage = function(src) {
-        var defer = $q.defer();
-
-        var image = new Image();
-        image.src = src;
-        image.onload = function() {
-          defer.resolve(this);
-        }
-        image.onerror = function() {
-          defer.reject(this);
-        }
-
-        return defer.promise;
-      }
-
-      service.convertUploadedPhotoToAttach = function(photo) {
-        return {
-          photo: photo,
-          width: photo.width,
-          clientWidth: photo.width,
-          height: photo.height,
-          clientHeight: photo.height,
-          src: photo.photo_130,
-          src_big: photo.photo_807 || photo.photo_604,
-          type: 'photo'
-        }
-      }
-
-      service.wrapVideo = function(video) {
-        return {
-          video: video,
-          id: service.getRandomString(16),
-          duration: video.duration,
-          src: video.photo_320,
-          type: 'video'
-        }
-      }
-
-      service.convertGoogleImageToAttach = function(image) {
-        return {
-          photo: image.photo,
-          id: image.id || service.getRandomString(16),
-          width: image.width,
-          clientWidth: image.width,
-          height: image.height,
-          clientHeight: image.height,
-          src: image.url,
-          src_big: image.url,
-          type: 'photo'
-        }
-      }
-
-      service.createEmptyPoll = function() {
-        return {
-          id: service.getRandomString(16),
-          type: 'poll'
-        }
-      }
-
-
-      service.getVideoQuality = function(video) {
-        if (video.files.mp4_1080) {
-          return '1080';
-        }
-        if (video.files.mp4_720) {
-          return '720';
-        }
-        if (video.files.mp4_480) {
-          return '480';
-        }
-        if (video.files.mp4_360) {
-          return '360';
-        }
-        if (video.files.mp4_240) {
-          return '240';
-        }
-      }
-
-      service.getCurrentTime = function() {
-        return Math.floor(new Date().getTime() / 1000);
-      }
-
-      service.sortAttachments = function(attaches) {
-        var priority = ['photo', 'video', 'doc', 'audio', 'poll'];
-        return _.sortBy(attaches, function(attach) {
-          var i = _.findIndex(priority, function(q) {
-            return q === attach.type;
-          });
-          if (i !== -1) {
-            return i;
-          } else {
-            return 0;
-          }
-        });
-      }
-
-      service.getAttachmentsString = function(attaches) {
-        var ret = [];
-        _.forEach(attaches, function(attach) {
-          switch (attach.type) {
-            case "photo":
-              {
-                ret.push('photo' + attach.photo.owner_id + '_' + attach.photo.id);
-                break;
-              }
-            case "video":
-              {
-                ret.push('video' + attach.video.owner_id + '_' + attach.video.id);
-                break;
-              }
-            case "poll":
-              {
-                ret.push('poll' + attach.owner_id + '_' + attach.id);
-                break;
-              }
-          }
-        });
-
-        return ret.join(',');
-      }
-
-      service.formatterTimelineTooltip = function(x, groupped) {
-        var info = groupped[Math.round(x / 1000)];
-
-        if (!info) {
-          return 'Не можем получить данные :(';
-        }
-
-        var scope = $rootScope.$new();
-        scope.posts = info;
-
-        scope.getAttachments = function(post) {
-          if (post.copy_history){
-            return post.copy_history[0].attachments;
-          } else {
-            return post.attachments;
-          }
-        }
-
-        scope.getText = function(post) {
-          return post.text || post.copy_history[0].text;
-        }
-
-        var el = $compile($templateCache.get('templates/other/timeLinePostTooltip.html'))(scope);
-        scope.$digest();
-        return el[0].outerHTML;
-      }
-
-      service.findFirstAttach = function(attaches) {
-        if (!attaches || attaches.length === 0) {
-          return;
-        }
-
-        var priority = ['photo', 'video', 'poll'];
-        _.sortBy(attaches, function(attach) {
-          var i = _.findIndex(priority, function(q) {
-            return q === attach.type;
-          });
-          if (i !== -1) {
-            return i;
-          } else {
-            return 0;
-          }
-        });
-
-        return attaches[0];
-      }
-
-      service.roundToHour = function(time) {
-        var inter = 3600;
-        var raz = time % inter;
-        return time - raz;
-      }
-
-      service.itemsInInterval = function(items, min, max) {
-        return _.filter(items, function(item) {
-          return item.date >= min && item.date <= max;
-        });
-      }
-
-      service.remapForTimeline = function(items, min, max) {
-        var raz, q, inter = __timelinePeriods.grouppingInterval;
-        var itemsFilterd = [];
-        _.forEach(items, function(item) {
-          q = item.date;
-          if (q > max || q < min) {
-            return;
-          }
-          raz = q % inter;
-          if (raz / inter > 0.5) {
-            q += inter - raz;
-          } else {
-            q -= raz;
-          }
-          item.groupDate = q;
-          itemsFilterd.push(item);
-        });
-
-        var groupped = _.groupBy(itemsFilterd, function(item) {
-          return item.groupDate;
-        });
-        var series = _.map(groupped, function(val, i) {
-          return [i * 1000, val.length];
-        });
-
-        _.sortBy(series, function(item) {
-          return item[0];
-        });
-
-        var max = _.max(series, function(e) {
-          return e[1];
-        })[1];
-
-        var stackedSeries = [];
-
-        for (var i = 0; i < max; i++) {
-          var arr = [];
-          _.forEach(series, function(e) {
-            arr.push([e[0], (e[1] > i) ? 1 : 0]);
-          });
-          stackedSeries.push({
-            data: arr,
-            stacking: "normal"
-          });
-        }
-
-        return {
-          max: max,
-          series: stackedSeries,
-          groupped: groupped
-        };
-      }
-
-      service.serverPostsToVkLike = function(posts) {
-        return _.map(posts, function(q) {
-          return {
-            text: q.message,
-            date: q.publish_date,
-            type: 'own_server',
-            attachments: q.attachments
-          }
-        });
-      }
-
-      service.unixTo = function(time, format) {
-        return moment(time, 'X').format(format);
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('vkTools', [])
-  .service('S_vk', [
-    '$q',
-    '$http',
-    'S_utils',
-    '__vkAppId',
-    function($q, $http, S_utils, __vkAppId) {
-      var service = {};
-
-      service.default = {
-        version: '5.26',
-        language: 'ru'
-      };
-
-      var _requestStack = [];
-
-      function listenerHandler(authenticationTabId, afterAuth) {
-        "use strict";
-
-        return function tabUpdateListener(tabId, changeInfo) {
-          var vkAccessToken,
-            vkAccessTokenExpiredFlag;
-
-          if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
-
-            if (changeInfo.url.indexOf('oauth.vk.com/blank.html') > -1) {
-              authenticationTabId = null;
-              chrome.tabs.onUpdated.removeListener(tabUpdateListener);
-
-              vkAccessToken = S_utils.getUrlParameterValue(changeInfo.url, 'access_token');
-
-              if (vkAccessToken === undefined || vkAccessToken.length === undefined) {
-                displayeAnError('vk auth response problem', 'access_token length = 0 or vkAccessToken == undefined');
-                return;
-              }
-
-              vkAccessTokenExpiredFlag = Number(S_utils.getUrlParameterValue(changeInfo.url, 'expires_in'));
-
-              if (vkAccessTokenExpiredFlag !== 0) {
-                displayeAnError('vk auth response problem', 'vkAccessTokenExpiredFlag != 0' + vkAccessToken);
-                return;
-              }
-              service.setToken(vkAccessToken);
-              chrome.storage.local.set({
-                'vkaccess_token': vkAccessToken
-              }, function() {
-                afterAuth();
-              });
-            }
-          }
-        };
-      }
-
-
-      service.request = function(_method, _params, _response) {
-        var defer = $q.defer();
-
-        service.getToken().then(function(token) {
-
-          var path = '/method/' + _method + '?' + 'access_token=' + service.token;
-          _params['v'] = _params['v'] || service.default.version;
-          _params['lang'] = _params['lang'] || service.default.language;
-
-          for (var key in _params) {
-            if (key === "message") {
-              path += ('&' + key + '=' + encodeURIComponent(_params[key]));
-            } else {
-              path += ('&' + key + '=' + _params[key]);
-            }
-          }
-
-
-          $http.get('https://api.vk.com' + path).then(function(res) {
-            if (typeof _response === 'function') {
-              _response(res.data);
-            } else {
-              defer.resolve(res.data);
-            }
-          });
-        });
-
-        return defer.promise;
-      };
-
-      service.setToken = function(token) {
-        service.token = token;
-        if (_requestStack.length > 0) {
-          angular.forEach(_requestStack, function(request) {
-            request.resolve(token);
-          });
-        }
-      };
-
-      service.testRequest = function() {
-        var defer = $q.defer();
-        service.request('users.get', {}, function(resp) {
-          if (resp.success) {
-            defer.resolve();
-          } else {
-            defer.reject();
-          }
-        })
-        return defer.promise;
-      }
-
-      service.callAuthPopup = function() {
-        var defer = $q.defer();
-        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,email,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
-
-        chrome.tabs.create({
-          url: vkAuthenticationUrl,
-          selected: true
-        }, function(tab) {
-
-          chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
-            defer.resolve(tab);
-          }));
-        });
-
-        return defer.promise;
-      }
-
-      service.createPoll = function(attach, group_id) {
-        return service.request('polls.create', {
-          question: attach.question,
-          is_anonymous: (attach.is_anonymous) ? 1 : 0,
-          owner_id: "-"+group_id,
-          add_answers: JSON.stringify(_.uniq(_.reduce(attach.variants,function(max, q){
-            if (q.text && q.text !== ''){
-              max.push(q.text);
-            }
-            return max;
-          },[])))
-        });
-      }
-
-      service.getToken = function() {
-        var defer = $q.defer();
-
-        if (service.token) {
-          defer.resolve(service.token);
-        } else {
-          _requestStack.push(defer);
-        }
-
-        return defer.promise;
-      };
-
-      return service;
-    }
-  ]);
-
 angular.module('App').controller('CD_attachPoll', [
   '$scope',
   'S_vk',
@@ -3616,6 +3676,155 @@ angular.module('App').controller('CD_attachPoll', [
   }
 ]);
 
+angular.module('App').controller('CD_channel', [
+  '$scope',
+  'S_utils',
+  function($scope, S_utils) {
+    var ctr = this;
+
+    ctr.network = $scope.channel.network;
+    ctr.screen_name = $scope.channel.screen_name;
+
+    $scope.channel.attachments = ctr.attachments = [];
+
+    ctr.selectedAttachments = [];
+    ctr.uploadingAttaches = [];
+    ctr.processingAttachments = [];
+
+    $scope.$watch("parsedText", function(text) {
+      if (!text) return;
+
+      ctr.text = $scope.channel.text = text;
+    });
+
+    $scope.$watch("parsedImage", function(text) {
+      if (!text) return;
+    });
+
+    $scope.$watch(function() {
+      return ctr.text;
+    }, function(text) {
+      $scope.channel.text = text;
+    });
+
+    ctr.isComplete = function() {
+      return $scope.channel.complete;
+    }
+
+    ctr.isFail = function() {
+      return $scope.channel.error;
+    }
+
+    ctr.getPostUrl = function() {
+      return $scope.channel.post_url;
+    }
+
+    ctr.attachItem = function(type) {
+      switch (type) {
+        case 'photo':
+          {
+            S_utils.callAttachPhotoDialog($scope.pageAttachments, {
+              before: ctr.pushUploadingAttach,
+              after: ctr.afterImageUploaded
+            }).then(function(resp) {
+              ctr.attachments = S_utils.sortAttachments(_.uniq(ctr.attachments.concat(resp), 'id'));
+            });
+            break;
+          }
+        case 'video':
+          {
+            S_utils.callAttachVideoDialog(ctr.selectedGroup.id).then(function(resp) {
+              var video = S_utils.wrapVideo(resp[0]);
+              ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(video));
+            });
+            break;
+          }
+        case 'poll':
+          {
+            var poll = S_utils.createEmptyPoll();
+            ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(poll));
+            break;
+          }
+      }
+    }
+
+
+
+    ctr.pushUploadingAttach = function() {
+      var obj = {
+        src: '/images/nophoto.jpg',
+        type: 'image',
+        processing: true,
+        id: S_utils.getRandomString(16)
+      };
+      $scope.$apply(function() {
+        ctr.attachments.push(obj);
+        ctr.uploadingAttaches.push(obj);
+        ctr.processingAttachments.push(obj);
+      });
+      return obj;
+    }
+
+    ctr.afterImageUploaded = function(resp, id) {
+      var attach = ctr.uploadingAttaches.shift();
+      var image = S_utils.convertUploadedPhotoToAttach(resp.data.media_id, resp.data.media_url, resp.data.info);
+      $scope.$apply(function() {
+        _.extend(attach, image);
+        ctr.processingAttachments.shift();
+      });
+    }
+
+    ctr.getFailDescription = function() {
+      if ($scope.channel.errorData) {
+        return S_utils.getFailDescription($scope.channel.errorData);
+      }
+    }
+
+    ctr.editPost = function() {
+      delete $scope.channel.error;
+      delete $scope.channel.errorData;
+    }
+
+    ctr.postInChannelAgain = function() {
+      $scope.postChannelAgain();
+    }
+
+
+    ctr.attachmentsLimitReached = function(network) {
+      switch (network) {
+        case 'ig':
+          {
+            return ctr.attachments.length >= 1;
+            break;
+          }
+        case 'tw':
+          {
+            return ctr.attachments.length >= 4;
+            break;
+          }
+        case 'vk':
+          {
+            return ctr.attachments.length >= 9;
+            break;
+          }
+      }
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CD_instagramArea', [
+  '$scope',
+
+  function($scope, S_vk, S_selfapi, S_chrome, __maxPollVariants) {
+    var ctr = this;
+
+
+    return ctr;
+  }
+]);
+ 
 angular.module('App').controller('CD_photobankSearch', [
   '$scope',
   'S_google',

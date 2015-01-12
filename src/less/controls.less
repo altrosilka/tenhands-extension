@@ -56,3 +56,32 @@ select.form-control {
     font-size: 14px;
   }
 }
+.social_bg {
+  &[data-network="vk"] {
+    background-color: rgba(67, 102, 138, 0.12);
+    &.deep{
+      background-color: rgba(67, 102, 138, 0.21);
+    }
+  }
+  &[data-network="fb"] {
+    background-color: #000;
+  } 
+  &[data-network="ig"] {
+    background-color: rgba(67, 69, 95, 0.11);
+    &.deep{
+      background-color: rgba(67, 69, 95, 0.21);
+    }
+  }
+  &[data-network="tw"] {
+    background-color: rgba(29, 172, 237, 0.11);
+    &.deep{
+      background-color: rgba(29, 172, 237, 0.21);
+    }
+  }
+  &[data-network="gp"] {
+    background-color: #000;
+  }
+  &[data-network="ok"] {
+    background-color: #000;
+  }
+}

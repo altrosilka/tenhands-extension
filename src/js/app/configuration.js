@@ -5,10 +5,13 @@ angular.module('config', [])
     paths: {
       saveExtensionToken: 'vkToken',
       getAssignKey: 'user/getAssignKey',
-      uploadPhoto: 'posts/uploadImage',
-      sendPost: 'posts/create',
+      media: 'media',
       getOverrideKey: 'groups/getOverrideKey',
-      getPostsInPeriod: 'posts/getInPeriod'
+      getPostsInPeriod: 'posts/getInPeriod',
+      createPost: 'posts',
+      checkAuth: 'auth/check',
+      signIn: 'auth/signIn',
+      sets: 'sets'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')

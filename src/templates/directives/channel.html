@@ -1,0 +1,72 @@
+<div class="channel social_bg" data-network="{{channel_ctr.network}}" ng-class="{'complete': channel_ctr.isComplete(), 'fail': channel_ctr.isFail()}">
+  <div class="workArea">
+    <header class="social_bg deep" data-network="{{channel_ctr.network}}">
+      <span ng-bind="channel_ctr.screen_name"></span>
+    </header>
+
+
+    <div class="inner">
+      <div ng-if="channel_ctr.network === 'vk'">
+
+
+
+
+        <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
+
+        <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('vk')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
+            <i class="fa fa-picture-o"></i><span>изображение</span>
+          </span>
+          <span class="addAttach" ng-click="channel_ctr.attachItem('video')">
+            <i class="fa fa-film"></i><span>видеозапись</span>
+          </span>
+          <span class="addAttach" ng-click="channel_ctr.attachItem('poll')">
+            <i class="fa fa-bar-chart"></i><span>опрос</span>
+          </span>
+        </div>
+
+        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel_ctr.attachments" main-mode="true"></div>
+      </div>
+
+      <div ng-if="channel_ctr.network === 'tw'">
+
+
+        <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
+        <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('tw')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
+            <i class="fa fa-picture-o"></i><span>изображение</span>
+          </span>
+        </div>
+        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel_ctr.attachments" main-mode="true"></div>
+      </div>
+
+      <div ng-if="channel_ctr.network === 'ig'">
+
+        <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
+        <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('ig')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
+            <i class="fa fa-picture-o"></i><span>изображение</span>
+          </span>
+        </div>
+        <!--<div instagram-area="channel_ctr.attachments[0]"></div>-->
+         <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel_ctr.attachments" main-mode="true"></div>
+      </div>
+    </div>
+  </div>
+  <div class="completeArea">
+    Публикация в <strong ng-bind="channel_ctr.screen_name"></strong> завершилась успехом.
+    <br>
+    <br><small>Ссылка для просмотра:<br>
+    <a target="_blank" class="link" ng-href="{{channel_ctr.getPostUrl()}}" ng-bind="channel_ctr.post_url"></a>&nbsp;<i class="fa fa-external-link"></i>
+    </small>
+  </div>
+  <div class="failArea">
+    Публикация в <strong ng-bind="channel_ctr.screen_name"></strong> не удалась.
+    <br>
+    <br>Причина:&nbsp;<strong ng-bind="channel_ctr.getFailDescription()"></strong>
+    <div class="buttons">
+      <button class="btn btn-primary" ng-click="channel_ctr.postInChannelAgain()">Попробовать еще раз</button>
+      <button class="btn btn-default" ng-click="channel_ctr.editPost()">Изменить запись</button>
+    </div>
+  </div>
+</div>

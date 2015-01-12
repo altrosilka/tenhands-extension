@@ -1,6 +1,6 @@
-<div class="attaches clearfix">
+<div class="attaches clearfix" ng-hide="!attachments.length">
   <div class="attach" ng-repeat="attach in attachments" ng-class="{'processing':ctr.attachIsProcessing(attach), selected: ctr.attachIsSelected(attach)}" data-type="{{attach.type}}">
-    <section ng-if="attach.type ==='photo'">
+    <section ng-if="attach.type ==='image'">
       <div class="process">
         <i class="fa fa-circle-o-notch fa-spin"></i>
       </div>

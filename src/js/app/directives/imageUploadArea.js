@@ -13,7 +13,7 @@ angular.module('App').directive('imageUploadArea', ['$timeout', '__api', functio
     }],
     link: function($scope, $element) {
       $element.find('input').fileupload({
-        url: __api.baseUrl + __api.paths.uploadPhoto,
+        url: __api.baseUrl + __api.paths.media,
         dataType: 'json',
         singleFileUploads: true,
         limitMultiFileUploads: 1,

@@ -16,51 +16,55 @@ angular.module('App')
         });
       }
 
-      service.sendPost = function(owner_id, message, attachments, publish_date, signed) {
+      service.createPost = function(setId, postInfo) {
         return $http({
-          url: base + __api.paths.sendPost,
+          url: base + __api.paths.createPost,
           method: 'POST',
           data: {
-            owner_id: owner_id,
-            message: message,
-            attachments: attachments,
-            publish_date: publish_date,
-            signed: signed
+            setId: setId,
+            postInfo: postInfo
           }
         });
       }
 
-      service.getAssignKey = function(token) {
+      service.checkAuth = function() {
         return $http({
-          url: base + __api.paths.getAssignKey,
-          method: 'GET'
-        });
-      }
-
-      service.getPostsInPeriod = function(groupId, from, to) {
-        return $http({
-          url: base + __api.paths.getPostsInPeriod,
+          url: base + __api.paths.checkAuth,
           method: 'GET',
-          params: {
-            groupId: groupId,
-            from: from,
-            to: to
-          }
+          withCredentials: true
         });
       }
 
-      service.getOverrideKey = function(groupId) {
+      service.getAllSets = function() {
         return $http({
-          url: base + __api.paths.getOverrideKey,
+          url: base + __api.paths.sets,
           method: 'GET',
-          params: {
-            groupId: groupId
+          withCredentials: true
+        });
+      }
+
+      service.getSetInfo = function(setId) {
+        return $http({
+          url: base + __api.paths.sets+'/'+setId,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.signIn = function(email, password) {
+        return $http({
+          withCredentials: true,
+          url: base + __api.paths.signIn,
+          method: 'POST',
+          data: {
+            email: email,
+            password: password
           }
         });
       }
 
-      var _uploadImageToVkStack = [];
-      service.uploadImageToVk = function(url, c, w, h, id) {
+      var _uploadStack = [];
+      service.uploadImage = function(url, c, w, h, id) {
         var defer = $q.defer();
 
         var obj = {
@@ -74,33 +78,34 @@ angular.module('App')
           obj.originalHeight = h;
         }
 
-        _uploadImageToVkStack.push({
+        _uploadStack.push({
           obj: obj,
           defer: defer
         });
 
-        if (_uploadImageToVkStack.length === 1) {
-          uploadImageToVkCall();
+        if (_uploadStack.length === 1) {
+          uploadImageCall();
         }
 
         return defer.promise;
       }
 
-      function uploadImageToVkCall() {
-        var q = _uploadImageToVkStack[0];
+      function uploadImageCall() {
+        var q = _uploadStack[0];
         $http({
-          url: base + __api.paths.uploadPhoto,
+          url: base + __api.paths.media,
           method: 'POST',
           data: q.obj
         }).then(function(resp) {
-          _uploadImageToVkStack.shift();
+          _uploadStack.shift();
           q.defer.resolve({
-            photo: resp.data.response[0],
+            media_id: resp.data.data.media_id,
+            media_url: resp.data.data.media_url,
             id: q.obj.id
           });
 
-          if (_uploadImageToVkStack.length > 0) {
-            uploadImageToVkCall();
+          if (_uploadStack.length > 0) {
+            uploadImageCall();
           }
         });
       }

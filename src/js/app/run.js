@@ -3,7 +3,8 @@ App.run([
   'S_chrome',
   'S_vk',
   'S_google',
-  function(__vkAppId, S_chrome, S_vk, S_google) {
+  'S_selfapi',
+  function(__vkAppId, S_chrome, S_vk, S_google, S_selfapi) {
 
     Highcharts.setOptions({
       global: {
@@ -33,6 +34,6 @@ App.run([
       }, function(response) {
         console.log(response.farewell);
       });
-    })
+    });
   }
 ]);

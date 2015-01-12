@@ -27,6 +27,7 @@ var backgroundScripts = [
 var enviromentScripts = ['./src/js/pageParser.js', './src/js/pageEnviroment.js'];
 
 var vendorLibs = [
+  './bower_components/socket.io-client/socket.io.js',
   './bower_components/lodash/dist/lodash.js',
   './bower_components/jquery/dist/jquery.js',
   './bower_components/bootstrap/dist/js/bootstrap.js',

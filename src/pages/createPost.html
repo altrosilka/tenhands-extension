@@ -8,7 +8,7 @@
   <title></title>
 </head>
 
-<body data-ng-app="App" data-ng-controller="C_main as ctr" data-ng-class="{'loaded': ctr.dataIsLoaded, 'min':ctr.minState}">
+<body data-ng-app="App" data-ng-controller="C_main as ctr" data-ng-class="{'loaded': ctr.showExtension(), 'min':ctr.minState}">
 
 
   <div class="layerFs" ng-class="{'active':ctr.postingProcess}">
@@ -41,116 +41,61 @@
   </div>
   <div class="filterArea" ng-class="{'blur':ctr.postingProcess}">
 
-    <div class="resizer" ng-click="ctr.resizeIframe()" tooltip="изменить размер окна расширения" tooltip-placement="bottom" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
-      <i class="fa fa-bars"></i>
-    </div>
+    <section ng-show="ctr._state === 'post'" ng-controller="C_posting as post_ctr">
 
-    <div class="remover" ng-click="ctr.closeIframe()" tooltip="закрыть расширение" tooltip-placement="left" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
-      <i class="fa fa-times"></i>
-    </div>
+      <div class="resizer" ng-click="post_ctr.resizeIframe()" tooltip="изменить размер окна расширения" tooltip-placement="bottom" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
+        <i class="fa fa-bars"></i>
+      </div>
 
-    <section class="window">
-      <header>
-        <span class="sharePhrase">Поделиться записью в</span>
-        <span class="groupSelect">
-          <ui-select ng-model="ctr.selectedGroup" theme="select2">
-            <ui-select-match placeholder="Выбери группу, в которую нужно разместить запись">
+      <div class="remover" ng-click="post_ctr.closeIframe()" tooltip="закрыть расширение" tooltip-placement="left" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
+        <i class="fa fa-times"></i>
+      </div>
+
+      <section class="window">
+        <header class="centered" ng-show="post_ctr.showSetSelect()">
+          <span class="sharePhrase">Поделиться записью в набор</span>
+          <span class="groupSelect">
+          <ui-select ng-model="post_ctr.selectedSet" theme="select2">
+            <ui-select-match placeholder="Выбери набор, в который нужно разместить запись">
               {{$select.selected.name}}
             </ui-select-match>
-            <ui-select-choices repeat="group in ctr.groups | findGroups: {name: $select.search}">
-              <div class="image" ng-style="{'background-image':'url('+group.photo_50+')'}"></div>
-              <div class="name" ng-bind-html="group.name | highlight: $select.search"></div>
+            <ui-select-choices repeat="set in post_ctr.sets | findGroups: {name: $select.search}">
+              <div class="image" ng-style="{'_background-image':'url('+set.photo_50+')'}"></div>
+              <div class="name" ng-bind-html="set.name | highlight: $select.search"></div>
             </ui-select-choices>
           </ui-select>
         </span>
-        <span class="fromApp" ng-class="{'active':ctr.postingApp}">
+          <span class="fromApp" ng-class="{'active':post_ctr.postingApp}">
           <span class="sharePhrase">от приложения</span>
-        <img ng-src="{{ctr.postingApp.icon_50}}">
-        <span class="title" ng-bind="ctr.postingApp.title"></span>
-        </span>
-      </header>
-
-      <section class="body clearfix">
-        <div class="leftColumn">
-          <textarea class="postArea" autosize-textarea ng-model="ctr.text"></textarea>
-          <div class="relative">
-
-            <div select-crop-area selected-attachments="ctr.selectedAttachments" processing-attachments="ctr.processingAttachments" attachments="ctr.attachments" main-mode="true"></div>
-          </div>
-        </div>
-
-        <div class="rightColumn">
-          <h4>Прикрепить</h4>
-          <div class="attachsButtons">
-            <div ng-click="ctr.attachItem('photo')">
-              <i class="fa fa-camera"></i>
-              <span>Фотографию</span>
-            </div>
-            <div ng-click="ctr.attachItem('video')">
-              <i class="fa fa-film"></i>
-              <span>Видеозапись</span>
-            </div>
-            <div class="ng-hide" ng-click="ctr.attachItem('audio')">
-              <i class="fa fa-music"></i>
-              <span>Аудиозапись</span>
-            </div>
-            <div ng-click="ctr.attachItem('poll')">
-              <i class="fa fa-bar-chart"></i>
-              <span>Опрос</span>
-            </div>
-            <div class="ng-hide" ng-click="ctr.attachItem('doc')">
-              <i class="fa fa-file"></i>
-              <span>Документ</span>
-            </div>
-          </div>
-
-          <div class="lastAttachCount">
-            <span ng-show="ctr.canAddAttach()">
-          еще <strong ng-bind="ctr.getRemainingAttachesCount()" tooltip-placement="right"></strong> материалов
+          <img ng-src="{{post_ctr.postingApp.icon_50}}">
+          <span class="title" ng-bind="post_ctr.postingApp.title"></span>
           </span>
-            <span ng-show="!ctr.canAddAttach()">
-          больше нельзя ничего прикрепить
-          </span>
-          </div>
+        </header>
 
-        </div>
+
+        <section class="v_channels">
+          <span channel="channel" ng-repeat="channel in post_ctr.channels" parsed-text="post_ctr.text" page-attachments="post_ctr.pageAttachments" post-channel-again="post_ctr.postChannelAgain(channel.id)"></span>
+        </section>
+
+
+        <footer class="centered">
+
+          <button type="button" class="btn btn-primary" ng-disabled="post_ctr.paidIsEnd || post_ctr.processingAttachments.length" ng-click="post_ctr.createPost()">
+            отправить
+          </button>
+
+          <div class="checkboxList controls-list">
+            <label>
+              <input type="checkbox" ng-model="post_ctr.notClose">
+              <span tooltip="например, можно запостить то же самое в другую группу" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Закрыть после публикации</span>
+            </label>
+          </div>
+        </footer>
       </section>
+    </section>
 
-      <div class="dateArea">
-        <h3 ng-hide="ctr.timerIsEnabled">Разместить запись <strong>сейчас</strong> / <span class="addTimer" ng-click="ctr.addTimer()">добавить таймер</span></h3>
-        <h3 ng-show="ctr.timerIsEnabled">Разместить отложенную запись / <span class="addTimer" ng-click="ctr.removeTimer()">разместить сейчас</span></h3>
-        <span ng-show="ctr.timerIsEnabled">
-        <div class="calendar" date-button min-date="ctr.minDate" max-date="ctr.maxDate" data-model="ctr.postingDate" class="picker_inputs"></div>
-        <span class="in">в</span>
-        <div class="timec" time-select time="ctr.postingTime" set-new-time="ctr.onTimeChange(time)"></div>
+    <section ng-show="ctr._state === 'login'" ng-include="'templates/views/login.html'">
 
-        <span class="text-danger" ng-show="ctr.pastTime">в прошлое постить не умеем :(</span>
-        </span>
-
-      </div>
-      <div class="timelineArea">
-        <h3 class="ng-hide">Лента записей в группе</h3>
-        <div posts-timeline time="ctr.postingUnixTime" now="ctr.postingNow" group-id="'755816'"></div>
-      </div>
-
-
-      <footer>
-
-        <button type="button" class="btn btn-primary" ng-disabled="ctr.paidIsEnd || ctr.processingAttachments.length" ng-click="ctr.publicPost()">
-          отправить
-        </button>
-
-        <div class="checkboxList controls-list">
-          <label>
-            <input type="checkbox" ng-model="ctr.assigned">
-            <span tooltip="под записью появится подпись этого аккаунта" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Подпись</span>
-          </label>
-          <label>
-            <input type="checkbox" ng-model="ctr.notClose">
-            <span tooltip="например, можно запостить то же самое в другую группу" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Закрыть после публикации</span>
-          </label>
-        </div>
-      </footer>
     </section>
   </div>
 

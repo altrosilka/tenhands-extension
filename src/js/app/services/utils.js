@@ -133,16 +133,16 @@ angular.module('utilsTools', [])
         return defer.promise;
       }
 
-      service.convertUploadedPhotoToAttach = function(photo) {
+      service.convertUploadedPhotoToAttach = function(media_id, media_url, info) {
         return {
-          photo: photo,
-          width: photo.width,
-          clientWidth: photo.width,
-          height: photo.height,
-          clientHeight: photo.height,
-          src: photo.photo_130,
-          src_big: photo.photo_807 || photo.photo_604,
-          type: 'photo'
+          media_id: media_id,
+          width: info.width,
+          clientWidth: info.width,
+          height: info.height,
+          clientHeight: info.height,
+          src: media_url,
+          src_big: media_url,
+          type: 'image'
         }
       }
 
@@ -250,7 +250,7 @@ angular.module('utilsTools', [])
         scope.posts = info;
 
         scope.getAttachments = function(post) {
-          if (post.copy_history){
+          if (post.copy_history) {
             return post.copy_history[0].attachments;
           } else {
             return post.attachments;
@@ -360,6 +360,44 @@ angular.module('utilsTools', [])
             attachments: q.attachments
           }
         });
+      }
+
+      service.getFailDescription = function(data) {
+        var q;
+
+        if (data.network === 'tw' && data.error && data.error.code && data.error.code === 187) {
+          return "Статус повторяется";
+        }
+
+        if (data.network === 'ig') {
+          if (data.error && data.error.code === 'notFull') {
+            return "Необходимо прикрепить изображение"
+          }
+          if (data.error && data.error.code === 'notMedia') {
+            return "Изображение не найдено, повторите загрузку"
+          }
+          if (data.error && data.error.code === 'notSquared') {
+            return "Изображение не квадратное"
+          }
+        }
+
+        return JSON.stringify(data.error);
+      }
+
+      service.configurePostInfo = function(channels, channel_ids) {
+        var postInfo = [];
+        _.forEach(channels, function(channel) {
+          if (channel.disabled || channel.complete) return;
+
+          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1 )) {
+            postInfo.push({
+              channel_id: channel.id,
+              text: channel.text,
+              attachments: channel.attachments
+            });
+          }
+        });
+        return postInfo;
       }
 
       service.unixTo = function(time, format) {
