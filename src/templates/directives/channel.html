@@ -1,11 +1,20 @@
 <div class="channel social_bg" data-network="{{channel_ctr.network}}" ng-class="{'complete': channel_ctr.isComplete(), 'fail': channel_ctr.isFail()}">
   <div class="workArea">
     <header class="social_bg deep" data-network="{{channel_ctr.network}}">
-      <span ng-bind="channel_ctr.screen_name"></span>
+      <div class="progress-bar progress-bar-info progress-bar-striped active" ng-class="{'showed':channel.inprogress}"></div>
+
+      <span class="actions">
+	    	<span class="visibility" ng-click="channel_ctr.toggleVisibility(channel)">
+	    		<i class="fa fa-eye" ng-class="{'active': channel.disabled}"></i>
+	    		<i class="fa fa-eye-slash" ng-class="{'active': !channel.disabled}"></i>
+	    	</span>
+      </span>
+      <span class="screen_name" ng-bind="channel_ctr.screen_name"></span>
     </header>
 
 
-    <div class="inner">
+    <div class="inner" ng-class="{'disabledChannel':channel.disabled}">
+      <div class="fakeOverlay" ng-class="{'active':channel.inprogress}"></div>
       <div ng-if="channel_ctr.network === 'vk'">
 
 
@@ -25,7 +34,7 @@
           </span>
         </div>
 
-        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel_ctr.attachments" main-mode="true"></div>
+        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
 
       <div ng-if="channel_ctr.network === 'tw'">
@@ -37,7 +46,7 @@
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
         </div>
-        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel_ctr.attachments" main-mode="true"></div>
+        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
 
       <div ng-if="channel_ctr.network === 'ig'">
@@ -49,7 +58,7 @@
           </span>
         </div>
         <!--<div instagram-area="channel_ctr.attachments[0]"></div>-->
-         <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel_ctr.attachments" main-mode="true"></div>
+        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
     </div>
   </div>
@@ -57,7 +66,7 @@
     Публикация в <strong ng-bind="channel_ctr.screen_name"></strong> завершилась успехом.
     <br>
     <br><small>Ссылка для просмотра:<br>
-    <a target="_blank" class="link" ng-href="{{channel_ctr.getPostUrl()}}" ng-bind="channel_ctr.post_url"></a>&nbsp;<i class="fa fa-external-link"></i>
+    <a target="_blank" class="link" ng-href="{{channel.post_url}}" ng-bind="channel.post_url"></a>&nbsp;<i class="fa fa-external-link"></i>
     </small>
   </div>
   <div class="failArea">

@@ -381,13 +381,13 @@ angular.module('utilsTools', [])
           }
         }
 
-        return JSON.stringify(data.error);
+        return ((data.error) ? JSON.stringify(data.error) : 'не удалось определить');
       }
 
       service.configurePostInfo = function(channels, channel_ids) {
         var postInfo = [];
         _.forEach(channels, function(channel) {
-          if (channel.disabled || channel.complete) return;
+          if (channel.disabled || channel.complete || channel.inprogress) return;
 
           if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1 )) {
             postInfo.push({
@@ -398,6 +398,15 @@ angular.module('utilsTools', [])
           }
         });
         return postInfo;
+      }
+
+      service.trackProgress = function(channels, info){
+        var q;
+        _.forEach(info, function(_channel) {
+          _.find(channels, function(channel){
+            return  channel.id === _channel.channel_id;
+          }).inprogress = true;
+        });
       }
 
       service.unixTo = function(time, format) {

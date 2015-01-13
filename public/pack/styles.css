@@ -888,6 +888,69 @@ body.min .filterArea .resizer {
 }
 .channel header {
   padding: 10px 15px;
+  position: relative;
+}
+.channel header .progress-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.4s;
+  width: 100%;
+}
+.channel header .progress-bar.showed {
+  opacity: 1;
+  visibility: visible;
+}
+.channel header .screen_name {
+  z-index: 3;
+  position: relative;
+}
+.channel header .actions {
+  z-index: 1;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.channel header .actions .visibility {
+  cursor: pointer;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  top: 7px;
+  right: 7px;
+}
+.channel header .actions .visibility .fa {
+  opacity: 0;
+  position: absolute;
+  transition: 0.3s;
+  font-size: 17px;
+  left: 3px;
+  top: 4px;
+}
+.channel header .actions .visibility .fa.active {
+  opacity: 1;
+}
+.channel .fakeOverlay {
+  display: none;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  position: absolute;
+}
+.channel .fakeOverlay.active {
+  display: block;
+}
+.channel .inner {
+  transition: 0.2s;
+  position: relative;
 }
 .channel .inner textarea {
   min-height: 120px;
@@ -895,6 +958,12 @@ body.min .filterArea .resizer {
   padding: 8px 15px;
   border: none;
   resize: none;
+}
+.channel .inner.disabledChannel {
+  opacity: 0.2;
+}
+.channel .inner.disabledChannel .fakeOverlay {
+  display: block;
 }
 .channel .selectAttachments {
   text-align: right;
@@ -933,11 +1002,13 @@ body.min .filterArea .resizer {
   padding: 25px;
   color: #555;
   font-size: 13px;
-  z-index: 1;
+  z-index: 10;
 }
 .channel .failArea a,
 .channel .completeArea a {
   color: #000!important;
+  text-decoration: none;
+  outline: none;
 }
 .channel .completeArea {
   background-color: #9DE49D;

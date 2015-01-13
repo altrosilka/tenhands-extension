@@ -10,6 +10,8 @@ angular.module('App').controller('C_posting', [
   function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
     var ctr = this;
 
+    var _socketListeningId;
+
     ctr.sets = [];
 
     ctr.selectedSet = {};
@@ -62,10 +64,12 @@ angular.module('App').controller('C_posting', [
     ctr.createPost = function(channel_ids) {
       var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
 
-      console.log(postInfo);
+      S_utils.trackProgress(ctr.channels, postInfo);
 
-      S_selfapi.createPost(ctr.selectedSet.id, postInfo).then(function(resp) {
+      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
+        _socketListeningId = resp.data.data.hash;
+
         var socket = io(socketUrl);
 
         socket.on('post_success', function(data) {
@@ -88,6 +92,7 @@ angular.module('App').controller('C_posting', [
 
           if (channel) {
             $scope.$apply(function() {
+              channel.inprogress = false;
               channel.error = true;
               channel.errorData = data;
             });
@@ -97,7 +102,6 @@ angular.module('App').controller('C_posting', [
     }
 
     ctr.postChannelAgain = function(channel_id){
-      debugger
       ctr.createPost([channel_id]);
     }
 

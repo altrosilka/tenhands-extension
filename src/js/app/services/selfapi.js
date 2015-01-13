@@ -16,13 +16,14 @@ angular.module('App')
         });
       }
 
-      service.createPost = function(setId, postInfo) {
+      service.createPost = function(setId, postInfo, socket_channel) {
         return $http({
           url: base + __api.paths.createPost,
           method: 'POST',
           data: {
             setId: setId,
-            postInfo: postInfo
+            postInfo: postInfo,
+            socket_channel: socket_channel
           }
         });
       }
@@ -45,7 +46,7 @@ angular.module('App')
 
       service.getSetInfo = function(setId) {
         return $http({
-          url: base + __api.paths.sets+'/'+setId,
+          url: base + __api.paths.sets + '/' + setId,
           method: 'GET',
           withCredentials: true
         });

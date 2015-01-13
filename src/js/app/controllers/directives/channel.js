@@ -7,7 +7,7 @@ angular.module('App').controller('CD_channel', [
     ctr.network = $scope.channel.network;
     ctr.screen_name = $scope.channel.screen_name;
 
-    $scope.channel.attachments = ctr.attachments = [];
+    $scope.channel.attachments = [];
 
     ctr.selectedAttachments = [];
     ctr.uploadingAttaches = [];
@@ -37,10 +37,6 @@ angular.module('App').controller('CD_channel', [
       return $scope.channel.error;
     }
 
-    ctr.getPostUrl = function() {
-      return $scope.channel.post_url;
-    }
-
     ctr.attachItem = function(type) {
       switch (type) {
         case 'photo':
@@ -49,7 +45,7 @@ angular.module('App').controller('CD_channel', [
               before: ctr.pushUploadingAttach,
               after: ctr.afterImageUploaded
             }).then(function(resp) {
-              ctr.attachments = S_utils.sortAttachments(_.uniq(ctr.attachments.concat(resp), 'id'));
+              $scope.channel.attachments = S_utils.sortAttachments(_.uniq($scope.channel.attachments, 'id'));
             });
             break;
           }
@@ -57,14 +53,14 @@ angular.module('App').controller('CD_channel', [
           {
             S_utils.callAttachVideoDialog(ctr.selectedGroup.id).then(function(resp) {
               var video = S_utils.wrapVideo(resp[0]);
-              ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(video));
+              $scope.channel.attachments = S_utils.sortAttachments($scope.channel.attachments.concat(video));
             });
             break;
           }
         case 'poll':
           {
             var poll = S_utils.createEmptyPoll();
-            ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(poll));
+            $scope.channel.attachments = S_utils.sortAttachments($scope.channel.attachments.concat(poll));
             break;
           }
       }
@@ -79,8 +75,9 @@ angular.module('App').controller('CD_channel', [
         processing: true,
         id: S_utils.getRandomString(16)
       };
+      console.log(123);
       $scope.$apply(function() {
-        ctr.attachments.push(obj);
+        $scope.channel.attachments.push(obj);
         ctr.uploadingAttaches.push(obj);
         ctr.processingAttachments.push(obj);
       });
@@ -111,22 +108,25 @@ angular.module('App').controller('CD_channel', [
       $scope.postChannelAgain();
     }
 
+    ctr.toggleVisibility = function(channel) {
+      channel.disabled = !channel.disabled;
+    }
 
     ctr.attachmentsLimitReached = function(network) {
       switch (network) {
         case 'ig':
           {
-            return ctr.attachments.length >= 1;
+            return $scope.channel.attachments.length >= 1;
             break;
           }
         case 'tw':
           {
-            return ctr.attachments.length >= 4;
+            return $scope.channel.attachments.length >= 4;
             break;
           }
         case 'vk':
           {
-            return ctr.attachments.length >= 9;
+            return $scope.channel.attachments.length >= 9;
             break;
           }
       }
