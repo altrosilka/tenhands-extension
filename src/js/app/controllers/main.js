@@ -14,15 +14,20 @@ angular.module('App').controller('C_main', [
       S_selfapi.checkAuth().then(function(resp) {
         if (resp.data.success) {
           ctr._state = 'post';
+          $timeout(function() {
+            ctr.showBottomPanel = true;
+          }, 1000);
         } else {
           ctr._state = 'login';
         }
       });
     }
 
-    ctr.showExtension = function(){
+    ctr.showExtension = function() {
       return ctr._state;
     }
+
+
 
     ctr.checkAuth();
 

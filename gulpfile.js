@@ -43,7 +43,9 @@ var vendorLibs = [
   './bower_components/angular-i18n/angular-locale_ru.js',
   './bower_components/angular-ui-select/dist/select.js',
   './bower_components/highcharts/highcharts.src.js',
-  './bower_components/jquery-autosize/jquery.autosize.js'
+  './bower_components/jquery-autosize/jquery.autosize.js',
+  './bower_components/jquery-mousewheel/jquery.mousewheel.js',
+  './bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.js'
 ];
 
 var vendorLibsCss = [
@@ -53,7 +55,8 @@ var vendorLibsCss = [
   './bower_components/Jcrop/css/jquery.Jcrop.css',
   './bower_components/select2/select2.css',
   './bower_components/select2/select2-bootstrap.css',
-  './bower_components/angular-ui-select/dist/select.css'
+  './bower_components/angular-ui-select/dist/select.css',
+  './bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css'
 ];
 
 

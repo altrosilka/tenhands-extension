@@ -1,23 +1,24 @@
-/* orange */
 /* plasma blue */
 /* borders */
 /* borders */
 /*@import url('vendor/ionicons/ionicons.less');  */
 .btn {
   transition: 0.2s;
-  padding: 6px 20px 7px;
+  padding: 0px 20px;
   outline: none!important;
-  border-radius: 3px;
+  border-radius: 0px;
+  border: 2px solid;
+  font-size: 13px;
+  line-height: 29px;
 }
 .btn.btn-primary {
-  background-color: #567CA4;
-  font-size: 12px;
-  line-height: 1.385em;
-  border: none;
+  background-color: #009ee0;
+  border-color: #009ee0;
   -webkit-font-smoothing: subpixel-antialiased;
 }
 .btn.btn-primary:hover {
-  background-color: #567CA4;
+  background-color: #fff;
+  color: #009ee0;
 }
 .btn.btn-link {
   height: 31px;
@@ -61,11 +62,14 @@ select.form-control {
   color: #CCC;
   font-size: 14px;
 }
+.social_bg {
+  color: #fff;
+}
 .social_bg[data-network="vk"] {
   background-color: rgba(67, 102, 138, 0.12);
 }
 .social_bg[data-network="vk"].deep {
-  background-color: rgba(67, 102, 138, 0.21);
+  background-color: #43668a;
 }
 .social_bg[data-network="fb"] {
   background-color: #000;
@@ -74,13 +78,13 @@ select.form-control {
   background-color: rgba(67, 69, 95, 0.11);
 }
 .social_bg[data-network="ig"].deep {
-  background-color: rgba(67, 69, 95, 0.21);
+  background-color: #43455f;
 }
 .social_bg[data-network="tw"] {
   background-color: rgba(29, 172, 237, 0.11);
 }
 .social_bg[data-network="tw"].deep {
-  background-color: rgba(29, 172, 237, 0.21);
+  background-color: #1daced;
 }
 .social_bg[data-network="gp"] {
   background-color: #000;
@@ -290,13 +294,19 @@ a:hover {
   font-weight: normal;
 }
 .filterArea {
-  background-color: #F4F4F4;
+  background: #ffffff url(../images/bg/wood.jpg) center no-repeat;
+  z-index: 2;
+  background-size: cover;
   opacity: 0;
   visibility: hidden;
-  padding: 60px 0;
+  padding: 120px 0;
   transform: translateY(100px);
   transition: 0.4s;
-  position: relative;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 .filterArea.blur {
   -webkit-filter: blur(3px) grayscale(1);
@@ -306,6 +316,7 @@ a:hover {
 .filterArea .remover {
   opacity: 0.4;
   transition: 0.2s;
+  color: #fff;
 }
 .filterArea .resizer:hover,
 .filterArea .remover:hover {
@@ -316,16 +327,58 @@ a:hover {
   position: absolute;
   width: 40px;
   margin-left: -20px;
-  top: 10px;
+  top: 15px;
   left: 50%;
   text-align: center;
-  font-size: 14px;
+  font-size: 18px;
 }
 .filterArea .remover {
   position: absolute;
   right: 10px;
-  top: 10px;
-  font-size: 16px;
+  top: 15px;
+  font-size: 20px;
+}
+.filterArea .setSelecterArea {
+  position: absolute;
+  color: #A39090;
+  top: 57px;
+  left: 20px;
+}
+.filterArea .setSelecterArea .sharePhrase {
+  position: relative;
+  top: 2px;
+}
+.filterArea .setSelecterArea .fromApp {
+  display: inline-block;
+  position: relative;
+  top: 1px;
+  transition: 0.4s;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-15px);
+}
+.filterArea .setSelecterArea .fromApp.active {
+  transform: translateX(0px);
+  opacity: 1;
+  visibility: visible;
+}
+.filterArea .setSelecterArea .fromApp .sharePhrase {
+  color: #AAA;
+  margin-left: 11px;
+  font-size: 10px;
+  top: 0px;
+}
+.filterArea .setSelecterArea .fromApp img {
+  height: 25px;
+  position: relative;
+  top: -1px;
+}
+.filterArea .setSelecterArea .fromApp .title {
+  font-size: 10px;
+  font-weight: bold;
+  position: relative;
+  top: 0px;
+  color: #666;
 }
 body.min .filterArea {
   /*background-color: rgba(250, 250, 255, 0.94);*/
@@ -348,53 +401,6 @@ body.min .filterArea .resizer {
   margin: 20px 0 5px;
   font-size: 12px;
 }
-.window header .sharePhrase {
-  position: relative;
-  top: 2px;
-}
-.window header .fromApp {
-  display: inline-block;
-  position: relative;
-  top: 1px;
-  transition: 0.4s;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-15px);
-}
-.window header .fromApp.active {
-  transform: translateX(0px);
-  opacity: 1;
-  visibility: visible;
-}
-.window header .fromApp .sharePhrase {
-  color: #AAA;
-  margin-left: 11px;
-  font-size: 10px;
-  top: 0px;
-}
-.window header .fromApp img {
-  height: 25px;
-  position: relative;
-  top: -1px;
-}
-.window header .fromApp .title {
-  font-size: 10px;
-  font-weight: bold;
-  position: relative;
-  top: 0px;
-  color: #666;
-}
-.window footer {
-  margin-top: 40px;
-}
-.window footer .controls-list {
-  display: inline-block;
-  margin-left: 10px;
-}
-.window footer .controls-list label {
-  display: inline-block;
-  margin-right: 10px;
-}
 .jcrop-hline {
   background: #ffffff url("../images/Jcrop.gif");
 }
@@ -415,7 +421,7 @@ body.min .filterArea .resizer {
   position: relative;
 }
 .attaches {
-  margin: -5px;
+  margin: -5px -5px 0;
 }
 .attaches .attach {
   float: left;
@@ -575,63 +581,71 @@ body.min .filterArea .resizer {
   font-size: 12px;
 }
 .groupSelect .select2-container .select2-choice {
-  border: 1px solid #C3CBD4;
   border-radius: 0px;
-  background: #FFF;
+  background: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid #444;
   box-shadow: none!important;
   height: 33px;
   line-height: 33px;
   font-size: 12px;
+  color: #EEE;
 }
 .groupSelect .select2-container .select2-choice .select2-arrow {
   border: none;
   background: rgba(0, 0, 0, 0);
   font-family: FontAwesome;
+  width: 100%;
+  text-align: right;
+  padding-right: 10px;
+  cursor: pointer;
 }
 .groupSelect .select2-container .select2-choice .select2-arrow b:after {
   content: "\f107";
 }
-.groupSelect .select2-results {
-  padding: 0 0 0 0px;
-  margin: 5px 0px 0px 0;
+.groupSelect .select2-search input {
+  border: none;
+  background: #333;
+  margin: 0px -9px;
+  width: 298px;
+  display: block;
+  padding: 0 10px;
+  line-height: 33px;
 }
-.groupSelect .select2-results .select2-highlighted {
-  background: #2B587A;
+.select2-results {
+  padding: 0 0 0 0px;
+  margin: 0px 0px 0px 0;
+}
+.select2-results .select2-highlighted {
+  background: #009ee0;
   color: #FFF;
 }
-.groupSelect .select2-drop-active {
-  border: 1px solid #C3CBD4;
+.select2-drop-active {
+  background-color: rgba(0, 0, 0, 0.85);
+  border: 1px solid #444;
   border-radius: 0px;
-  padding-top: 10px;
+  color: #ccc;
 }
-.groupSelect .select2 {
+.select2 {
   min-width: 300px;
 }
-.groupSelect .select2 .select2-search {
+.select2 .select2-search {
   padding-left: 9px;
   padding-right: 9px;
 }
-.groupSelect .ui-select-choices-row {
+.ui-select-choices-row {
   position: relative;
   padding: 5px 0px;
 }
-.groupSelect .image {
+.name {
   display: inline-block;
-  width: 25px;
-  height: 25px;
-  background-size: 25px;
-  background-position: center;
-  background-repeat: no-repeat;
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  margin-top: -13px;
-}
-.groupSelect .name {
-  display: inline-block;
-  margin-left: 38px;
+  margin-left: 2px;
   margin-top: 0px;
   font-size: 12px;
+}
+.count {
+  float: right;
+  opacity: 0.6;
 }
 .uploadImage {
   float: right;
@@ -664,7 +678,7 @@ body.min .filterArea .resizer {
   width: 14px;
   height: 14px;
   left: 4px;
-  top: 1px;
+  top: 2px;
   content: '';
   position: absolute;
   display: block;
@@ -691,10 +705,23 @@ body.min .filterArea .resizer {
   font-family: FontAwesome;
   content: "\f00c";
   background: rgba(0, 0, 0, 0);
-  top: 1px;
+  top: 2px;
   left: 6px;
   font-size: 11px;
   color: #567CA4;
+}
+.controls-list.dark span {
+  color: #ccc;
+}
+.controls-list.dark span:before {
+  background-color: #111;
+  border: 1px solid #444;
+}
+.controls-list.dark span:after {
+  background: transparent;
+}
+.controls-list.dark.checkboxList span:after {
+  color: #aaa;
 }
 .noResults {
   padding: 40px;
@@ -765,7 +792,48 @@ body.min .filterArea .resizer {
   text-overflow: ellipsis;
 }
 .v_channels {
+  overflow: hidden;
+}
+.v_channels .channelsList {
   overflow: auto;
+  padding: 0 20px;
+}
+.bottomFooter {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 20px 0;
+  color: #EEE;
+  transition: 0.5s;
+  transform: translateY(120px);
+  border-top: 1px solid #000;
+  z-index: 3;
+}
+.bottomFooter .controls-list {
+  display: inline-block;
+  margin-right: 26px;
+  position: relative;
+  top: 1px;
+}
+.bottomFooter .controls-list label {
+  display: inline-block;
+}
+.bottomFooter.active {
+  transform: translateY(0px);
+}
+.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_dragger .mCSB_dragger_bar {
+  height: 10px;
+}
+.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_draggerRail {
+  width: 100%;
+  height: 10px;
+  margin: 6px 0;
+}
+.mCSB_scrollTools {
+  right: 20px!important;
+  left: 19px!important;
 }
 #fountainG {
   position: relative;
@@ -877,16 +945,16 @@ body.min .filterArea .resizer {
   float: right;
 }
 .channel {
-  background-color: #ddd;
   display: block;
   width: 400px;
   margin: 8px;
   float: left;
-  border-radius: 2px;
+  border-radius: 5px;
   position: relative;
-  overflow: hidden;
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.7);
 }
 .channel header {
+  border-radius: 5px 5px 0 0;
   padding: 10px 15px;
   position: relative;
 }
@@ -901,6 +969,7 @@ body.min .filterArea .resizer {
   visibility: hidden;
   transition: 0.4s;
   width: 100%;
+  background-color: rgba(0, 0, 0, 0) !important;
 }
 .channel header .progress-bar.showed {
   opacity: 1;
@@ -909,6 +978,23 @@ body.min .filterArea .resizer {
 .channel header .screen_name {
   z-index: 3;
   position: relative;
+  margin-left: 20px;
+  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
+}
+.channel header .socialSign {
+  display: inline-block;
+  font-size: 16px;
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+.channel header .socialSign span {
+  position: relative;
+}
+.channel header .socialSign .vk {
+  top: -1px;
 }
 .channel header .actions {
   z-index: 1;
@@ -932,6 +1018,7 @@ body.min .filterArea .resizer {
   font-size: 17px;
   left: 3px;
   top: 4px;
+  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.4);
 }
 .channel header .actions .visibility .fa.active {
   opacity: 1;
@@ -951,16 +1038,18 @@ body.min .filterArea .resizer {
 .channel .inner {
   transition: 0.2s;
   position: relative;
+  background-color: #EAEAEA;
+  border-radius: 0px 0px 5px 5px;
 }
 .channel .inner textarea {
   min-height: 120px;
   max-height: 300px;
-  padding: 8px 15px;
+  padding: 8px 14px;
   border: none;
   resize: none;
 }
 .channel .inner.disabledChannel {
-  opacity: 0.2;
+  opacity: 0.5;
 }
 .channel .inner.disabledChannel .fakeOverlay {
   display: block;
@@ -969,7 +1058,7 @@ body.min .filterArea .resizer {
   text-align: right;
   padding: 7px 15px;
   color: #000;
-  background: #fff;
+  background: #FFF;
 }
 .channel .addAttach {
   transition: 0.3s;
@@ -991,18 +1080,19 @@ body.min .filterArea .resizer {
 .channel .completeArea {
   opacity: 0;
   visibility: hidden;
-  transform: scale(1.1);
-  -webkit-transform: scale(1.1);
+  transform: scale(0.9);
+  -webkit-transform: scale(0.9);
   transition: 0.3s;
   position: absolute;
   left: 0;
-  top: 0;
+  top: 37px;
   bottom: 0;
   right: 0;
   padding: 25px;
   color: #555;
   font-size: 13px;
   z-index: 10;
+  border-radius: 0px 0px 5px 5px;
 }
 .channel .failArea a,
 .channel .completeArea a {
@@ -1011,7 +1101,7 @@ body.min .filterArea .resizer {
   outline: none;
 }
 .channel .completeArea {
-  background-color: #9DE49D;
+  background-color: #F2F2F2;
 }
 .channel .failArea {
   background-color: #ffcccc;
@@ -1028,8 +1118,11 @@ body.min .filterArea .resizer {
   transform: scale(1);
   text-decoration: none!important;
 }
+.channel .attachesArea {
+  border-top: 1px solid #ddd;
+}
 .channel .attaches {
-  margin: 13px;
+  padding: 13px;
 }
 .channel .attaches .attach {
   float: left;

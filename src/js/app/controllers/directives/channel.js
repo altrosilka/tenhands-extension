@@ -11,18 +11,34 @@ angular.module('App').controller('CD_channel', [
 
     ctr.selectedAttachments = [];
     ctr.uploadingAttaches = [];
-    ctr.processingAttachments = [];
+    ctr.processingAttachments = []; 
 
-    $scope.$watch("parsedText", function(text) {
-      if (!text) return;
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      $scope.$apply(function() {
+        ctr.data = data;
 
-      ctr.text = $scope.channel.text = text;
+        if (data.imageSrc && data.imageSrc !== '') {
+          data.images.unshift({
+            src: data.imageSrc,
+            big_src: data.imageSrc
+          });
+        }
+
+        var images = _.map(data.images, function(q) {
+          q.type = 'image';
+          q.id = S_utils.getRandomString(16);
+          return q;
+        });
+        ctr.pageAttachments = $scope.channel.attachments.concat(images);
+        if (images.length) {
+          $scope.channel.attachments.push(images[0]);
+        }
+
+        if (!ctr.text || ctr.text === '') {
+          ctr.text = $scope.channel.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
+        }
+      });
     });
-
-    $scope.$watch("parsedImage", function(text) {
-      if (!text) return;
-    });
-
     $scope.$watch(function() {
       return ctr.text;
     }, function(text) {
@@ -75,7 +91,7 @@ angular.module('App').controller('CD_channel', [
         processing: true,
         id: S_utils.getRandomString(16)
       };
-      console.log(123);
+
       $scope.$apply(function() {
         $scope.channel.attachments.push(obj);
         ctr.uploadingAttaches.push(obj);
@@ -130,6 +146,14 @@ angular.module('App').controller('CD_channel', [
             break;
           }
       }
+    }
+
+    ctr.showActions = function(channel){
+      return !channel.inprogress && !channel.error && !channel.complete;
+    }
+
+    ctr.showProgress = function(channel){
+      return channel.inprogress;
     }
 
     return ctr;

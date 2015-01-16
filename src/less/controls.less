@@ -1,16 +1,18 @@
 .btn {
   transition: 0.2s;
-  padding: 6px 20px 7px;
+  padding: 0px 20px;
   outline: none!important;
-  border-radius: 3px;
+  border-radius: 0px;
+  border: 2px solid;
+  font-size: 13px;
+  line-height: 29px;
   &.btn-primary {
-    background-color: #567CA4;
-    font-size: 12px;
-    line-height: 1.385em;
-    border: none;
+    background-color: @colorPrimary;
+    border-color: @colorPrimary;
     -webkit-font-smoothing: subpixel-antialiased;
     &:hover {
-      background-color: #567CA4;
+      background-color: #fff;
+      color: @colorPrimary;
     }
   }
   &.btn-link {
@@ -55,27 +57,29 @@ select.form-control {
     color: #CCC;
     font-size: 14px;
   }
+  
 }
 .social_bg {
+  color:#fff;
   &[data-network="vk"] {
     background-color: rgba(67, 102, 138, 0.12);
-    &.deep{
-      background-color: rgba(67, 102, 138, 0.21);
+    &.deep {
+      background-color: rgba(67, 102, 138, 1);
     }
   }
   &[data-network="fb"] {
     background-color: #000;
-  } 
+  }
   &[data-network="ig"] {
     background-color: rgba(67, 69, 95, 0.11);
-    &.deep{
-      background-color: rgba(67, 69, 95, 0.21);
+    &.deep {
+      background-color: rgba(67, 69, 95, 1);
     }
   }
   &[data-network="tw"] {
     background-color: rgba(29, 172, 237, 0.11);
-    &.deep{
-      background-color: rgba(29, 172, 237, 0.21);
+    &.deep {
+      background-color: rgba(29, 172, 237, 1);
     }
   }
   &[data-network="gp"] {

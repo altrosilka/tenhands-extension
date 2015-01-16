@@ -4,7 +4,7 @@ html, body {
 }
 ::-webkit-scrollbar {
   width: 0px;
-  height:0px;
+  height: 0px;
 }
 ::-webkit-scrollbar-track {
   background: #ddd;
@@ -117,13 +117,19 @@ a {
   }
 }
 .filterArea {
-  background-color: #F4F4F4;
+  background: #fff url(../images/bg/wood.jpg) center no-repeat;
+  z-index: 2;
+  background-size: cover;
   opacity: 0;
   visibility: hidden;
-  padding: 60px 0;
+  padding: 120px 0;
   transform: translateY(100px);
   transition: 0.4s;
-  position: relative;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   &.blur {
     -webkit-filter: blur(3px) grayscale(1);
     opacity: 0.4;
@@ -131,6 +137,7 @@ a {
   .resizer, .remover {
     opacity: 0.4;
     transition: 0.2s;
+    color: #fff;
     &:hover {
       opacity: 1;
       cursor: pointer;
@@ -140,42 +147,22 @@ a {
     position: absolute;
     width: 40px;
     margin-left: -20px;
-    top: 10px;
+    top: 15px;
     left: 50%;
     text-align: center;
-    font-size: 14px;
+    font-size: 18px;
   }
   .remover {
     position: absolute;
     right: 10px;
-    top: 10px;
-    font-size: 16px;
+    top: 15px;
+    font-size: 20px;
   }
-}
-body.min {
-  .filterArea {
-    /*background-color: rgba(250, 250, 255, 0.94);*/
-    
-    .resizer {
-      color: #4F73AB;
-    }
-  }
-}
-.centered {
-  margin: auto; 
-  width: 960px;
-}
-.window {
-  padding-bottom: 300px;
-  h2 {
-    font-size: 17px;
-    margin: 45px 0 10px;
-  }
-  h3 {
-    margin: 20px 0 5px;
-    font-size: 12px;
-  }
-  header {
+  .setSelecterArea {
+    position: absolute;
+    color: #A39090;
+    top: 57px;
+    left: 20px;
     .sharePhrase {
       position: relative;
       top: 2px;
@@ -213,16 +200,29 @@ body.min {
       }
     }
   }
-  footer {
-    margin-top: 40px;
-    .controls-list {
-      display: inline-block;
-      margin-left: 10px;
-      label {
-        display: inline-block;
-        margin-right: 10px;
-      }
+}
+body.min {
+  .filterArea {
+    /*background-color: rgba(250, 250, 255, 0.94);*/
+    
+    .resizer {
+      color: #4F73AB;
     }
+  }
+}
+.centered {
+  margin: auto;
+  width: 960px;
+}
+.window {
+  padding-bottom: 300px;
+  h2 {
+    font-size: 17px;
+    margin: 45px 0 10px;
+  }
+  h3 {
+    margin: 20px 0 5px;
+    font-size: 12px;
   }
 }
 .jcrop-hline {
@@ -245,7 +245,7 @@ body.min {
   position: relative;
 }
 .attaches {
-  margin: -5px;
+  margin: -5px -5px 0;
   .attach {
     float: left;
     width: 132px;
@@ -412,17 +412,23 @@ body.min {
 .groupSelect {
   font-size: 12px;
   .select2-container .select2-choice {
-    border: 1px solid #C3CBD4;
     border-radius: 0px;
-    background: #FFF;
+    background: none;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid #444;
     box-shadow: none!important;
     height: 33px;
     line-height: 33px;
     font-size: 12px;
+    color: #EEE;
     .select2-arrow {
       border: none;
       background: rgba(0, 0, 0, 0);
       font-family: FontAwesome;
+      width: 100%;
+      text-align: right;
+      padding-right: 10px;
+      cursor: pointer;
       b {
         &:after {
           content: "\f107";
@@ -430,48 +436,52 @@ body.min {
       }
     }
   }
-  .select2-results {
-    padding: 0 0 0 0px;
-    margin: 5px 0px 0px 0;
-    .select2-highlighted {
-      background: #2B587A;
-      color: #FFF;
+  .select2-search {
+    input {
+      border: none;
+      background: #333;
+      margin: 0px -9px;
+      width: 298px;
+      display: block;
+      padding: 0 10px;
+      line-height: 33px;
     }
   }
-  .select2-drop-active {
-    border: 1px solid #C3CBD4;
-    border-radius: 0px;
-    padding-top: 10px;
+}
+.select2-results {
+  padding: 0 0 0 0px;
+  margin: 0px 0px 0px 0;
+  .select2-highlighted {
+    background: @colorPrimary;
+    color: #FFF;
   }
-  .select2 {
-    min-width: 300px;
-    .select2-search {
-      padding-left: 9px;
-      padding-right: 9px;
-    }
+}
+.select2-drop-active {
+  background-color: rgba(0, 0, 0, 0.85);
+  border: 1px solid #444;
+  border-radius: 0px;
+  color: #ccc;
+}
+.select2 {
+  min-width: 300px;
+  .select2-search {
+    padding-left: 9px;
+    padding-right: 9px;
   }
-  .ui-select-choices-row {
-    position: relative;
-    padding: 5px 0px;
-  }
-  .image {
-    display: inline-block;
-    width: 25px;
-    height: 25px;
-    background-size: 25px;
-    background-position: center;
-    background-repeat: no-repeat;
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    margin-top: -13px;
-  }
-  .name {
-    display: inline-block;
-    margin-left: 38px;
-    margin-top: 0px;
-    font-size: 12px;
-  }
+}
+.ui-select-choices-row {
+  position: relative;
+  padding: 5px 0px;
+}
+.name {
+  display: inline-block;
+  margin-left: 2px;
+  margin-top: 0px;
+  font-size: 12px;
+}
+.count {
+  float: right;
+  opacity: 0.6;
 }
 .uploadImage {
   float: right;
@@ -505,7 +515,7 @@ body.min {
     width: 14px;
     height: 14px;
     left: 4px;
-    top: 1px;
+    top: 2px;
     content: '';
     position: absolute;
     display: block;
@@ -531,10 +541,25 @@ body.min {
     font-family: FontAwesome;
     content: "\f00c";
     background: rgba(0, 0, 0, 0);
-    top: 1px;
+    top: 2px;
     left: 6px;
     font-size: 11px;
     color: #567CA4;
+  }
+  &.dark {
+    span {
+      color: #ccc;
+      &:before {
+        background-color: #111;
+        border: 1px solid #444;
+      }
+      &:after {
+        background: transparent;
+      }
+    }
+    &.checkboxList span:after {
+      color: #aaa;
+    }
   }
 }
 .noResults {
@@ -605,7 +630,47 @@ body.min {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .v_channels {
-  overflow:auto;
+  overflow: hidden;
+  .channelsList {
+    overflow: auto;
+     padding: 0 20px;
+  }
+}
+.bottomFooter {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 20px 0;
+  color: #EEE;
+  transition: 0.5s;
+  transform: translateY(120px);
+  border-top: 1px solid #000;
+  z-index: 3;
+  .controls-list {
+    display: inline-block;
+    margin-right: 26px;
+    position: relative;
+    top: 1px;
+    label {
+      display: inline-block;
+    }
+  }
+  &.active {
+    transform: translateY(0px);
+  }
+}
+.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_dragger .mCSB_dragger_bar {
+  height: 10px;
+}
+.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_draggerRail {
+  width: 100%;
+  height: 10px;
+  margin: 6px 0;
+}
+.mCSB_scrollTools{
+  right: 20px!important;
+  left: 19px!important;
 }

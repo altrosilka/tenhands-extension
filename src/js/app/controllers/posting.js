@@ -79,6 +79,7 @@ angular.module('App').controller('C_posting', [
 
           if (channel) {
             $scope.$apply(function() {
+              channel.inprogress = false;
               channel.complete = true;
               channel.post_url = data.post_url;
             });
@@ -101,13 +102,32 @@ angular.module('App').controller('C_posting', [
       });
     }
 
-    ctr.postChannelAgain = function(channel_id){
+    ctr.getChannelsAreaWidth = function(channels) {
+      if (!channels) {
+        return;
+      }
+      return (channels.length * 416);
+    }
+
+    ctr.postChannelAgain = function(channel_id) {
       ctr.createPost([channel_id]);
     }
 
     ctr.showSetSelect = function() {
       return ctr.sets.length > 1;
     }
+
+    ctr.getChannelsCount = function(q) {
+      return ((q) ? q.length : 0);
+    }
+
+    ctr.channelsPlural = {
+      0: 'нет каналов',
+      one: '{} канал',
+      few: '{} канала',
+      many: '{} каналов',
+      other: '{} каналов'
+    };
 
 
     return ctr;

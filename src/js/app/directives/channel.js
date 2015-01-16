@@ -3,6 +3,7 @@ angular.module('App').directive('channel', [function() {
     scope:{
       channel: "=",
       parsedText: "=",
+      parsedImage: "=",
       pageAttachments: "=",
       postChannelAgain: "&"
     },

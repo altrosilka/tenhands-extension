@@ -83,6 +83,617 @@ App.run([
   }
 ]);
 
+angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
+  var ctr = this;
+
+
+  S_chrome.getVkToken().then(function(token) {
+    if (token) {
+      S_selfapi.sendExtensionToken(token).then(function(){
+        ctr.canClose = true;
+      });
+    } else {
+      location.href = '/pages/afterInstall.html';
+    }
+  })
+
+  ctr.closeWindow = function(){
+    window.close();
+  }
+
+  return ctr;
+}]);
+
+angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
+  var ctr = this;
+
+  ctr.singIn = function() {
+    var currentTab;
+
+    chrome.tabs.getCurrent(function(tab) {
+      currentTab = tab;
+
+      S_vk.callAuthPopup().then(function(tab) {
+
+
+        chrome.tabs.remove(tab.id, function() {});
+        
+
+        chrome.tabs.update( 
+          currentTab.id, {
+            'url': '/pages/afterAuth.html',
+            'active': true
+          },
+          function(tab) {
+          }
+        );
+      })
+    })
+
+  }
+
+  return ctr;
+}]);
+
+angular.module('App').controller('C_login', [
+  '$scope',
+  'S_selfapi',
+  function($scope, S_selfapi) {
+    var ctr = this;
+
+    ctr.auth = function(email, password) {
+      S_selfapi.signIn(email, password).then(function(resp) {
+        if (resp.data.success){
+          $scope.ctr.checkAuth();
+        }
+      });
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_main', [
+  '$scope',
+  '$compile',
+  '$timeout',
+  'S_utils',
+  'S_selfapi',
+  'S_eventer',
+  'S_vk',
+  '__maxAttachments',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+    var ctr = this;
+
+    ctr.checkAuth = function() {
+      S_selfapi.checkAuth().then(function(resp) {
+        if (resp.data.success) {
+          ctr._state = 'post';
+          $timeout(function() {
+            ctr.showBottomPanel = true;
+          }, 1000);
+        } else {
+          ctr._state = 'login';
+        }
+      });
+    }
+
+    ctr.showExtension = function() {
+      return ctr._state;
+    }
+
+
+
+    ctr.checkAuth();
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_posting', [
+  '$scope',
+  '$compile',
+  '$timeout',
+  'S_utils',
+  'S_selfapi',
+  'S_eventer',
+  'S_vk',
+  '__maxAttachments',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+    var ctr = this;
+
+    var _socketListeningId;
+
+    ctr.sets = [];
+
+    ctr.selectedSet = {};
+    ctr.attachments = [];
+
+    S_selfapi.getAllSets().then(function(resp) {
+      ctr.sets = resp.data.data;
+      ctr.selectedSet = ctr.sets[0];
+    });
+
+    $scope.$watch(function() {
+      return ctr.selectedSet.id;
+    }, function(setId) {
+      if (!setId) return;
+
+      S_selfapi.getSetInfo(setId).then(function(resp) {
+        ctr.channels = resp.data.data;
+      });
+    });
+
+
+
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      $scope.$apply(function() {
+        ctr.data = data;
+
+        if (data.imageSrc && data.imageSrc !== '') {
+          data.images.unshift({
+            src: data.imageSrc,
+            big_src: data.imageSrc
+          });
+        }
+
+        var images = _.map(data.images, function(q) {
+          q.type = 'photo';
+          q.id = S_utils.getRandomString(16);
+          return q;
+        });
+        ctr.pageAttachments = ctr.attachments.concat(images);
+        if (images.length) {
+          ctr.attachments.push(images[0]);
+        }
+
+        if (!ctr.text || ctr.text === '') {
+          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
+        }
+      });
+    });
+
+    ctr.createPost = function(channel_ids) {
+      var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
+
+      S_utils.trackProgress(ctr.channels, postInfo);
+
+      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId).then(function(resp) {
+        var socketUrl = resp.data.data.socketUrl;
+        _socketListeningId = resp.data.data.hash;
+
+        var socket = io(socketUrl);
+
+        socket.on('post_success', function(data) {
+          var channel = _.find(ctr.channels, function(c) {
+            return c.id === data.channel_id;
+          });
+
+          if (channel) {
+            $scope.$apply(function() {
+              channel.inprogress = false;
+              channel.complete = true;
+              channel.post_url = data.post_url;
+            });
+          }
+        });
+
+        socket.on('post_fail', function(data) {
+          var channel = _.find(ctr.channels, function(c) {
+            return c.id === data.channel_id;
+          });
+
+          if (channel) {
+            $scope.$apply(function() {
+              channel.inprogress = false;
+              channel.error = true;
+              channel.errorData = data;
+            });
+          }
+        });
+      });
+    }
+
+    ctr.getChannelsAreaWidth = function(channels) {
+      if (!channels) {
+        return;
+      }
+      return (channels.length * 416);
+    }
+
+    ctr.postChannelAgain = function(channel_id) {
+      ctr.createPost([channel_id]);
+    }
+
+    ctr.showSetSelect = function() {
+      return ctr.sets.length > 1;
+    }
+
+    ctr.getChannelsCount = function(q) {
+      return ((q) ? q.length : 0);
+    }
+
+    ctr.channelsPlural = {
+      0: 'нет каналов',
+      one: '{} канал',
+      few: '{} канала',
+      many: '{} каналов',
+      other: '{} каналов'
+    };
+
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_posting_back', [
+  '$scope',
+  '$compile',
+  '$timeout',
+  'S_utils',
+  'S_selfapi',
+  'S_eventer',
+  'S_vk',
+  '__maxAttachments',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+    var ctr = this;
+
+    return;
+
+    ctr.minDate = new Date();
+    ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
+    ctr.postingNow = true;
+    ctr.postingTime = new Date();
+    ctr.stepsPlural = {
+      0: '',
+      one: 'еще {} шаг',
+      few: 'еще {} шага',
+      many: 'еще {} шагов',
+      other: 'еще {} шагов'
+    };
+
+    ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
+    ctr.postingUnixTime = S_utils.getCurrentTime();
+
+    ctr.attachments = [];
+    ctr.selectedGroup = {};
+
+    ctr.processingAttachments = [];
+    ctr.uploadingAttaches = [];
+
+
+
+    S_vk.request('groups.get', {
+      extended: 1,
+      filter: 'admin,editor',
+      fields: 'members_count'
+    }).then(function(resp) {
+      ctr.groups = resp.response.items;
+      ctr.selectedGroup = ctr.groups[0];
+    });
+
+    $scope.$watch(function() {
+      return ctr.postingNow;
+    }, function(q) {
+      if (typeof q === 'undefined') return;
+
+      if (q === false) {
+        var secondsFromStart = moment().diff(moment().hour(0).minute(0).second(0), 'seconds');
+        var daySeconds = 3600 * 24;
+        var offset = secondsFromStart + 3600 * 3;
+        if (offset > daySeconds) {
+          ctr.postingTime = offset - daySeconds;
+          ctr.postingDate = moment(ctr.postingDate).add(1, 'days').toDate();
+        } else {
+          ctr.postingTime = offset;
+        }
+        ctr.onTimeChange(ctr.postingTime);
+      } else {
+        ctr.postingUnixTime = S_utils.getCurrentTime();
+      }
+    });
+
+    $scope.$watch(function() {
+      return ctr.selectedGroup.id;
+    }, function(groupId) {
+      if (!groupId) return;
+      ctr.postingApp = undefined;
+      ctr.postingToken = undefined;
+
+      S_selfapi.getOverrideKey(groupId).then(function(resp) {
+        if (resp.data.settings !== null) {
+          ctr.postingToken = resp.data.settings.token;
+          S_vk.request('apps.get', {
+            app_id: resp.data.settings.appId
+          }).then(function(resp) {
+            ctr.postingApp = resp.response;
+          });
+        }
+      });
+    });
+
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      $scope.$apply(function() {
+        ctr.data = data;
+
+        if (data.imageSrc && data.imageSrc !== '') {
+          data.images.unshift({
+            src: data.imageSrc,
+            big_src: data.imageSrc
+          });
+        }
+
+        var images = _.map(data.images, function(q) {
+          q.type = 'photo';
+          q.id = S_utils.getRandomString(16);
+          return q;
+        });
+        ctr.pageAttachments = ctr.attachments.concat(images);
+        if (images.length) {
+          ctr.attachments.push(images[0]);
+        }
+
+        if (!ctr.text || ctr.text === '') {
+          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
+        }
+      });
+    });
+
+    $timeout(function() {
+      ctr.dataIsLoaded = true;
+    }, 100);
+
+    ctr.getRemainingAttachesCount = function() {
+      return __maxAttachments - ctr.attachments.length;
+    }
+
+    ctr.canAddAttach = function() {
+      return ctr.getRemainingAttachesCount() > 0;
+    }
+
+    ctr.pushUploadingAttach = function() {
+      var obj = {
+        src: '/images/nophoto.jpg',
+        type: 'image',
+        processing: true,
+        id: S_utils.getRandomString(16)
+      };
+      $scope.$apply(function() {
+        ctr.attachments.push(obj);
+        ctr.uploadingAttaches.push(obj);
+        ctr.processingAttachments.push(obj);
+      });
+      return obj;
+    }
+
+    ctr.afterImageUploaded = function(resp, id) {
+      var attach = ctr.uploadingAttaches.shift();
+      var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
+      $scope.$apply(function() {
+        _.extend(attach, image);
+        ctr.processingAttachments.shift();
+      });
+    }
+
+    S_selfapi.getAssignKey().then(function(resp) {
+      if (resp.data.keyInfo === null) {
+        ctr.paidIsEnd = true;
+      } else {
+        ctr.paidIsEnd = false;
+      }
+    });
+
+
+    $scope.$watch(function() {
+      return ctr.postingDate;
+    }, function(q) {
+      if (!q) return;
+      ctr.onTimeChange();
+    });
+
+    ctr.onTimeChange = function(time) {
+      ctr.pastTime = false;
+
+      if (!ctr.postingTime || !ctr.postingDate) return;
+
+      if (time) {
+        ctr.postingTime = time;
+      }
+
+      var dateUnix = +moment(ctr.postingDate).format('X');
+      var startDate = ctr.postingTime;
+
+      var res = dateUnix + startDate;
+
+      if (res > S_utils.getCurrentTime()) {
+        ctr.postingUnixTime = dateUnix + startDate;
+      } else {
+        ctr.pastTime = true;
+      }
+    }
+
+    ctr.publicPost = function() {
+
+      if (ctr.processingAttachments.length > 0) {
+        return;
+      }
+
+      var postInfo = _.map(ctr.attachments, function() {
+        return '';
+      });
+
+      ctr.postingProcess = true;
+
+      _.forEach(ctr.attachments, function(q, i) {
+        switch (q.type) {
+          case "photo":
+            {
+              if (q.photo) {
+                postInfo[i] = {
+                  type: 'photo',
+                  photo: q.photo
+                };
+              } else {
+                ctr.processingAttachments.push(q);
+                S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
+                  var photo = resp.photo;
+                  _.remove(ctr.processingAttachments, function(qz) {
+                    return qz.id === q.id;
+                  })[0];
+
+                  postInfo[i] = {
+                    type: 'photo',
+                    photo: photo
+                  };
+
+                  if (ctr.processingAttachments.length === 0) {
+                    out(postInfo);
+                  }
+                });
+              }
+              break;
+            }
+          case "video":
+            {
+              postInfo[i] = {
+                type: 'video',
+                video: q.video
+              };
+              break;
+            }
+          case "poll":
+            {
+              if (q.poll) {
+                postInfo[i] = q.poll;
+              } else {
+                ctr.processingAttachments.push(q);
+                S_vk.createPoll(q, ctr.selectedGroup.id).then(function(resp) {
+                  var poll = resp.response;
+                  _.remove(ctr.processingAttachments, function(qz) {
+                    return qz.type === 'poll';
+                  })[0];
+
+                  postInfo[i] = {
+                    type: 'poll',
+                    poll: poll
+                  };
+
+                  if (ctr.processingAttachments.length === 0) {
+                    out(postInfo);
+                  }
+                });
+              }
+              break;
+            }
+        }
+      });
+
+      if (ctr.processingAttachments.length === 0) {
+        out([]);
+      }
+
+      function out(attachments) {
+        console.log(attachments);
+
+        var owner_id = '-' + ctr.selectedGroup.id;
+        var text = ctr.text;
+        var postingTime = ctr.postingUnixTime;
+        var assigned = (ctr.assigned) ? 1 : 0;
+
+        if (ctr.postingNow) {
+          var attas = S_utils.getAttachmentsString(attachments);
+
+          var oldToken;
+          if (ctr.postingApp) {
+            S_vk.getToken().then(function(token) {
+              oldToken = token;
+
+              if (ctr.postingApp) {
+                S_vk.setToken(ctr.postingToken);
+              }
+
+              S_vk.request('wall.post', {
+                owner_id: owner_id,
+                from_group: 1,
+                signed: assigned,
+                message: text,
+                attachments: attas
+              }).then(function(resp) {
+                S_vk.setToken(oldToken);
+                if (ctr.notClose) {
+                  ctr.postingProcess = false;
+                } else {
+                  S_eventer.sayToFrame('close');
+                }
+              });
+            });
+          }
+        } else {
+          S_selfapi.sendPost(owner_id, text, attachments, postingTime, assigned).then(function(resp) {
+            if (ctr.notClose) {
+              ctr.postingProcess = false;
+            } else {
+              S_eventer.sayToFrame('close');
+            }
+          });
+        }
+      }
+    }
+
+    ctr.addTimer = function() {
+      ctr.timerIsEnabled = true;
+      ctr.postingNow = false;
+    }
+    ctr.removeTimer = function() {
+      ctr.timerIsEnabled = false;
+      ctr.postingNow = true;
+    }
+
+    ctr.attachItem = function(type) {
+      switch (type) {
+        case 'photo':
+          {
+            S_utils.callAttachPhotoDialog(ctr.pageAttachments, {
+              before: ctr.pushUploadingAttach,
+              after: ctr.afterImageUploaded
+            }).then(function(resp) {
+              ctr.attachments = S_utils.sortAttachments(_.uniq(ctr.attachments.concat(resp), 'id'));
+            });
+            break;
+          }
+        case 'video':
+          {
+            S_utils.callAttachVideoDialog(ctr.selectedGroup.id).then(function(resp) {
+              var video = S_utils.wrapVideo(resp[0]);
+              ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(video));
+            });
+            break;
+          }
+        case 'poll':
+          {
+            var poll = S_utils.createEmptyPoll();
+            ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(poll));
+            break;
+          }
+      }
+
+    }
+
+
+    /* enviroment */
+    ctr.resizeIframe = function() {
+      ctr.minState = !ctr.minState;
+      S_eventer.sayToFrame('toggle');
+    }
+
+    ctr.closeIframe = function() {
+      S_eventer.sayToFrame('close');
+    }
+
+    return ctr;
+  }
+]);
+
 angular.module('App').directive('attachPoll', [function() {
   return {
     scope:{
@@ -110,6 +721,7 @@ angular.module('App').directive('channel', [function() {
     scope:{
       channel: "=",
       parsedText: "=",
+      parsedImage: "=",
       pageAttachments: "=",
       postChannelAgain: "&"
     },
@@ -121,6 +733,24 @@ angular.module('App').directive('channel', [function() {
   }
 }]);
  
+angular.module('App').directive('channelsScrollbar', [function() {
+  return {
+    link: function($scope, $element) {
+      $element.mCustomScrollbar({
+        axis: 'x',
+        advanced: {
+          autoExpandHorizontalScroll: true
+        },
+        scrollInertia: 0,
+        mouseWheel: {
+          enable:true,
+          invert: (navigator.platform === "MacIntel")
+        }
+      });
+    }
+  }
+}]);
+
 angular.module('App')
   .directive('dateButton', [
     '$filter',
@@ -536,6 +1166,45 @@ angular.module('App')
     }
   ])
 
+angular.module('App').directive('setMaxLength', [function() {
+  return {
+    require: 'ngModel',
+    link: function(scope, element, attrs, ngModelCtrl) {
+      var maxlength = Number(attrs.setMaxLength);
+
+      function fromUser(text) {
+
+        if (text.length > maxlength) {
+          var transformedInput = text.substring(0, maxlength);
+          ngModelCtrl.$setViewValue(transformedInput);
+          ngModelCtrl.$render();
+          return transformedInput;
+        }
+        return text;
+      }
+      ngModelCtrl.$parsers.push(fromUser);
+    }
+  };
+}]).filter('cut', function() {
+  return function(value, wordwise, max, tail) {
+    if (!value) return '';
+
+    max = parseInt(max, 10);
+    if (!max) return value;
+    if (value.length <= max) return value;
+
+    value = value.substr(0, max);
+    if (wordwise) {
+      var lastspace = value.lastIndexOf(' ');
+      if (lastspace != -1) {
+        value = value.substr(0, lastspace);
+      }
+    }
+
+    return value + (tail);
+  };
+});;
+
 angular.module('App').directive('timeSelect', [function() {
   return {
     scope: {
@@ -608,591 +1277,109 @@ angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_util
   }
 }]);
  
-angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
-  var ctr = this;
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
 
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
 
-  S_chrome.getVkToken().then(function(token) {
-    if (token) {
-      S_selfapi.sendExtensionToken(token).then(function(){
-        ctr.canClose = true;
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
       });
     } else {
-      location.href = '/pages/afterInstall.html';
+      // Let the output be the input untouched
+      out = items;
     }
-  })
 
-  ctr.closeWindow = function(){
-    window.close();
+    return out;
   }
+});
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
 
-  return ctr;
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
 }]);
 
-angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
-  var ctr = this;
+angular.module('App').filter('parseVkText', [function() {
+  return function(input, removeLink) {
+    if (!input) {
+      return;
+    }
 
-  ctr.singIn = function() {
-    var currentTab;
-
-    chrome.tabs.getCurrent(function(tab) {
-      currentTab = tab;
-
-      S_vk.callAuthPopup().then(function(tab) {
+    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
+    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
 
 
-        chrome.tabs.remove(tab.id, function() {});
-        
 
-        chrome.tabs.update( 
-          currentTab.id, {
-            'url': '/pages/afterAuth.html',
-            'active': true
-          },
-          function(tab) {
-          }
-        );
-      })
-    })
+    var bytes = [];
 
+    for (var i = 0; i < input.length; ++i) {
+      bytes.push(input.charCodeAt(i));
+    }
+
+    var ranges = [
+      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
+      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
+      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
+    ];
+
+    input = emojiParseInText(input);
+      
+    var text = input;
+
+    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
+    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
+
+    return text;
   }
-
-  return ctr;
 }]);
 
-angular.module('App').controller('C_login', [
-  '$scope',
-  'S_selfapi',
-  function($scope, S_selfapi) {
-    var ctr = this;
+angular.module('App').filter('substring', [function() {
+  return function(text, len) {
+    len = len || 100;
+    if (!text) {
+      return;
+    } 
 
-    ctr.auth = function(email, password) {
-      S_selfapi.signIn(email, password).then(function(resp) {
-        if (resp.data.success){
-          $scope.ctr.checkAuth();
-        }
-      });
+    if (text.length > len){
+      return text.substring(0,len);
+    } else {
+      return text;
     }
-
-    return ctr;
   }
-]);
-
-angular.module('App').controller('C_main', [
-  '$scope',
-  '$compile',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
-    var ctr = this;
-
-    ctr.checkAuth = function() {
-      S_selfapi.checkAuth().then(function(resp) {
-        if (resp.data.success) {
-          ctr._state = 'post';
-        } else {
-          ctr._state = 'login';
-        }
-      });
+}]);
+ 
+angular.module('App').filter('toGIS', function() {
+  return function(time) {
+    if (!time) {
+      return '';
     }
-
-    ctr.showExtension = function(){
-      return ctr._state;
-    }
-
-    ctr.checkAuth();
-
-    return ctr;
+    var out = '';
+    var s_last = time % 60;
+    var s_minutes = (time - s_last) / 60;
+    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
+    return out;
   }
-]);
-
-angular.module('App').controller('C_posting', [
-  '$scope',
-  '$compile',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
-    var ctr = this;
-
-    var _socketListeningId;
-
-    ctr.sets = [];
-
-    ctr.selectedSet = {};
-    ctr.attachments = [];
-
-    S_selfapi.getAllSets().then(function(resp) {
-      ctr.sets = resp.data.data;
-      ctr.selectedSet = ctr.sets[0];
-    });
-
-    $scope.$watch(function() {
-      return ctr.selectedSet.id;
-    }, function(setId) {
-      if (!setId) return;
-
-      S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = resp.data.data;
-      });
-    });
-
-
-
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
-
-        if (data.imageSrc && data.imageSrc !== '') {
-          data.images.unshift({
-            src: data.imageSrc,
-            big_src: data.imageSrc
-          });
-        }
-
-        var images = _.map(data.images, function(q) {
-          q.type = 'photo';
-          q.id = S_utils.getRandomString(16);
-          return q;
-        });
-        ctr.pageAttachments = ctr.attachments.concat(images);
-        if (images.length) {
-          ctr.attachments.push(images[0]);
-        }
-
-        if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
-        }
-      });
-    });
-
-    ctr.createPost = function(channel_ids) {
-      var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
-
-      S_utils.trackProgress(ctr.channels, postInfo);
-
-      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId).then(function(resp) {
-        var socketUrl = resp.data.data.socketUrl;
-        _socketListeningId = resp.data.data.hash;
-
-        var socket = io(socketUrl);
-
-        socket.on('post_success', function(data) {
-          var channel = _.find(ctr.channels, function(c) {
-            return c.id === data.channel_id;
-          });
-
-          if (channel) {
-            $scope.$apply(function() {
-              channel.complete = true;
-              channel.post_url = data.post_url;
-            });
-          }
-        });
-
-        socket.on('post_fail', function(data) {
-          var channel = _.find(ctr.channels, function(c) {
-            return c.id === data.channel_id;
-          });
-
-          if (channel) {
-            $scope.$apply(function() {
-              channel.inprogress = false;
-              channel.error = true;
-              channel.errorData = data;
-            });
-          }
-        });
-      });
-    }
-
-    ctr.postChannelAgain = function(channel_id){
-      ctr.createPost([channel_id]);
-    }
-
-    ctr.showSetSelect = function() {
-      return ctr.sets.length > 1;
-    }
-
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('C_posting_back', [
-  '$scope',
-  '$compile',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
-    var ctr = this;
-
-    return;
-
-    ctr.minDate = new Date();
-    ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
-    ctr.postingNow = true;
-    ctr.postingTime = new Date();
-    ctr.stepsPlural = {
-      0: '',
-      one: 'еще {} шаг',
-      few: 'еще {} шага',
-      many: 'еще {} шагов',
-      other: 'еще {} шагов'
-    };
-
-    ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
-    ctr.postingUnixTime = S_utils.getCurrentTime();
-
-    ctr.attachments = [];
-    ctr.selectedGroup = {};
-
-    ctr.processingAttachments = [];
-    ctr.uploadingAttaches = [];
-
-
-
-    S_vk.request('groups.get', {
-      extended: 1,
-      filter: 'admin,editor',
-      fields: 'members_count'
-    }).then(function(resp) {
-      ctr.groups = resp.response.items;
-      ctr.selectedGroup = ctr.groups[0];
-    });
-
-    $scope.$watch(function() {
-      return ctr.postingNow;
-    }, function(q) {
-      if (typeof q === 'undefined') return;
-
-      if (q === false) {
-        var secondsFromStart = moment().diff(moment().hour(0).minute(0).second(0), 'seconds');
-        var daySeconds = 3600 * 24;
-        var offset = secondsFromStart + 3600 * 3;
-        if (offset > daySeconds) {
-          ctr.postingTime = offset - daySeconds;
-          ctr.postingDate = moment(ctr.postingDate).add(1, 'days').toDate();
-        } else {
-          ctr.postingTime = offset;
-        }
-        ctr.onTimeChange(ctr.postingTime);
-      } else {
-        ctr.postingUnixTime = S_utils.getCurrentTime();
-      }
-    });
-
-    $scope.$watch(function() {
-      return ctr.selectedGroup.id;
-    }, function(groupId) {
-      if (!groupId) return;
-      ctr.postingApp = undefined;
-      ctr.postingToken = undefined;
-
-      S_selfapi.getOverrideKey(groupId).then(function(resp) {
-        if (resp.data.settings !== null) {
-          ctr.postingToken = resp.data.settings.token;
-          S_vk.request('apps.get', {
-            app_id: resp.data.settings.appId
-          }).then(function(resp) {
-            ctr.postingApp = resp.response;
-          });
-        }
-      });
-    });
-
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
-
-        if (data.imageSrc && data.imageSrc !== '') {
-          data.images.unshift({
-            src: data.imageSrc,
-            big_src: data.imageSrc
-          });
-        }
-
-        var images = _.map(data.images, function(q) {
-          q.type = 'photo';
-          q.id = S_utils.getRandomString(16);
-          return q;
-        });
-        ctr.pageAttachments = ctr.attachments.concat(images);
-        if (images.length) {
-          ctr.attachments.push(images[0]);
-        }
-
-        if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
-        }
-      });
-    });
-
-    $timeout(function() {
-      ctr.dataIsLoaded = true;
-    }, 100);
-
-    ctr.getRemainingAttachesCount = function() {
-      return __maxAttachments - ctr.attachments.length;
-    }
-
-    ctr.canAddAttach = function() {
-      return ctr.getRemainingAttachesCount() > 0;
-    }
-
-    ctr.pushUploadingAttach = function() {
-      var obj = {
-        src: '/images/nophoto.jpg',
-        type: 'image',
-        processing: true,
-        id: S_utils.getRandomString(16)
-      };
-      $scope.$apply(function() {
-        ctr.attachments.push(obj);
-        ctr.uploadingAttaches.push(obj);
-        ctr.processingAttachments.push(obj);
-      });
-      return obj;
-    }
-
-    ctr.afterImageUploaded = function(resp, id) {
-      var attach = ctr.uploadingAttaches.shift();
-      var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
-      $scope.$apply(function() {
-        _.extend(attach, image);
-        ctr.processingAttachments.shift();
-      });
-    }
-
-    S_selfapi.getAssignKey().then(function(resp) {
-      if (resp.data.keyInfo === null) {
-        ctr.paidIsEnd = true;
-      } else {
-        ctr.paidIsEnd = false;
-      }
-    });
-
-
-    $scope.$watch(function() {
-      return ctr.postingDate;
-    }, function(q) {
-      if (!q) return;
-      ctr.onTimeChange();
-    });
-
-    ctr.onTimeChange = function(time) {
-      ctr.pastTime = false;
-
-      if (!ctr.postingTime || !ctr.postingDate) return;
-
-      if (time) {
-        ctr.postingTime = time;
-      }
-
-      var dateUnix = +moment(ctr.postingDate).format('X');
-      var startDate = ctr.postingTime;
-
-      var res = dateUnix + startDate;
-
-      if (res > S_utils.getCurrentTime()) {
-        ctr.postingUnixTime = dateUnix + startDate;
-      } else {
-        ctr.pastTime = true;
-      }
-    }
-
-    ctr.publicPost = function() {
-
-      if (ctr.processingAttachments.length > 0) {
-        return;
-      }
-
-      var postInfo = _.map(ctr.attachments, function() {
-        return '';
-      });
-
-      ctr.postingProcess = true;
-
-      _.forEach(ctr.attachments, function(q, i) {
-        switch (q.type) {
-          case "photo":
-            {
-              if (q.photo) {
-                postInfo[i] = {
-                  type: 'photo',
-                  photo: q.photo
-                };
-              } else {
-                ctr.processingAttachments.push(q);
-                S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
-                  var photo = resp.photo;
-                  _.remove(ctr.processingAttachments, function(qz) {
-                    return qz.id === q.id;
-                  })[0];
-
-                  postInfo[i] = {
-                    type: 'photo',
-                    photo: photo
-                  };
-
-                  if (ctr.processingAttachments.length === 0) {
-                    out(postInfo);
-                  }
-                });
-              }
-              break;
-            }
-          case "video":
-            {
-              postInfo[i] = {
-                type: 'video',
-                video: q.video
-              };
-              break;
-            }
-          case "poll":
-            {
-              if (q.poll) {
-                postInfo[i] = q.poll;
-              } else {
-                ctr.processingAttachments.push(q);
-                S_vk.createPoll(q, ctr.selectedGroup.id).then(function(resp) {
-                  var poll = resp.response;
-                  _.remove(ctr.processingAttachments, function(qz) {
-                    return qz.type === 'poll';
-                  })[0];
-
-                  postInfo[i] = {
-                    type: 'poll',
-                    poll: poll
-                  };
-
-                  if (ctr.processingAttachments.length === 0) {
-                    out(postInfo);
-                  }
-                });
-              }
-              break;
-            }
-        }
-      });
-
-      if (ctr.processingAttachments.length === 0) {
-        out([]);
-      }
-
-      function out(attachments) {
-        console.log(attachments);
-
-        var owner_id = '-' + ctr.selectedGroup.id;
-        var text = ctr.text;
-        var postingTime = ctr.postingUnixTime;
-        var assigned = (ctr.assigned) ? 1 : 0;
-
-        if (ctr.postingNow) {
-          var attas = S_utils.getAttachmentsString(attachments);
-
-          var oldToken;
-          if (ctr.postingApp) {
-            S_vk.getToken().then(function(token) {
-              oldToken = token;
-
-              if (ctr.postingApp) {
-                S_vk.setToken(ctr.postingToken);
-              }
-
-              S_vk.request('wall.post', {
-                owner_id: owner_id,
-                from_group: 1,
-                signed: assigned,
-                message: text,
-                attachments: attas
-              }).then(function(resp) {
-                S_vk.setToken(oldToken);
-                if (ctr.notClose) {
-                  ctr.postingProcess = false;
-                } else {
-                  S_eventer.sayToFrame('close');
-                }
-              });
-            });
-          }
-        } else {
-          S_selfapi.sendPost(owner_id, text, attachments, postingTime, assigned).then(function(resp) {
-            if (ctr.notClose) {
-              ctr.postingProcess = false;
-            } else {
-              S_eventer.sayToFrame('close');
-            }
-          });
-        }
-      }
-    }
-
-    ctr.addTimer = function() {
-      ctr.timerIsEnabled = true;
-      ctr.postingNow = false;
-    }
-    ctr.removeTimer = function() {
-      ctr.timerIsEnabled = false;
-      ctr.postingNow = true;
-    }
-
-    ctr.attachItem = function(type) {
-      switch (type) {
-        case 'photo':
-          {
-            S_utils.callAttachPhotoDialog(ctr.pageAttachments, {
-              before: ctr.pushUploadingAttach,
-              after: ctr.afterImageUploaded
-            }).then(function(resp) {
-              ctr.attachments = S_utils.sortAttachments(_.uniq(ctr.attachments.concat(resp), 'id'));
-            });
-            break;
-          }
-        case 'video':
-          {
-            S_utils.callAttachVideoDialog(ctr.selectedGroup.id).then(function(resp) {
-              var video = S_utils.wrapVideo(resp[0]);
-              ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(video));
-            });
-            break;
-          }
-        case 'poll':
-          {
-            var poll = S_utils.createEmptyPoll();
-            ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(poll));
-            break;
-          }
-      }
-
-    }
-
-
-    /* enviroment */
-    ctr.resizeIframe = function() {
-      ctr.minState = !ctr.minState;
-      S_eventer.sayToFrame('toggle');
-    }
-
-    ctr.closeIframe = function() {
-      S_eventer.sayToFrame('close');
-    }
-
-    return ctr;
-  }
-]);
+});
 
 angular.module('chromeTools', [])
   .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
@@ -2093,110 +2280,6 @@ angular.module('vkTools', [])
       return service;
     }
   ]);
-
-angular.module('App').filter('findGroups', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) { 
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  }
-});
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
-angular.module('App').filter('parseVkText', [function() {
-  return function(input, removeLink) {
-    if (!input) {
-      return;
-    }
-
-    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
-    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
-
-
-
-    var bytes = [];
-
-    for (var i = 0; i < input.length; ++i) {
-      bytes.push(input.charCodeAt(i));
-    }
-
-    var ranges = [
-      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
-      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
-      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
-    ];
-
-    input = emojiParseInText(input);
-      
-    var text = input;
-
-    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
-    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
-
-    return text;
-  }
-}]);
-
-angular.module('App').filter('substring', [function() {
-  return function(text, len) {
-    len = len || 100;
-    if (!text) {
-      return;
-    } 
-
-    if (text.length > len){
-      return text.substring(0,len);
-    } else {
-      return text;
-    }
-  }
-}]);
- 
-angular.module('App').filter('toGIS', function() {
-  return function(time) {
-    if (!time) {
-      return '';
-    }
-    var out = '';
-    var s_last = time % 60;
-    var s_minutes = (time - s_last) / 60;
-    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
-    return out;
-  }
-});
 
 (function replaceEmojiWithImages(root) {
 
@@ -3703,18 +3786,34 @@ angular.module('App').controller('CD_channel', [
 
     ctr.selectedAttachments = [];
     ctr.uploadingAttaches = [];
-    ctr.processingAttachments = [];
+    ctr.processingAttachments = []; 
 
-    $scope.$watch("parsedText", function(text) {
-      if (!text) return;
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      $scope.$apply(function() {
+        ctr.data = data;
 
-      ctr.text = $scope.channel.text = text;
+        if (data.imageSrc && data.imageSrc !== '') {
+          data.images.unshift({
+            src: data.imageSrc,
+            big_src: data.imageSrc
+          });
+        }
+
+        var images = _.map(data.images, function(q) {
+          q.type = 'image';
+          q.id = S_utils.getRandomString(16);
+          return q;
+        });
+        ctr.pageAttachments = $scope.channel.attachments.concat(images);
+        if (images.length) {
+          $scope.channel.attachments.push(images[0]);
+        }
+
+        if (!ctr.text || ctr.text === '') {
+          ctr.text = $scope.channel.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
+        }
+      });
     });
-
-    $scope.$watch("parsedImage", function(text) {
-      if (!text) return;
-    });
-
     $scope.$watch(function() {
       return ctr.text;
     }, function(text) {
@@ -3767,7 +3866,7 @@ angular.module('App').controller('CD_channel', [
         processing: true,
         id: S_utils.getRandomString(16)
       };
-      console.log(123);
+
       $scope.$apply(function() {
         $scope.channel.attachments.push(obj);
         ctr.uploadingAttaches.push(obj);
@@ -3822,6 +3921,14 @@ angular.module('App').controller('CD_channel', [
             break;
           }
       }
+    }
+
+    ctr.showActions = function(channel){
+      return !channel.inprogress && !channel.error && !channel.complete;
+    }
+
+    ctr.showProgress = function(channel){
+      return channel.inprogress;
     }
 
     return ctr;

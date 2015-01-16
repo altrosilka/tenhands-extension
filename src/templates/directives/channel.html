@@ -1,14 +1,26 @@
-<div class="channel social_bg" data-network="{{channel_ctr.network}}" ng-class="{'complete': channel_ctr.isComplete(), 'fail': channel_ctr.isFail()}">
+<div class="channel" data-network="{{channel_ctr.network}}" ng-class="{'complete': channel_ctr.isComplete(), 'fail': channel_ctr.isFail()}">
   <div class="workArea">
     <header class="social_bg deep" data-network="{{channel_ctr.network}}">
-      <div class="progress-bar progress-bar-info progress-bar-striped active" ng-class="{'showed':channel.inprogress}"></div>
+      <div class="progress-bar progress-bar-info progress-bar-striped active" ng-class="{'showed':channel_ctr.showProgress(channel)}"></div>
 
-      <span class="actions">
+      <span class="actions" ng-show="channel_ctr.showActions(channel)">
 	    	<span class="visibility" ng-click="channel_ctr.toggleVisibility(channel)">
 	    		<i class="fa fa-eye" ng-class="{'active': channel.disabled}"></i>
 	    		<i class="fa fa-eye-slash" ng-class="{'active': !channel.disabled}"></i>
 	    	</span>
       </span>
+
+
+
+      <span class="socialSign">
+        <span class="vk" ng-if="channel_ctr.network === 'vk'"><i class="fa fa-vk"></i></span>
+        <span class="fb" ng-if="channel_ctr.network === 'fb'"><i class="fa fa-facebook"></i></span>
+        <span class="tw" ng-if="channel_ctr.network === 'tw'"><i class="fa fa-twitter"></i></span>
+        <span class="ig" ng-if="channel_ctr.network === 'ig'"><i class="fa fa-instagram"></i></span>
+        <span class="gp" ng-if="channel_ctr.network === 'gp'"><i class="fa fa-google-plus"></i></span>
+        <span class="ok" ng-if="channel_ctr.network === 'ok'"><i class="fa fa-ok"></i></span>
+      </span>
+
       <span class="screen_name" ng-bind="channel_ctr.screen_name"></span>
     </header>
 
@@ -18,7 +30,7 @@
       <div ng-if="channel_ctr.network === 'vk'">
 
 
-
+      	
 
         <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
 
@@ -34,19 +46,19 @@
           </span>
         </div>
 
-        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
+        <div class="attachesArea" select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
 
       <div ng-if="channel_ctr.network === 'tw'">
 
 
-        <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
+        <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text" set-max-length="117"></textarea>
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('tw')">
           <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
         </div>
-        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
+        <div class="attachesArea" select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
 
       <div ng-if="channel_ctr.network === 'ig'">
@@ -58,7 +70,7 @@
           </span>
         </div>
         <!--<div instagram-area="channel_ctr.attachments[0]"></div>-->
-        <div select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
+        <div class="attachesArea" select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
     </div>
   </div>
