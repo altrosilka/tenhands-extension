@@ -2,8 +2,8 @@ angular.module('App').directive('channel', [function() {
   return {
     scope:{
       channel: "=",
+      parsedLink: "=",
       parsedText: "=",
-      parsedImage: "=",
       pageAttachments: "=",
       postChannelAgain: "&"
     },

@@ -2,11 +2,12 @@ angular.module('App')
   .service('S_eventer', [
     '$rootScope',
     '__postMessagePrepend',
-    function($rootScope, __postMessagePrepend) {
+    '__cabinet',
+    function($rootScope, __postMessagePrepend, __cabinet) {
       var service = {};
 
       service.sendEvent = function(name, arguments) {
-        $rootScope.$broadcast(name, arguments); 
+        $rootScope.$broadcast(name, arguments);
       }
 
       service.sayToFrame = function(code) {
@@ -28,3 +29,5 @@ angular.module('App')
       return service;
     }
   ]);
+
+

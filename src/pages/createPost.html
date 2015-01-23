@@ -41,26 +41,31 @@
     </div>
   </div>
 
+  <div class="topBackground"></div>
+
+  <header class="top">
+    <div class="resizer" ng-click="ctr.resizeIframe()" tooltip="изменить размер окна расширения" tooltip-placement="bottom" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
+      <i class="fa fa-bars"></i>
+    </div>
+
+    <div class="remover" ng-click="ctr.closeIframe()" tooltip="закрыть расширение" tooltip-placement="left" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
+      <i class="fa fa-times"></i>
+    </div>
+  </header>
+
   <div class="filterArea" ng-class="{'blur':ctr.postingProcess}">
 
-    <section ng-show="ctr._state === 'post'" ng-controller="C_posting as post_ctr">
+    <section ng-if="ctr._state === 'post'" ng-controller="C_posting as post_ctr">
 
-      <div class="resizer" ng-click="post_ctr.resizeIframe()" tooltip="изменить размер окна расширения" tooltip-placement="bottom" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
-        <i class="fa fa-bars"></i>
-      </div>
-
-      <div class="remover" ng-click="post_ctr.closeIframe()" tooltip="закрыть расширение" tooltip-placement="left" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">
-        <i class="fa fa-times"></i>
-      </div>
+      <section class="setSelecterArea" ng-show="post_ctr.showSetSelect()">
 
 
-      <header class="setSelecterArea" ng-show="post_ctr.showSetSelect()">
+
+
         <span class="sharePhrase">Поделиться записью в</span>
         <span class="groupSelect">
           <ui-select ng-model="post_ctr.selectedSet" theme="select2">
-            <ui-select-match placeholder="Выбери набор, в который нужно разместить запись">
-              {{$select.selected.name}}
-            </ui-select-match>
+            <ui-select-match placeholder="Выбери набор, в который нужно разместить запись" ng-bind="$select.selected.name"></ui-select-match>
             <ui-select-choices repeat="set in post_ctr.sets | findGroups: {name: $select.search}">
               <span class="name" ng-bind-html="set.name | highlight: $select.search"></span>
         <span class="count">
@@ -75,42 +80,62 @@
         <img ng-src="{{post_ctr.postingApp.icon_50}}">
         <span class="title" ng-bind="post_ctr.postingApp.title"></span>
         </span>
-      </header>
+      </section>
 
       <section class="window">
 
 
-        <section class="v_channels" channels-scrollbar>
-          <div class="channelsList" ng-style="{'width':post_ctr.getChannelsAreaWidth()}">
-            <div style="margin: 0 -8px;">
-              <span channel="channel" ng-repeat="channel in post_ctr.channels" parsed-text="post_ctr.text" page-attachments="post_ctr.pageAttachments" post-channel-again="post_ctr.postChannelAgain(channel.id)"></span>
-            </div>
+        <section class="v_channels inFromBottom" ng-class="{'inFromBottom-in': post_ctr.channelsIsLoaded}">
+          <div class="channelsList">
+            <span channel="channel" ng-repeat="channel in post_ctr.channels" parsed-text="post_ctr.text" parsed-link="post_ctr.link" page-attachments="post_ctr.pageAttachments" post-channel-again="post_ctr.postChannelAgain(channel.id)"></span>
           </div>
         </section>
 
+        <footer class="slidingFooter" ng-class="{'active':ctr.showBottomPanel}">
+          <section class="bottomFooter" ng-if="ctr._state === 'post'">
+
+            <div class="postingProgressPanel" ng-class="{'active':post_ctr.postingCount > 0}">
+              <div class="greenLine" ng-style="{'width':post_ctr.getProgressLineWidth()}">
+
+              </div>
+              <div class="progress-bar progress-bar-info progress-bar-striped active" ng-class="{'hideLine':post_ctr.allPostsComplete}"></div>
+              <div class="numbers">
+                <span ng-show="post_ctr.allPostsComplete">Все записи размещены!</span>
+                <span ng-hide="post_ctr.allPostsComplete">
+                    <span ng-bind="post_ctr.completePostsCount"></span>/<span ng-bind="post_ctr.postingCount"></span>
+                </span>
+              </div>
+            </div>
 
 
+
+            <div class="centered clearfix sendPanel" ng-class="{'active':!post_ctr.postingCount}">
+
+              <div class="dark postingTimer pull-left ng-hide">
+                <div class="calendar inline" date-button="" min-date="ctr.minDate" max-date="ctr.maxDate" data-model="ctr.postingDate" class="picker_inputs"></div>
+                <span class="in inline">в</span>
+                <div class="timec inline" time-select="" time="ctr.postingTime" set-new-time="ctr.onTimeChange(time)"></div>
+              </div>
+
+              <div class="pull-right">
+                <div class="checkboxList controls-list dark">
+                  <label>
+                    <input type="checkbox" ng-model="post_ctr.closeAfterSuccess">
+                    <span tooltip="например, можно запостить то же самое в другую группу" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Закрыть после публикации</span>
+                  </label>
+                </div>
+
+                <button type="button" class="btn btn-primary" ng-disabled="post_ctr.paidIsEnd || post_ctr.processingAttachments.length" ng-click="post_ctr.createPost()">
+                  <span>Отправить</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        </footer>
       </section>
-
-      <footer class="bottomFooter" ng-if="ctr._state === 'post'" ng-class="{'active':ctr.showBottomPanel}">
-        <div class="centered text-right">
-
-
-          <div class="checkboxList controls-list dark">
-            <label>
-              <input type="checkbox" ng-model="post_ctr.notClose">
-              <span tooltip="например, можно запостить то же самое в другую группу" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Закрыть после публикации</span>
-            </label>
-          </div>
-
-          <button type="button" class="btn btn-primary" ng-disabled="post_ctr.paidIsEnd || post_ctr.processingAttachments.length" ng-click="post_ctr.createPost()">
-            отправить
-          </button>
-        </div>
-      </footer>
     </section>
 
-    <section ng-show="ctr._state === 'login'" ng-include="'templates/views/login.html'">
+    <section ng-if="ctr._state === 'login'" ng-include="'templates/views/login.html'">
 
     </section>
   </div>

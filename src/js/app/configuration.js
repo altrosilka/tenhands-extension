@@ -1,9 +1,12 @@
 angular.module('config', [])
   .constant('__vkAppId', 4639658)
+  .constant('__cabinet',{
+    domain: 'smm.dev'
+  })
   .constant('__api', {
     baseUrl: 'http://api.smm.dev/',
     paths: {
-      saveExtensionToken: 'vkToken',
+      saveExtensionVkToken: 'accounts/vkontakte/add',
       getAssignKey: 'user/getAssignKey',
       media: 'media',
       getOverrideKey: 'groups/getOverrideKey',

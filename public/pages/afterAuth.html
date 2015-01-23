@@ -7,12 +7,18 @@
   <title></title>
 </head>
 
-<body data-ng-app="App" data-ng-controller="C_afterAuth as ctr">
+<body class="page_afterAuth" data-ng-app="App" data-ng-controller="C_afterAuth as ctr">
+ 
+
+	<div class="blackModal">
+    <h1>Успешная авторизация</h1>
+    <p>Авторизация под аккаунтом <strong ng-bind="ctr.accountName">...</strong> прошла успешно.<p>Можешь смело закрывать это окно.</p>
+    <div class="footer">
+      <button class="btn btn-primary" ng-click="ctr.closeWindow()" ng-disabled="!ctr.canClose"><span>Закрыть окно</span></button>
+    </div>
+  </div>
 
 
-  Ты авторизовался, все круто!
-
-  <button class="btn btn-primary" ng-click="ctr.closeWindow()" ng-if="ctr.canClose">Закрыть окно</button>
 
   <script type="text/javascript" src="/pack/vendor.js"></script>
   <script type="text/javascript" src="/pack/templates.js"></script>

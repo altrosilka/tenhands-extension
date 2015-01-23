@@ -26,6 +26,7 @@
   "web_accessible_resources": [
     "pages/createPost.html",
     "pages/afterInstall.html",
+    "pages/authVk.html",
     "pack/page.css"
   ],
   "content_scripts": [

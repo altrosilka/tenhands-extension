@@ -13,37 +13,15 @@ angular.module('App').controller('CD_channel', [
     ctr.uploadingAttaches = [];
     ctr.processingAttachments = []; 
 
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
+    
 
-        if (data.imageSrc && data.imageSrc !== '') {
-          data.images.unshift({
-            src: data.imageSrc,
-            big_src: data.imageSrc
-          });
-        }
-
-        var images = _.map(data.images, function(q) {
-          q.type = 'image';
-          q.id = S_utils.getRandomString(16);
-          return q;
-        });
-        ctr.pageAttachments = $scope.channel.attachments.concat(images);
-        if (images.length) {
-          $scope.channel.attachments.push(images[0]);
-        }
-
-        if (!ctr.text || ctr.text === '') {
-          ctr.text = $scope.channel.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
-        }
-      });
-    });
     $scope.$watch(function() {
       return ctr.text;
     }, function(text) {
       $scope.channel.text = text;
     });
+
+  
 
     ctr.isComplete = function() {
       return $scope.channel.complete;
@@ -146,6 +124,11 @@ angular.module('App').controller('CD_channel', [
             break;
           }
       }
+    }
+
+    ctr.getMaxTextLength = function(type, attachments){
+      return S_utils.getMaxTextLength(type, attachments);
+      
     }
 
     ctr.showActions = function(channel){

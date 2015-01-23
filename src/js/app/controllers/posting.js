@@ -17,6 +17,10 @@ angular.module('App').controller('C_posting', [
     ctr.selectedSet = {};
     ctr.attachments = [];
 
+
+
+    ctr.closeAfterSuccess = true;
+
     S_selfapi.getAllSets().then(function(resp) {
       ctr.sets = resp.data.data;
       ctr.selectedSet = ctr.sets[0];
@@ -27,8 +31,14 @@ angular.module('App').controller('C_posting', [
     }, function(setId) {
       if (!setId) return;
 
+      ctr.allPostsComplete = false;
+      ctr.postingCount = 0;
+
       S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = resp.data.data;
+        ctr.channels = _.filter(resp.data.data,function(channel){
+          return !channel.disabled;
+        });
+        ctr.channelsIsLoaded = true;
       });
     });
 
@@ -56,15 +66,20 @@ angular.module('App').controller('C_posting', [
         }
 
         if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
+          ctr.text = S_utils.decodeEntities(data.selection || data.title);
         }
+        
+        ctr.link = data.url;
       });
     });
 
     ctr.createPost = function(channel_ids) {
       var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
-
+      ctr.postingCount = postInfo.length;
+      ctr.completePostsCount = 0;
       S_utils.trackProgress(ctr.channels, postInfo);
+
+
 
       S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
@@ -79,9 +94,11 @@ angular.module('App').controller('C_posting', [
 
           if (channel) {
             $scope.$apply(function() {
+              ctr.completePostsCount++;
               channel.inprogress = false;
               channel.complete = true;
               channel.post_url = data.post_url;
+              onChannelInfoRecieved();
             });
           }
         });
@@ -93,20 +110,33 @@ angular.module('App').controller('C_posting', [
 
           if (channel) {
             $scope.$apply(function() {
+              ctr.completePostsCount++;
               channel.inprogress = false;
               channel.error = true;
               channel.errorData = data;
+              onChannelInfoRecieved();
             });
           }
         });
       });
+
+      function onChannelInfoRecieved() {
+        if (ctr.completePostsCount === ctr.postingCount) {
+          if (ctr.channels.length === ctr.completePostsCount) {
+            ctr.allPostsComplete = true;
+            if (ctr.closeAfterSuccess) {
+              S_eventer.sayToFrame('close');
+            }
+          } else {
+            ctr.postingCount = 0;
+          }
+        }
+      }
     }
 
-    ctr.getChannelsAreaWidth = function(channels) {
-      if (!channels) {
-        return;
-      }
-      return (channels.length * 416);
+
+    ctr.getProgressLineWidth = function() {
+      return (((ctr.completePostsCount) / ctr.postingCount * 100) + '%');
     }
 
     ctr.postChannelAgain = function(channel_id) {
@@ -129,6 +159,7 @@ angular.module('App').controller('C_posting', [
       other: '{} каналов'
     };
 
+    
 
     return ctr;
   }

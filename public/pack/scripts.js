@@ -21,10 +21,13 @@ App.config([
   
 angular.module('config', [])
   .constant('__vkAppId', 4639658)
+  .constant('__cabinet',{
+    domain: 'smm.dev'
+  })
   .constant('__api', {
     baseUrl: 'http://api.smm.dev/',
     paths: {
-      saveExtensionToken: 'vkToken',
+      saveExtensionVkToken: 'accounts/vkontakte/add',
       getAssignKey: 'user/getAssignKey',
       media: 'media',
       getOverrideKey: 'groups/getOverrideKey',
@@ -83,57 +86,83 @@ App.run([
   }
 ]);
 
-angular.module('App').controller('C_afterAuth', ['$scope', 'S_vk', 'S_selfapi', 'S_chrome', function($scope, S_vk, S_selfapi, S_chrome) {
-  var ctr = this;
+angular.module('App').controller('C_afterAuth', [
+  '$scope',
+  'S_vk',
+  'S_selfapi',
+  'S_chrome',
+  'S_eventer',
+  function($scope, S_vk, S_selfapi, S_chrome, S_eventer) {
+    var ctr = this;
 
 
-  S_chrome.getVkToken().then(function(token) {
-    if (token) {
-      S_selfapi.sendExtensionToken(token).then(function(){
-        ctr.canClose = true;
-      });
-    } else {
-      location.href = '/pages/afterInstall.html';
-    }
-  })
-
-  ctr.closeWindow = function(){
-    window.close();
-  }
-
-  return ctr;
-}]);
-
-angular.module('App').controller('C_afterInstall', ['$scope', 'S_vk', function($scope, S_vk) {
-  var ctr = this;
-
-  ctr.singIn = function() {
-    var currentTab;
-
-    chrome.tabs.getCurrent(function(tab) {
-      currentTab = tab;
-
-      S_vk.callAuthPopup().then(function(tab) {
-
-
-        chrome.tabs.remove(tab.id, function() {});
-        
-
-        chrome.tabs.update( 
-          currentTab.id, {
-            'url': '/pages/afterAuth.html',
-            'active': true
-          },
-          function(tab) {
-          }
-        );
-      })
+    S_chrome.getVkToken().then(function(token) {
+      if (token) {
+        S_selfapi.sendExtensionToken(token).then(function(resp) {
+          ctr.canClose = true;
+          ctr.accountName = resp.data.data.screen_name;
+        });
+      } else {
+        location.href = '/pages/afterInstall.html';
+      }
     })
 
-  }
 
-  return ctr;
-}]);
+
+    ctr.closeWindow = function() {
+      window.close();
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_afterInstall', [
+  '$scope',
+  '$location',
+  'S_vk',
+  function($scope, $location, S_vk) {
+    var ctr = this;
+
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_authVk', [
+  '$scope',
+  '$location',
+  'S_vk',
+  function($scope, $location, S_vk) {
+    var ctr = this;
+    
+    ctr.singIn = function() {
+      var currentTab;
+
+      chrome.tabs.getCurrent(function(tab) {
+        currentTab = tab;
+
+        S_vk.callAuthPopup().then(function(tab) {
+
+
+          chrome.tabs.remove(tab.id, function() {});
+
+
+          chrome.tabs.update(
+            currentTab.id, {
+              'url': '/pages/afterAuth.html',
+              'active': true
+            },
+            function(tab) {}
+          );
+        })
+      })
+
+    }
+
+    return ctr;
+  }
+]);
 
 angular.module('App').controller('C_login', [
   '$scope',
@@ -141,10 +170,19 @@ angular.module('App').controller('C_login', [
   function($scope, S_selfapi) {
     var ctr = this;
 
+    ctr.email = ctr.password = '';
+
     ctr.auth = function(email, password) {
+      ctr.authInProgress = true;
+      ctr.error = false;
       S_selfapi.signIn(email, password).then(function(resp) {
-        if (resp.data.success){
+        ctr.authInProgress = false;
+        if (resp.data.success) {
           $scope.ctr.checkAuth();
+        }
+
+        if (resp.data.error) {
+          ctr.error = true;
         }
       });
     }
@@ -182,6 +220,16 @@ angular.module('App').controller('C_main', [
       return ctr._state;
     }
 
+    /* enviroment */
+    ctr.resizeIframe = function() {
+      ctr.minState = !ctr.minState;
+      S_eventer.sayToFrame('toggle');
+    }
+
+    ctr.closeIframe = function() {
+      S_eventer.sayToFrame('close');
+    }
+
 
 
     ctr.checkAuth();
@@ -209,6 +257,10 @@ angular.module('App').controller('C_posting', [
     ctr.selectedSet = {};
     ctr.attachments = [];
 
+
+
+    ctr.closeAfterSuccess = true;
+
     S_selfapi.getAllSets().then(function(resp) {
       ctr.sets = resp.data.data;
       ctr.selectedSet = ctr.sets[0];
@@ -219,8 +271,14 @@ angular.module('App').controller('C_posting', [
     }, function(setId) {
       if (!setId) return;
 
+      ctr.allPostsComplete = false;
+      ctr.postingCount = 0;
+
       S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = resp.data.data;
+        ctr.channels = _.filter(resp.data.data,function(channel){
+          return !channel.disabled;
+        });
+        ctr.channelsIsLoaded = true;
       });
     });
 
@@ -255,8 +313,11 @@ angular.module('App').controller('C_posting', [
 
     ctr.createPost = function(channel_ids) {
       var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
-
+      ctr.postingCount = postInfo.length;
+      ctr.completePostsCount = 0;
       S_utils.trackProgress(ctr.channels, postInfo);
+
+
 
       S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
@@ -271,9 +332,11 @@ angular.module('App').controller('C_posting', [
 
           if (channel) {
             $scope.$apply(function() {
+              ctr.completePostsCount++;
               channel.inprogress = false;
               channel.complete = true;
               channel.post_url = data.post_url;
+              onChannelInfoRecieved();
             });
           }
         });
@@ -285,20 +348,33 @@ angular.module('App').controller('C_posting', [
 
           if (channel) {
             $scope.$apply(function() {
+              ctr.completePostsCount++;
               channel.inprogress = false;
               channel.error = true;
               channel.errorData = data;
+              onChannelInfoRecieved();
             });
           }
         });
       });
+
+      function onChannelInfoRecieved() {
+        if (ctr.completePostsCount === ctr.postingCount) {
+          if (ctr.channels.length === ctr.completePostsCount) {
+            ctr.allPostsComplete = true;
+            if (ctr.closeAfterSuccess) {
+              S_eventer.sayToFrame('close');
+            }
+          } else {
+            ctr.postingCount = 0;
+          }
+        }
+      }
     }
 
-    ctr.getChannelsAreaWidth = function(channels) {
-      if (!channels) {
-        return;
-      }
-      return (channels.length * 416);
+
+    ctr.getProgressLineWidth = function() {
+      return (((ctr.completePostsCount) / ctr.postingCount * 100) + '%');
     }
 
     ctr.postChannelAgain = function(channel_id) {
@@ -321,6 +397,7 @@ angular.module('App').controller('C_posting', [
       other: '{} каналов'
     };
 
+    
 
     return ctr;
   }
@@ -1166,23 +1243,85 @@ angular.module('App')
     }
   ])
 
-angular.module('App').directive('setMaxLength', [function() {
+angular.module('App').directive('sourceLink', [function() {
   return {
-    require: 'ngModel',
-    link: function(scope, element, attrs, ngModelCtrl) {
-      var maxlength = Number(attrs.setMaxLength);
+    scope:{
+      link: '=sourceLink'
+    },
+    templateUrl: 'templates/directives/sourceLink.html',
+    controller: 'CD_sourceLink as ctr',
+    link: function($scope, $element) {
+      
+    }  
+  }
+}]);
 
-      function fromUser(text) {
+angular.module('App').directive('textareaValidator', [
+  '$timeout',
+  function($timeout) {
+  return {
+    scope: {
+      model: '=',
+      maxLength: '=',
+      showCounter: '='
+    }, 
+    templateUrl: 'templates/directives/textareaValidator.html',
+    link: function($scope, $element, attrs, ngModelCtrl) {
 
-        if (text.length > maxlength) {
-          var transformedInput = text.substring(0, maxlength);
-          ngModelCtrl.$setViewValue(transformedInput);
-          ngModelCtrl.$render();
-          return transformedInput;
-        }
-        return text;
+      var DOM = {
+        parent: $element.find('.textareaValidator'),
+        textarea: $element.find('.textarea'),
+        section: $element.find('.text'),
+        counter: $element.find('.counter span')
       }
-      ngModelCtrl.$parsers.push(fromUser);
+
+      DOM.textarea.on('keyup keydown keypress', function(){
+        $timeout(track);
+      }).on('scroll',function(){
+        DOM.section.scrollTop($(this).scrollTop());
+      })
+      $scope.$watch('model', function(q) {
+        if (!q) return;
+
+        DOM.textarea.val(q);
+        track();
+      });
+
+      $scope.$watch('maxLength', function(q) {
+        if (!q) return;
+        track(); 
+      });
+
+      function track() {
+        var separateSymbol = 'Ξ';
+        var text = DOM.textarea.val().replace(/\n/g, separateSymbol);
+ 
+        var res = text.match(new RegExp('.{' + $scope.maxLength + '}(.*)'));
+
+        if (res !== null) {
+          var extra = res[1];
+
+          var newContent = text.replace(new RegExp(extra + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
+          DOM.section.html(newContent+'<br>').height(DOM.textarea.height());
+        }
+
+        if ($scope.showCounter){
+          DOM.counter.empty();
+          var last = $scope.maxLength - text.length;
+          var className = 'zero';
+          if (last > 0) className = 'more';
+          if (last < 0) className = 'less';
+
+          if (text.length / $scope.maxLength > 0.5){
+            className += ' active';
+          }
+
+          DOM.counter.removeClass().addClass(className).html(last);
+        }
+
+        DOM.textarea.trigger('scroll');
+      }
+
     }
   };
 }]).filter('cut', function() {
@@ -1391,111 +1530,6 @@ angular.module('chromeTools', [])
         S_eventer.sendEvent('loadedDataFromTab', e.data);
       });
 
-      
-      setTimeout(function() {
-        S_eventer.sendEvent('loadedDataFromTab', {
-          "images": [{
-            "alt": "Грелка ",
-            "clientHeight": 450,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 450,
-            "title": "Грелка ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/grelka-_1416265291.jpg"
-          }, {
-            "alt": "Любовь - великая сила ",
-            "clientHeight": 571,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 571,
-            "title": "Любовь - великая сила ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/lyubov-velikaya-sila-_1416314178.jpg"
-          }, {
-            "alt": "Скоро праздники ",
-            "clientHeight": 600,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 600,
-            "title": "Скоро праздники ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/skoro-prazdniki-_1416214236.jpg"
-          }, {
-            "alt": "Фигулька ",
-            "clientHeight": 778,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 778,
-            "title": "Фигулька ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/figulka-_1415910890.jpg"
-          }, {
-            "alt": "Коварная чугунная поня ",
-            "clientHeight": 449,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 449,
-            "title": "Коварная чугунная поня ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/kovarnaya-chugunnaya-ponya-_1416233562.jpg"
-          }, {
-            "alt": "Таблетки для смеха",
-            "clientHeight": 488,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 488,
-            "title": "Таблетки для смеха",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/tabletki-dlya-smeha-_1415531344.jpg"
-          }, {
-            "alt": "Разбуженный грабитель ",
-            "clientHeight": 399,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 399,
-            "title": "Разбуженный грабитель ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/razbuzhennyy-grabitel-_1416233761.jpg"
-          }, {
-            "alt": "Нам бы карася  ",
-            "clientHeight": 429,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 429,
-            "title": "Нам бы карася  ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nam-by-karasya-_1416233413.jpg"
-          }, {
-            "alt": "Нычкарик по призванию ",
-            "clientHeight": 450,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 450,
-            "title": "Нычкарик по призванию ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nychkarik-po-prizvaniyu-_1416232762.jpg"
-          }, {
-            "alt": "Еда с гавкающим названием ",
-            "clientHeight": 800,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 800,
-            "title": "Еда с гавкающим названием ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/yeda-s-gavkayuschim-nazvaniyem-_1416203979.jpg"
-          }, {
-            "alt": "",
-            "clientHeight": 250,
-            "clientWidth": 250,
-            "width": 250,
-            "height": 250,
-            "title": "",
-            "src": "http://static.lolkot.ru/images/usermatrix1416326402.jpg"
-          }, {
-            "alt": "",
-            "clientHeight": 15,
-            "clientWidth": 88,
-            "width": 88,
-            "height": 15,
-            "title": "",
-            "src": "http://counter.yadro.ru/hit?t26.16;rhttp%3A//yandex.ru/clck/jsredir%3Ffrom%…c%3D2.584962500721156;s1280*800*24;uhttp%3A//lolkot.ru/;0.5310913703870028"
-          }],
-          "title": "Смешные картинки кошек с надписями",
-          "url": "http://lolkot.ru/",
-          "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
-        })
-      }, 10000000000);
     }
 
 
@@ -1535,11 +1569,12 @@ angular.module('App')
   .service('S_eventer', [
     '$rootScope',
     '__postMessagePrepend',
-    function($rootScope, __postMessagePrepend) {
+    '__cabinet',
+    function($rootScope, __postMessagePrepend, __cabinet) {
       var service = {};
 
       service.sendEvent = function(name, arguments) {
-        $rootScope.$broadcast(name, arguments); 
+        $rootScope.$broadcast(name, arguments);
       }
 
       service.sayToFrame = function(code) {
@@ -1561,6 +1596,8 @@ angular.module('App')
       return service;
     }
   ]);
+
+
 
 angular.module('App')
   .service('S_google', [
@@ -1603,7 +1640,7 @@ angular.module('App')
       var base = __api.baseUrl;
       service.sendExtensionToken = function(token) {
         return $http({
-          url: base + __api.paths.saveExtensionToken,
+          url: base + __api.paths.saveExtensionVkToken,
           method: 'POST',
           data: {
             token: token
@@ -2081,6 +2118,12 @@ angular.module('utilsTools', [])
           return "Статус повторяется";
         }
 
+        if(data.network === 'fb') {
+          if (data.data.error && data.data.error.code && data.data.error.code == 506) {
+            return "Сообщение повторяется";
+          }
+        }
+
         if (data.network === 'ig') {
           if (data.error && data.error.code === 'notFull') {
             return "Необходимо прикрепить изображение"
@@ -2101,7 +2144,7 @@ angular.module('utilsTools', [])
         _.forEach(channels, function(channel) {
           if (channel.disabled || channel.complete || channel.inprogress) return;
 
-          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1 )) {
+          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1)) {
             postInfo.push({
               channel_id: channel.id,
               text: channel.text,
@@ -2112,13 +2155,27 @@ angular.module('utilsTools', [])
         return postInfo;
       }
 
-      service.trackProgress = function(channels, info){
+      service.trackProgress = function(channels, info) {
         var q;
         _.forEach(info, function(_channel) {
-          _.find(channels, function(channel){
-            return  channel.id === _channel.channel_id;
+          _.find(channels, function(channel) {
+            return channel.id === _channel.channel_id;
           }).inprogress = true;
         });
+      }
+
+      service.getMaxTextLength = function(type, attachments) {
+        switch (type) {
+          case 'tw':
+            {
+              return ((attachments.length) ? 117 : 140);
+            }
+          case 'ig':
+            {
+              return 2200;
+            }
+        }
+        return 10000;
       }
 
       service.unixTo = function(time, format) {
@@ -2236,9 +2293,9 @@ angular.module('vkTools', [])
 
       service.callAuthPopup = function() {
         var defer = $q.defer();
-        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,email,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
+        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
 
-        chrome.tabs.create({
+        chrome.tabs.create({ 
           url: vkAuthenticationUrl,
           selected: true
         }, function(tab) {
@@ -3923,6 +3980,11 @@ angular.module('App').controller('CD_channel', [
       }
     }
 
+    ctr.getMaxTextLength = function(type, attachments){
+      return S_utils.getMaxTextLength(type, attachments);
+      
+    }
+
     ctr.showActions = function(channel){
       return !channel.inprogress && !channel.error && !channel.complete;
     }
@@ -3974,6 +4036,20 @@ angular.module('App').controller('CD_photobankSearch', [
         ctr.attachments = images;
       });
     }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CD_sourceLink', [
+  '$scope',
+  'S_vk',
+  'S_selfapi', 
+  'S_chrome',
+  '__maxPollVariants',
+  function($scope, S_vk, S_selfapi, S_chrome, __maxPollVariants) {
+    var ctr = this;
+  
 
     return ctr;
   }

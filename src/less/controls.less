@@ -1,4 +1,6 @@
 .btn {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-appearance: none;
   transition: 0.2s;
   padding: 0px 20px;
   outline: none!important;
@@ -6,13 +8,23 @@
   border: 2px solid;
   font-size: 13px;
   line-height: 29px;
+  cursor: pointer;
   &.btn-primary {
+    color: #eee;
     background-color: @colorPrimary;
     border-color: @colorPrimary;
     -webkit-font-smoothing: subpixel-antialiased;
+    span {
+      transition: 0.3s;
+      transform: scale(1);
+      display: inline-block;
+      text-shadow: 0px 0px transparent;
+    }
     &:hover {
-      background-color: #fff;
-      color: @colorPrimary;
+      span {
+        transform: scale(1.05);
+        text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
+      }
     }
   }
   &.btn-link {
@@ -42,8 +54,14 @@ select.form-control {
   height: 25px;
   padding: 3px 19px 3px 7px;
 }
+.dark {
+  .form-control {
+    border: 1px solid #444;
+    background-color: #111;
+    color: #bbb;
+  }
+}
 .selectWrapper {
-  background: #fff;
   position: relative;
   overflow: auto;
   display: inline-block;
@@ -57,10 +75,9 @@ select.form-control {
     color: #CCC;
     font-size: 14px;
   }
-  
 }
 .social_bg {
-  color:#fff;
+  color: #fff;
   &[data-network="vk"] {
     background-color: rgba(67, 102, 138, 0.12);
     &.deep {
@@ -68,7 +85,10 @@ select.form-control {
     }
   }
   &[data-network="fb"] {
-    background-color: #000;
+    background-color: rgba(67, 69, 95, 0.11);
+    &.deep {
+      background-color: #3B5998;
+    }
   }
   &[data-network="ig"] {
     background-color: rgba(67, 69, 95, 0.11);

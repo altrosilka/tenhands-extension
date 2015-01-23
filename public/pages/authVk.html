@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" type="text/css" href="/pack/styles.css" />
+  <title></title>
+</head>
+
+<body class="page_authVk" data-ng-app="App" data-ng-controller="C_authVk as ctr">
+
+  <div class="blackModal">
+    <h1>Авторизация аккаунта ВК</h1>
+    <p>При первом запросе авторизации тебе нужно предоставить доступ приложению 10Hands к своему аккаунту. У тебя будет возможность выбрать аккаунт. </p>
+    <p>Последующие запросы авторизации будут проходить автоматически, так что проверь, что ты вошел в социальную сеть уже под нужным аккаунтом.</p>
+    <div class="footer">
+      <button class="btn btn-primary" ng-click="ctr.singIn()"><span>Авторизовать расширение в ВК</span></button>
+    </div>
+  </div>
+
+
+  <script type="text/javascript" src="/pack/vendor.js"></script>
+  <script type="text/javascript" src="/pack/templates.js"></script>
+  <script type="text/javascript" src="/pack/scripts.js"></script>
+</body>
+
+</html>

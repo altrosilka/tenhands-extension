@@ -1,7 +1,28 @@
-<section class="v_login" ng-controller="C_login as login_ctr">
-  <form ng-submit="login_ctr.auth(login_ctr.email, login_ctr.password)">
-    <input type="text" class="form-control" ng-model="login_ctr.email" placeholder="e-mail">
-    <input type="password" class="form-control" ng-model="login_ctr.password" placeholder="пароль">
+<section class="v_login"  ng-controller="C_login as login_ctr">
+  <form class="text-center" ng-class="{'error':login_ctr.error}" ng-submit="login_ctr.auth(login_ctr.email, login_ctr.password)">
+    <div>
+      <div class="wrapInput">
+        <span class="input input--juro" ng-class="{'input--filled': login_ctr.email != ''}">
+	    <input class="input__field input__field--juro" type="text" id="input-1" ng-model="login_ctr.email" />
+	    <label class="input__label input__label--juro" for="input-1">
+	        <span class="input__label-content input__label-content--juro">Адрес электронной почты</span>
+        </label>
+        </span>
+      </div>
+      <div class="wrapInput">
+        <span class="input input--juro" ng-class="{'input--filled': login_ctr.password != ''}">
+	    <input class="input__field input__field--juro" type="password" id="input-2" ng-model="login_ctr.password" />
+	    <label class="input__label input__label--juro" for="input-2">
+	        <span class="input__label-content input__label-content--juro">Пароль</span>
+        </label>
+        </span>
+      </div>
+    </div>
+    <div>
+      <button class="btn btn-primary introButton">
+      	<span>Тук-тук, откройте!</span>
+      </button>
+    </div>
     <input type="submit" class="gogoleft">
   </form>
-</section> 
+</section>

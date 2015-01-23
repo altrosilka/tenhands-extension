@@ -369,6 +369,12 @@ angular.module('utilsTools', [])
           return "Статус повторяется";
         }
 
+        if(data.network === 'fb') {
+          if (data.data.error && data.data.error.code && data.data.error.code == 506) {
+            return "Сообщение повторяется";
+          }
+        }
+
         if (data.network === 'ig') {
           if (data.error && data.error.code === 'notFull') {
             return "Необходимо прикрепить изображение"
@@ -389,7 +395,7 @@ angular.module('utilsTools', [])
         _.forEach(channels, function(channel) {
           if (channel.disabled || channel.complete || channel.inprogress) return;
 
-          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1 )) {
+          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1)) {
             postInfo.push({
               channel_id: channel.id,
               text: channel.text,
@@ -400,13 +406,27 @@ angular.module('utilsTools', [])
         return postInfo;
       }
 
-      service.trackProgress = function(channels, info){
+      service.trackProgress = function(channels, info) {
         var q;
         _.forEach(info, function(_channel) {
-          _.find(channels, function(channel){
-            return  channel.id === _channel.channel_id;
+          _.find(channels, function(channel) {
+            return channel.id === _channel.channel_id;
           }).inprogress = true;
         });
+      }
+
+      service.getMaxTextLength = function(type, attachments) {
+        switch (type) {
+          case 'tw':
+            {
+              return ((attachments.length) ? 117 : 140);
+            }
+          case 'ig':
+            {
+              return 2200;
+            }
+        }
+        return 10000;
       }
 
       service.unixTo = function(time, format) {

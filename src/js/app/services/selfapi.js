@@ -8,7 +8,7 @@ angular.module('App')
       var base = __api.baseUrl;
       service.sendExtensionToken = function(token) {
         return $http({
-          url: base + __api.paths.saveExtensionToken,
+          url: base + __api.paths.saveExtensionVkToken,
           method: 'POST',
           data: {
             token: token

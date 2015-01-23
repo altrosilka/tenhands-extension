@@ -27,6 +27,16 @@ angular.module('App').controller('C_main', [
       return ctr._state;
     }
 
+    /* enviroment */
+    ctr.resizeIframe = function() {
+      ctr.minState = !ctr.minState;
+      S_eventer.sayToFrame('toggle');
+    }
+
+    ctr.closeIframe = function() {
+      S_eventer.sayToFrame('close');
+    }
+
 
 
     ctr.checkAuth();

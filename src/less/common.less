@@ -25,9 +25,10 @@ html, body {
   height: 1px;
 }
 body {
+  background: fixed #fff url(../images/bg/wood.jpg) center no-repeat;
+  background-size: cover;
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
-  background-color: transparent;
   font-size: 12px;
   &:before {
     content: '';
@@ -41,14 +42,7 @@ body {
     opacity: 0;
     transition: 0.4s;
   }
-  &.loaded {
-    .filterArea {
-      transform: translateY(0px);
-      opacity: 1;
-      visibility: visible;
-    }
-  }
-  &.min:before {
+  &.loaded {} &.min:before {
     opacity: 1;
   }
 }
@@ -78,6 +72,96 @@ a {
   border: none!important;
   text-decoration: none!important;
   cursor: default!important;
+}
+header.top {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 11;
+  .resizer, .remover {
+    position: absolute;
+    opacity: 0.5;
+    transition: 0.2s;
+    color: #fff;
+    top: 19px;
+    &:hover {
+      opacity: 1;
+      cursor: pointer;
+    }
+  }
+  .resizer {
+    width: 40px;
+    margin-left: -20px;
+    left: 50%;
+    text-align: center;
+    font-size: 18px;
+  }
+  .remover {
+    right: 28px;
+    font-size: 20px;
+  }
+}
+.setSelecterArea {
+  position: fixed;
+  color: #A39090;
+  top: 16px;
+  left: 28px;
+  z-index: 11;
+  .sharePhrase {
+    position: relative;
+    top: 2px;
+  }
+  .fromApp {
+    display: inline-block;
+    position: relative;
+    top: 1px;
+    transition: 0.4s;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-15px);
+    &.active {
+      transform: translateX(0px);
+      opacity: 1;
+      visibility: visible;
+    }
+    .sharePhrase {
+      color: #AAA;
+      margin-left: 11px;
+      font-size: 10px;
+      top: 0px;
+    }
+    img {
+      height: 25px;
+      position: relative;
+      top: -1px;
+    }
+    .title {
+      font-size: 10px;
+      font-weight: bold;
+      position: relative;
+      top: 0px;
+      color: #666;
+    }
+  }
+}
+.topBackground {
+  height: 100px;
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  background: url(../images/top.png) center repeat;
+  background-size: auto 100px;
+  z-index: 10;
+  opacity: 0.7;
+  &.reverse {
+    bottom: 0px;
+    top: auto;
+    transform: rotateX(180deg);
+    transform-origin: center;
+  }
 }
 .layerFs {
   position: fixed;
@@ -117,88 +201,10 @@ a {
   }
 }
 .filterArea {
-  background: #fff url(../images/bg/wood.jpg) center no-repeat;
-  z-index: 2;
-  background-size: cover;
-  opacity: 0;
-  visibility: hidden;
-  padding: 120px 0;
-  transform: translateY(100px);
-  transition: 0.4s;
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  padding: 120px 0 0;
   &.blur {
     -webkit-filter: blur(3px) grayscale(1);
     opacity: 0.4;
-  }
-  .resizer, .remover {
-    opacity: 0.4;
-    transition: 0.2s;
-    color: #fff;
-    &:hover {
-      opacity: 1;
-      cursor: pointer;
-    }
-  }
-  .resizer {
-    position: absolute;
-    width: 40px;
-    margin-left: -20px;
-    top: 15px;
-    left: 50%;
-    text-align: center;
-    font-size: 18px;
-  }
-  .remover {
-    position: absolute;
-    right: 10px;
-    top: 15px;
-    font-size: 20px;
-  }
-  .setSelecterArea {
-    position: absolute;
-    color: #A39090;
-    top: 57px;
-    left: 20px;
-    .sharePhrase {
-      position: relative;
-      top: 2px;
-    }
-    .fromApp {
-      display: inline-block;
-      position: relative;
-      top: 1px;
-      transition: 0.4s;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateX(-15px);
-      &.active {
-        transform: translateX(0px);
-        opacity: 1;
-        visibility: visible;
-      }
-      .sharePhrase {
-        color: #AAA;
-        margin-left: 11px;
-        font-size: 10px;
-        top: 0px;
-      }
-      img {
-        height: 25px;
-        position: relative;
-        top: -1px;
-      }
-      .title {
-        font-size: 10px;
-        font-weight: bold;
-        position: relative;
-        top: 0px;
-        color: #666;
-      }
-    }
   }
 }
 body.min {
@@ -215,7 +221,7 @@ body.min {
   width: 960px;
 }
 .window {
-  padding-bottom: 300px;
+  padding-bottom: 100px;
   h2 {
     font-size: 17px;
     margin: 45px 0 10px;
@@ -634,32 +640,40 @@ body.min {
   overflow: hidden;
   .channelsList {
     overflow: auto;
-     padding: 0 20px;
+    padding: 0 20px;
+    flex-wrap: wrap;
+    display: flex;
   }
 }
-.bottomFooter {
+.slidingFooter {
   position: fixed;
   bottom: 0;
   right: 0;
   left: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  padding: 20px 0;
-  color: #EEE;
-  transition: 0.5s;
-  transform: translateY(120px);
-  border-top: 1px solid #000;
-  z-index: 3;
-  .controls-list {
-    display: inline-block;
-    margin-right: 26px;
-    position: relative;
-    top: 1px;
-    label {
-      display: inline-block;
-    }
-  }
+  opacity: 0;
+  height: 73px;
+  transition: 0.4s;
+  -webkit-transform: translateY(73px);
   &.active {
-    transform: translateY(0px);
+    -webkit-transform: translateY(0px);
+    opacity: 1;
+  }
+  .bottomFooter {
+    color: #EEE;
+    transition: 0.5s;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 13;
+    height: 73px;
+    position: relative;
+    .controls-list {
+      display: inline-block;
+      margin-right: 26px;
+      position: relative;
+      top: 1px;
+      label {
+        display: inline-block;
+      }
+    }
   }
 }
 .mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_dragger .mCSB_dragger_bar {
@@ -670,7 +684,109 @@ body.min {
   height: 10px;
   margin: 6px 0;
 }
-.mCSB_scrollTools{
+.mCSB_scrollTools {
   right: 20px!important;
   left: 19px!important;
+}
+.inFromBottom {
+  transform: translateY(100px);
+  transition: 0.4s;
+  opacity: 0;
+  visibility: hidden;
+  &.inFromBottom-in {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0px);
+  }
+}
+.fancybox-skin {
+  background: none;
+  background-color: transparent;
+}
+.postingTimer {
+  margin-top: 4px;
+  .inline {
+    float: left;
+  }
+  .in {
+    position: relative;
+    top: 4px;
+    margin: 0 6px;
+  }
+}
+.postingProgressPanel {
+  visibility: hidden;
+  position: absolute;
+  opacity: 0;
+  height: 100%;
+  left: 0;
+  right: 0;
+  .greenLine {
+    background-color: @colorPrimary;
+    position: relative;
+    height: 100%;
+    z-index: 1;
+    opacity: 0.5;
+    transition: 0.2s;
+  }
+  .progress-bar {
+    position: absolute;
+    background-color: transparent;
+    height: 100%;
+    z-index: 2;
+    left: 0;
+    width: 100%;
+    top: 0;
+    transition: 0.2s;
+    &.hideLine {
+      opacity: 0;
+    }
+  }
+  .numbers {
+    color: #CFCFCF;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    line-height: 72px;
+    text-align: center;
+    font-size: 20px;
+    z-index: 11;
+  }
+  &.active {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+.sendPanel {
+  padding: 20px 0;
+  opacity: 0;
+  visibility: hidden;
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+.blackModal {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #EEE;
+  padding: 30px;
+  width: 600px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -330px;
+  h1 {
+    font-weight: normal;
+font-size: 26px;
+margin: 0 0 24px;
+  }
+  p {
+    font-size: 14px;
+    line-height: 1.5em;
+  }
+  .footer {
+    margin-top: 30px;
+  }
 }
