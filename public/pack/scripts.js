@@ -28,6 +28,7 @@ angular.module('config', [])
     baseUrl: 'http://api.smm.dev/',
     paths: {
       saveExtensionVkToken: 'accounts/vkontakte/add',
+      getShortUrl: 'utils/shortUrl',
       getAssignKey: 'user/getAssignKey',
       media: 'media',
       getOverrideKey: 'groups/getOverrideKey',
@@ -85,6 +86,110 @@ App.run([
     });
   }
 ]);
+
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
+
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
+
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  }
+});
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('App').filter('parseVkText', [function() {
+  return function(input, removeLink) {
+    if (!input) {
+      return;
+    }
+
+    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
+    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
+
+
+
+    var bytes = [];
+
+    for (var i = 0; i < input.length; ++i) {
+      bytes.push(input.charCodeAt(i));
+    }
+
+    var ranges = [
+      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
+      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
+      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
+    ];
+
+    input = emojiParseInText(input);
+      
+    var text = input;
+
+    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
+    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
+
+    return text;
+  }
+}]);
+
+angular.module('App').filter('substring', [function() {
+  return function(text, len) {
+    len = len || 100;
+    if (!text) {
+      return;
+    } 
+
+    if (text.length > len){
+      return text.substring(0,len);
+    } else {
+      return text;
+    }
+  }
+}]);
+ 
+angular.module('App').filter('toGIS', function() {
+  return function(time) {
+    if (!time) {
+      return '';
+    }
+    var out = '';
+    var s_last = time % 60;
+    var s_minutes = (time - s_last) / 60;
+    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
+    return out;
+  }
+});
 
 angular.module('App').controller('C_afterAuth', [
   '$scope',
@@ -202,7 +307,7 @@ angular.module('App').controller('C_main', [
   '__maxAttachments',
   function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
     var ctr = this;
-
+    var _pushedMenu = false;
     ctr.checkAuth = function() {
       S_selfapi.checkAuth().then(function(resp) {
         if (resp.data.success) {
@@ -230,6 +335,14 @@ angular.module('App').controller('C_main', [
       S_eventer.sayToFrame('close');
     }
 
+
+    ctr.toggleMenu = function(){
+      _pushedMenu = !_pushedMenu;
+    } 
+
+    ctr.isPushed = function(){
+      return _pushedMenu;
+    }
 
 
     ctr.checkAuth();
@@ -275,12 +388,14 @@ angular.module('App').controller('C_posting', [
       ctr.postingCount = 0;
 
       S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = _.filter(resp.data.data,function(channel){
+        ctr.channels = _.filter(resp.data.data, function(channel) {
           return !channel.disabled;
         });
         ctr.channelsIsLoaded = true;
       });
     });
+
+
 
 
 
@@ -306,8 +421,18 @@ angular.module('App').controller('C_posting', [
         }
 
         if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
+          ctr.text = S_utils.decodeEntities(data.selection || data.title);
         }
+
+        ctr.link = data.url;
+        /*
+        S_selfapi.getShortUrl(data.url).then(function(resp) {
+          if (resp.data.data) {
+            ctr.link = resp.data.data;
+          } else {
+            ctr.link = data.url;
+          }
+        });*/
       });
     });
 
@@ -397,7 +522,7 @@ angular.module('App').controller('C_posting', [
       other: '{} каналов'
     };
 
-    
+
 
     return ctr;
   }
@@ -797,8 +922,8 @@ angular.module('App').directive('channel', [function() {
   return {
     scope:{
       channel: "=",
+      parsedLink: "=",
       parsedText: "=",
-      parsedImage: "=",
       pageAttachments: "=",
       postChannelAgain: "&"
     },
@@ -1416,110 +1541,6 @@ angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_util
   }
 }]);
  
-angular.module('App').filter('findGroups', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) { 
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  }
-});
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
-angular.module('App').filter('parseVkText', [function() {
-  return function(input, removeLink) {
-    if (!input) {
-      return;
-    }
-
-    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
-    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
-
-
-
-    var bytes = [];
-
-    for (var i = 0; i < input.length; ++i) {
-      bytes.push(input.charCodeAt(i));
-    }
-
-    var ranges = [
-      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
-      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
-      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
-    ];
-
-    input = emojiParseInText(input);
-      
-    var text = input;
-
-    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
-    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
-
-    return text;
-  }
-}]);
-
-angular.module('App').filter('substring', [function() {
-  return function(text, len) {
-    len = len || 100;
-    if (!text) {
-      return;
-    } 
-
-    if (text.length > len){
-      return text.substring(0,len);
-    } else {
-      return text;
-    }
-  }
-}]);
- 
-angular.module('App').filter('toGIS', function() {
-  return function(time) {
-    if (!time) {
-      return '';
-    }
-    var out = '';
-    var s_last = time % 60;
-    var s_minutes = (time - s_last) / 60;
-    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
-    return out;
-  }
-});
-
 angular.module('chromeTools', [])
   .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
     var service = {};
@@ -1656,6 +1677,16 @@ angular.module('App')
             setId: setId,
             postInfo: postInfo,
             socket_channel: socket_channel
+          }
+        });
+      }
+
+      service.getShortUrl = function(url) {
+        return $http({
+          url: base + __api.paths.getShortUrl,
+          method: 'POST',
+          data: {
+            url: url
           }
         });
       }
@@ -3843,7 +3874,7 @@ angular.module('App').controller('CD_channel', [
 
     ctr.selectedAttachments = [];
     ctr.uploadingAttaches = [];
-    ctr.processingAttachments = []; 
+    ctr.processingAttachments = [];
 
     $scope.$on('loadedDataFromTab', function(event, data) {
       $scope.$apply(function() {
@@ -3866,11 +3897,16 @@ angular.module('App').controller('CD_channel', [
           $scope.channel.attachments.push(images[0]);
         }
 
-        if (!ctr.text || ctr.text === '') {
-          ctr.text = $scope.channel.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
-        }
+        ctr.text = ctr.text = $scope.channel.text = S_utils.decodeEntities(data.selection || data.title);
+
+        //if (ctr.network === 'vk' || ctr.network === 'fb') {
+        //  $scope.channel.link = data.url;
+        //} else {
+          ctr.text += '\n' + data.url;
+        //}
       });
     });
+
     $scope.$watch(function() {
       return ctr.text;
     }, function(text) {
@@ -3980,16 +4016,16 @@ angular.module('App').controller('CD_channel', [
       }
     }
 
-    ctr.getMaxTextLength = function(type, attachments){
+    ctr.getMaxTextLength = function(type, attachments) {
       return S_utils.getMaxTextLength(type, attachments);
-      
+
     }
 
-    ctr.showActions = function(channel){
+    ctr.showActions = function(channel) {
       return !channel.inprogress && !channel.error && !channel.complete;
     }
 
-    ctr.showProgress = function(channel){
+    ctr.showProgress = function(channel) {
       return channel.inprogress;
     }
 

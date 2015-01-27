@@ -32,7 +32,7 @@
       <div ng-if="channel_ctr.network === 'fb'">
         <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
 
-        <div source-link="ctr.link"></div>
+        <!--<div source-link="channel.link"></div>-->
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('fb')">
           <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
@@ -52,9 +52,9 @@
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
           <span class="addAttach" ng-click="channel_ctr.attachItem('video')">
-            <i class="fa fa-film"></i><span>видеозапись</span>
+            <i class="fa fa-film ng-hide"></i><span>видеозапись</span>
           </span>
-          <span class="addAttach" ng-click="channel_ctr.attachItem('poll')">
+          <span class="addAttach ng-hide" ng-click="channel_ctr.attachItem('poll')">
             <i class="fa fa-bar-chart"></i><span>опрос</span>
           </span>
         </div>

@@ -7,6 +7,7 @@ angular.module('config', [])
     baseUrl: 'http://api.smm.dev/',
     paths: {
       saveExtensionVkToken: 'accounts/vkontakte/add',
+      getShortUrl: 'utils/shortUrl',
       getAssignKey: 'user/getAssignKey',
       media: 'media',
       getOverrideKey: 'groups/getOverrideKey',

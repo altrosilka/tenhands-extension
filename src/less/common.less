@@ -1,6 +1,7 @@
 html, body {
   height: 100%;
   min-height: 100%;
+  overflow-x: hidden;
 }
 ::-webkit-scrollbar {
   width: 0px;
@@ -25,8 +26,10 @@ html, body {
   height: 1px;
 }
 body {
-  background: fixed #fff url(../images/bg/wood.jpg) center no-repeat;
-  background-size: cover;
+  /*background: fixed #fff url(../images/bg/wood.jpg) center no-repeat;
+  background-size: cover;*/
+  
+  background-color: #222;
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
   font-size: 12px;
@@ -73,94 +76,89 @@ a {
   text-decoration: none!important;
   cursor: default!important;
 }
+.translateArea {
+  -webkit-perspective: 1942px;
+}
+.pushed {
+  .translateArea {
+    .filterArea {
+      -webkit-transform: translateX(300px);
+      opacity: 0.3;
+      .fakePushOverlay {
+        display: block;
+      }
+    }
+  }
+  .leftMenu {
+    -webkit-transform: translateX(0px);
+  }
+}
 header.top {
   position: fixed;
   top: 0;
   right: 0;
   left: 0;
   z-index: 11;
-  .resizer, .remover {
+  .menuver, .remover {
     position: absolute;
     opacity: 0.5;
     transition: 0.2s;
     color: #fff;
     top: 19px;
+    text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7);
     &:hover {
       opacity: 1;
       cursor: pointer;
     }
   }
   .resizer {
-    width: 40px;
-    margin-left: -20px;
+    width: 60px;
     left: 50%;
+    margin-left: -30px;
     text-align: center;
-    font-size: 18px;
+    font-size: 26px;
+    border-radius: 50%;
+    background-color: #FFF;
+    opacity: 0.5;
+    position: absolute;
+    height: 60px;
+    margin-top: -40px;
+    cursor: pointer;
+    display: block;
+    transition: 0.2s;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
+    -webkit-transform: translateY(0px);
+    color: #666;
+    font-size: 12px;
+    padding-top: 41px;
+    -webkit-transform: translateY(0px);
+    .fa {
+      transition: 0.5s;
+    }
+    &:hover {
+      opacity: 1;
+      -webkit-transform: translateY(4px);
+    }
   }
   .remover {
     right: 28px;
-    font-size: 20px;
+    font-size: 28px;
+  }
+  .menuver {
+    width: 40px;
+    left: 20px;
+    text-align: center;
+    font-size: 26px;
   }
 }
 .setSelecterArea {
-  position: fixed;
   color: #A39090;
-  top: 16px;
-  left: 28px;
   z-index: 11;
+  text-align: center;
+  margin-bottom: 40px;
   .sharePhrase {
     position: relative;
     top: 2px;
-  }
-  .fromApp {
-    display: inline-block;
-    position: relative;
-    top: 1px;
-    transition: 0.4s;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-15px);
-    &.active {
-      transform: translateX(0px);
-      opacity: 1;
-      visibility: visible;
-    }
-    .sharePhrase {
-      color: #AAA;
-      margin-left: 11px;
-      font-size: 10px;
-      top: 0px;
-    }
-    img {
-      height: 25px;
-      position: relative;
-      top: -1px;
-    }
-    .title {
-      font-size: 10px;
-      font-weight: bold;
-      position: relative;
-      top: 0px;
-      color: #666;
-    }
-  }
-}
-.topBackground {
-  height: 100px;
-  pointer-events: none;
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  background: url(../images/top.png) center repeat;
-  background-size: auto 100px;
-  z-index: 10;
-  opacity: 0.7;
-  &.reverse {
-    bottom: 0px;
-    top: auto;
-    transform: rotateX(180deg);
-    transform-origin: center;
   }
 }
 .layerFs {
@@ -202,17 +200,41 @@ header.top {
 }
 .filterArea {
   padding: 120px 0 0;
+  background-color: #42424b;
+  transition: 0.4s;
+  -webkit-transform-origin: 100% 0;
+  -webkit-transform-style: preserve-3d;
+  box-shadow: 0px 0px 0px 1px #666;
   &.blur {
     -webkit-filter: blur(3px) grayscale(1);
     opacity: 0.4;
   }
+  .fakePushOverlay {
+    display: none;
+    position: absolute;
+    left: 0;
+    z-index: 2222;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  }
+}
+.leftMenu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200px;
+  background-color: #222;
+  width: 300px;
+  transition: 0.4s;
+  -webkit-transform: translateX(-300px);
 }
 body.min {
-  .filterArea {
-    /*background-color: rgba(250, 250, 255, 0.94);*/
-    
-    .resizer {
-      color: #4F73AB;
+  .resizer {
+    color: #4F73AB;
+    .fa {
+      -webkit-transform: rotate(180deg);
     }
   }
 }
@@ -417,16 +439,26 @@ body.min {
 }
 .groupSelect {
   font-size: 12px;
+  text-align: left;
+  .select2 {
+    min-width: 10px;
+  }
   .select2-container .select2-choice {
     border-radius: 0px;
     background: none;
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 1px solid #444;
+    border: none;
     box-shadow: none!important;
     height: 33px;
-    line-height: 33px;
-    font-size: 12px;
+    line-height: 30px;
+    font-size: 18px;
     color: #EEE;
+    padding: 0 0 0 5px;
+    opacity: 0.8;
+    transition: 0.2s;
+    &:hover {
+      opacity: 1;
+      cursor: pointer;
+    }
     .select2-arrow {
       border: none;
       background: rgba(0, 0, 0, 0);
@@ -445,12 +477,15 @@ body.min {
   .select2-search {
     input {
       border: none;
-      background: #333;
+      background: #F4F4F4;
       margin: 0px -9px;
-      width: 298px;
+      width: 300px;
       display: block;
       padding: 0 10px;
-      line-height: 33px;
+      line-height: 46px;
+      font-size: 20px;
+      color: #000;
+      background-image: none!important;
     }
   }
 }
@@ -463,10 +498,14 @@ body.min {
   }
 }
 .select2-drop-active {
-  background-color: rgba(0, 0, 0, 0.85);
-  border: 1px solid #444;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: none;
   border-radius: 0px;
-  color: #ccc;
+  color: #CCC;
+  width: 300px;
+  box-shadow: 0px 2px 14px rgba(0, 0, 0, 0.3);
+  margin-top: -38px;
+  margin-left: 1px;
 }
 .select2 {
   min-width: 300px;
@@ -661,7 +700,7 @@ body.min {
   .bottomFooter {
     color: #EEE;
     transition: 0.5s;
-    background: rgba(0, 0, 0, 0.8);
+    background: #222;
     z-index: 13;
     height: 73px;
     position: relative;
@@ -779,8 +818,8 @@ body.min {
   margin-left: -330px;
   h1 {
     font-weight: normal;
-font-size: 26px;
-margin: 0 0 24px;
+    font-size: 26px;
+    margin: 0 0 24px;
   }
   p {
     font-size: 14px;

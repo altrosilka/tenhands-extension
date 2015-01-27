@@ -9,7 +9,7 @@ angular.module('App').controller('C_main', [
   '__maxAttachments',
   function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
     var ctr = this;
-
+    var _pushedMenu = false;
     ctr.checkAuth = function() {
       S_selfapi.checkAuth().then(function(resp) {
         if (resp.data.success) {
@@ -37,6 +37,14 @@ angular.module('App').controller('C_main', [
       S_eventer.sayToFrame('close');
     }
 
+
+    ctr.toggleMenu = function(){
+      _pushedMenu = !_pushedMenu;
+    } 
+
+    ctr.isPushed = function(){
+      return _pushedMenu;
+    }
 
 
     ctr.checkAuth();

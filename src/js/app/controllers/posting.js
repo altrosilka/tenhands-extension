@@ -35,12 +35,14 @@ angular.module('App').controller('C_posting', [
       ctr.postingCount = 0;
 
       S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = _.filter(resp.data.data,function(channel){
+        ctr.channels = _.filter(resp.data.data, function(channel) {
           return !channel.disabled;
         });
         ctr.channelsIsLoaded = true;
       });
     });
+
+
 
 
 
@@ -68,8 +70,16 @@ angular.module('App').controller('C_posting', [
         if (!ctr.text || ctr.text === '') {
           ctr.text = S_utils.decodeEntities(data.selection || data.title);
         }
-        
+
         ctr.link = data.url;
+        /*
+        S_selfapi.getShortUrl(data.url).then(function(resp) {
+          if (resp.data.data) {
+            ctr.link = resp.data.data;
+          } else {
+            ctr.link = data.url;
+          }
+        });*/
       });
     });
 
@@ -159,7 +169,7 @@ angular.module('App').controller('C_posting', [
       other: '{} каналов'
     };
 
-    
+
 
     return ctr;
   }

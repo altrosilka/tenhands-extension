@@ -198,6 +198,7 @@ html,
 body {
   height: 100%;
   min-height: 100%;
+  overflow-x: hidden;
 }
 ::-webkit-scrollbar {
   width: 0px;
@@ -222,8 +223,9 @@ body {
   height: 1px;
 }
 body {
-  background: fixed #ffffff url(../images/bg/wood.jpg) center no-repeat;
-  background-size: cover;
+  /*background: fixed #fff url(../images/bg/wood.jpg) center no-repeat;
+  background-size: cover;*/
+  background-color: #222;
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
   font-size: 12px;
@@ -270,6 +272,19 @@ a:hover {
   text-decoration: none!important;
   cursor: default!important;
 }
+.translateArea {
+  -webkit-perspective: 1942px;
+}
+.pushed .translateArea .filterArea {
+  -webkit-transform: translateX(300px);
+  opacity: 0.3;
+}
+.pushed .translateArea .filterArea .fakePushOverlay {
+  display: block;
+}
+.pushed .leftMenu {
+  -webkit-transform: translateX(0px);
+}
 header.top {
   position: fixed;
   top: 0;
@@ -277,90 +292,67 @@ header.top {
   left: 0;
   z-index: 11;
 }
-header.top .resizer,
+header.top .menuver,
 header.top .remover {
   position: absolute;
   opacity: 0.5;
   transition: 0.2s;
   color: #fff;
   top: 19px;
+  text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7);
 }
-header.top .resizer:hover,
+header.top .menuver:hover,
 header.top .remover:hover {
   opacity: 1;
   cursor: pointer;
 }
 header.top .resizer {
-  width: 40px;
-  margin-left: -20px;
+  width: 60px;
   left: 50%;
+  margin-left: -30px;
   text-align: center;
-  font-size: 18px;
+  font-size: 26px;
+  border-radius: 50%;
+  background-color: #FFF;
+  opacity: 0.5;
+  position: absolute;
+  height: 60px;
+  margin-top: -40px;
+  cursor: pointer;
+  display: block;
+  transition: 0.2s;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
+  color: #666;
+  font-size: 12px;
+  padding-top: 41px;
+  -webkit-transform: translateY(0px);
+}
+header.top .resizer .fa {
+  transition: 0.5s;
+}
+header.top .resizer:hover {
+  opacity: 1;
+  -webkit-transform: translateY(4px);
 }
 header.top .remover {
   right: 28px;
-  font-size: 20px;
+  font-size: 28px;
+}
+header.top .menuver {
+  width: 40px;
+  left: 20px;
+  text-align: center;
+  font-size: 26px;
 }
 .setSelecterArea {
-  position: fixed;
   color: #A39090;
-  top: 16px;
-  left: 28px;
   z-index: 11;
+  text-align: center;
+  margin-bottom: 40px;
 }
 .setSelecterArea .sharePhrase {
   position: relative;
   top: 2px;
-}
-.setSelecterArea .fromApp {
-  display: inline-block;
-  position: relative;
-  top: 1px;
-  transition: 0.4s;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-15px);
-}
-.setSelecterArea .fromApp.active {
-  transform: translateX(0px);
-  opacity: 1;
-  visibility: visible;
-}
-.setSelecterArea .fromApp .sharePhrase {
-  color: #AAA;
-  margin-left: 11px;
-  font-size: 10px;
-  top: 0px;
-}
-.setSelecterArea .fromApp img {
-  height: 25px;
-  position: relative;
-  top: -1px;
-}
-.setSelecterArea .fromApp .title {
-  font-size: 10px;
-  font-weight: bold;
-  position: relative;
-  top: 0px;
-  color: #666;
-}
-.topBackground {
-  height: 100px;
-  pointer-events: none;
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  background: url(../images/top.png) center repeat;
-  background-size: auto 100px;
-  z-index: 10;
-  opacity: 0.7;
-}
-.topBackground.reverse {
-  bottom: 0px;
-  top: auto;
-  transform: rotateX(180deg);
-  transform-origin: center;
 }
 .layerFs {
   position: fixed;
@@ -401,16 +393,41 @@ header.top .remover {
 }
 .filterArea {
   padding: 120px 0 0;
+  background-color: #42424b;
+  transition: 0.4s;
+  -webkit-transform-origin: 100% 0;
+  -webkit-transform-style: preserve-3d;
+  box-shadow: 0px 0px 0px 1px #666;
 }
 .filterArea.blur {
   -webkit-filter: blur(3px) grayscale(1);
   opacity: 0.4;
 }
-body.min .filterArea {
-  /*background-color: rgba(250, 250, 255, 0.94);*/
+.filterArea .fakePushOverlay {
+  display: none;
+  position: absolute;
+  left: 0;
+  z-index: 2222;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
-body.min .filterArea .resizer {
+.leftMenu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200px;
+  background-color: #222;
+  width: 300px;
+  transition: 0.4s;
+  -webkit-transform: translateX(-300px);
+}
+body.min .resizer {
   color: #4F73AB;
+}
+body.min .resizer .fa {
+  -webkit-transform: rotate(180deg);
 }
 .centered {
   margin: auto;
@@ -605,17 +622,27 @@ body.min .filterArea .resizer {
 }
 .groupSelect {
   font-size: 12px;
+  text-align: left;
+}
+.groupSelect .select2 {
+  min-width: 10px;
 }
 .groupSelect .select2-container .select2-choice {
   border-radius: 0px;
   background: none;
-  background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid #444;
+  border: none;
   box-shadow: none!important;
   height: 33px;
-  line-height: 33px;
-  font-size: 12px;
+  line-height: 30px;
+  font-size: 18px;
   color: #EEE;
+  padding: 0 0 0 5px;
+  opacity: 0.8;
+  transition: 0.2s;
+}
+.groupSelect .select2-container .select2-choice:hover {
+  opacity: 1;
+  cursor: pointer;
 }
 .groupSelect .select2-container .select2-choice .select2-arrow {
   border: none;
@@ -631,12 +658,15 @@ body.min .filterArea .resizer {
 }
 .groupSelect .select2-search input {
   border: none;
-  background: #333;
+  background: #F4F4F4;
   margin: 0px -9px;
-  width: 298px;
+  width: 300px;
   display: block;
   padding: 0 10px;
-  line-height: 33px;
+  line-height: 46px;
+  font-size: 20px;
+  color: #000;
+  background-image: none!important;
 }
 .select2-results {
   padding: 0 0 0 0px;
@@ -647,10 +677,14 @@ body.min .filterArea .resizer {
   color: #FFF;
 }
 .select2-drop-active {
-  background-color: rgba(0, 0, 0, 0.85);
-  border: 1px solid #444;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: none;
   border-radius: 0px;
-  color: #ccc;
+  color: #CCC;
+  width: 300px;
+  box-shadow: 0px 2px 14px rgba(0, 0, 0, 0.3);
+  margin-top: -38px;
+  margin-left: 1px;
 }
 .select2 {
   min-width: 300px;
@@ -843,7 +877,7 @@ body.min .filterArea .resizer {
 .slidingFooter .bottomFooter {
   color: #EEE;
   transition: 0.5s;
-  background: rgba(0, 0, 0, 0.8);
+  background: #222;
   z-index: 13;
   height: 73px;
   position: relative;
@@ -1284,12 +1318,9 @@ body.min .filterArea .resizer {
   width: 397px;
   margin: 8px;
   float: left;
-  border-radius: 5px;
   position: relative;
-  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.7);
 }
 .channel header {
-  border-radius: 5px 5px 0 0;
   padding: 10px 15px;
   position: relative;
 }
@@ -1374,7 +1405,6 @@ body.min .filterArea .resizer {
   transition: 0.2s;
   position: relative;
   background-color: #EAEAEA;
-  border-radius: 0px 0px 5px 5px;
 }
 .channel .inner textarea {
   min-height: 120px;
@@ -1382,6 +1412,9 @@ body.min .filterArea .resizer {
   padding: 8px 14px;
   border: none;
   resize: none;
+}
+.channel .inner textarea.short {
+  min-height: 90px;
 }
 .channel .inner.disabledChannel {
   opacity: 0.5;
@@ -1445,7 +1478,6 @@ body.min .filterArea .resizer {
   color: #555;
   font-size: 13px;
   z-index: 10;
-  border-radius: 0px 0px 5px 5px;
 }
 .channel .failArea a,
 .channel .completeArea a {

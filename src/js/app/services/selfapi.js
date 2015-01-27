@@ -28,6 +28,16 @@ angular.module('App')
         });
       }
 
+      service.getShortUrl = function(url) {
+        return $http({
+          url: base + __api.paths.getShortUrl,
+          method: 'POST',
+          data: {
+            url: url
+          }
+        });
+      }
+
       service.checkAuth = function() {
         return $http({
           url: base + __api.paths.checkAuth,
