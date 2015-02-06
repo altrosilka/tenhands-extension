@@ -12,14 +12,14 @@
 
 
 
-      <span class="socialSign">
+      <div class="socialSign">
         <span class="vk" ng-if="channel_ctr.network === 'vk'"><i class="fa fa-vk"></i></span>
-      <span class="fb" ng-if="channel_ctr.network === 'fb'"><i class="fa fa-facebook"></i></span>
-      <span class="tw" ng-if="channel_ctr.network === 'tw'"><i class="fa fa-twitter"></i></span>
-      <span class="ig" ng-if="channel_ctr.network === 'ig'"><i class="fa fa-instagram"></i></span>
-      <span class="gp" ng-if="channel_ctr.network === 'gp'"><i class="fa fa-google-plus"></i></span>
-      <span class="ok" ng-if="channel_ctr.network === 'ok'"><i class="fa fa-ok"></i></span>
-      </span>
+        <span class="fb" ng-if="channel_ctr.network === 'fb'"><i class="fa fa-facebook"></i></span>
+        <span class="tw" ng-if="channel_ctr.network === 'tw'"><i class="fa fa-twitter"></i></span>
+        <span class="ig" ng-if="channel_ctr.network === 'ig'"><i class="fa fa-instagram"></i></span>
+        <span class="gp" ng-if="channel_ctr.network === 'gp'"><i class="fa fa-google-plus"></i></span>
+        <span class="ok" ng-if="channel_ctr.network === 'ok'"><i class="fa fa-ok"></i></span>
+      </div>
 
       <span class="screen_name" ng-bind="channel_ctr.screen_name"></span>
     </header>
@@ -51,8 +51,8 @@
           <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
-          <span class="addAttach" ng-click="channel_ctr.attachItem('video')">
-            <i class="fa fa-film ng-hide"></i><span>видеозапись</span>
+          <span class="addAttach ng-hide" ng-click="channel_ctr.attachItem('video')">
+            <i class="fa fa-film"></i><span>видеозапись</span>
           </span>
           <span class="addAttach ng-hide" ng-click="channel_ctr.attachItem('poll')">
             <i class="fa fa-bar-chart"></i><span>опрос</span>

@@ -15,7 +15,8 @@ angular.module('config', [])
       createPost: 'posts',
       checkAuth: 'auth/check',
       signIn: 'auth/signIn',
-      sets: 'sets'
+      sets: 'sets',
+      getSetChannels: 'sets/getChannels'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')

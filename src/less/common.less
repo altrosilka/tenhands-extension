@@ -29,7 +29,8 @@ body {
   /*background: fixed #fff url(../images/bg/wood.jpg) center no-repeat;
   background-size: cover;*/
   
-  background-color: #222;
+  background: fixed #fff url(../images/bg/repeat.jpg) repeat;
+  background: #E9EAED;
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
   font-size: 12px;
@@ -103,9 +104,8 @@ header.top {
     position: absolute;
     opacity: 0.5;
     transition: 0.2s;
-    color: #fff;
+    color: #222;
     top: 19px;
-    text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7);
     &:hover {
       opacity: 1;
       cursor: pointer;
@@ -200,11 +200,7 @@ header.top {
 }
 .filterArea {
   padding: 120px 0 0;
-  background-color: #42424b;
   transition: 0.4s;
-  -webkit-transform-origin: 100% 0;
-  -webkit-transform-style: preserve-3d;
-  box-shadow: 0px 0px 0px 1px #666;
   &.blur {
     -webkit-filter: blur(3px) grayscale(1);
     opacity: 0.4;
@@ -224,11 +220,11 @@ header.top {
   top: 0;
   bottom: 0;
   left: 0;
-  width: 200px;
-  background-color: #222;
+  background-color: #f9f9f9;
   width: 300px;
   transition: 0.4s;
   -webkit-transform: translateX(-300px);
+  z-index: 2;
 }
 body.min {
   .resizer {
@@ -451,7 +447,7 @@ body.min {
     height: 33px;
     line-height: 30px;
     font-size: 18px;
-    color: #EEE;
+    color: #000;
     padding: 0 0 0 5px;
     opacity: 0.8;
     transition: 0.2s;
@@ -477,7 +473,7 @@ body.min {
   .select2-search {
     input {
       border: none;
-      background: #F4F4F4;
+      background: #FFF;
       margin: 0px -9px;
       width: 300px;
       display: block;
@@ -486,6 +482,7 @@ body.min {
       font-size: 20px;
       color: #000;
       background-image: none!important;
+      border-bottom: 1px solid #f2f2f2;
     }
   }
 }
@@ -498,10 +495,10 @@ body.min {
   }
 }
 .select2-drop-active {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(255, 255, 255, 0.95);
   border: none;
   border-radius: 0px;
-  color: #CCC;
+  color: #202020;
   width: 300px;
   box-shadow: 0px 2px 14px rgba(0, 0, 0, 0.3);
   margin-top: -38px;
@@ -679,7 +676,7 @@ body.min {
   overflow: hidden;
   .channelsList {
     overflow: auto;
-    padding: 0 20px;
+    padding: 0 13px;
     flex-wrap: wrap;
     display: flex;
   }
@@ -689,18 +686,13 @@ body.min {
   bottom: 0;
   right: 0;
   left: 0;
-  opacity: 0;
   height: 73px;
-  transition: 0.4s;
-  -webkit-transform: translateY(73px);
+  display: none;
   &.active {
-    -webkit-transform: translateY(0px);
-    opacity: 1;
+    display: block;
   }
   .bottomFooter {
     color: #EEE;
-    transition: 0.5s;
-    background: #222;
     z-index: 13;
     height: 73px;
     position: relative;

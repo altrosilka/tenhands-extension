@@ -1,13 +1,13 @@
 .channel {
   display: block;
-  width: 397px;
-  margin: 8px;
+  width: 383px;
+  margin: 15px;
   float: left;
-
   position: relative;
   header {
     padding: 10px 15px;
     position: relative;
+    border-radius: 1px;
     .progress-bar {
       position: absolute;
       left: 0;
@@ -89,19 +89,21 @@
   .inner {
     transition: 0.2s;
     position: relative;
-    background-color: #EAEAEA;
+    margin-top: 5px;
     textarea {
       min-height: 120px;
       max-height: 300px;
       padding: 8px 14px;
       border: none;
       resize: none;
-      &.short{
+      border-radius: 1px;
+      box-shadow: inset 0px 0px 1px rgba(0, 0, 0, 0.3) !important;
+      &.short {
         min-height: 90px;
       }
     }
     &.disabledChannel {
-      opacity: 0.5;
+      opacity: 0.3;
       .fakeOverlay {
         display: block;
       }
@@ -129,7 +131,6 @@
     text-align: left;
     padding: 7px 15px;
     color: #000;
-    border-top: 1px solid #DDD;
   }
   .addAttach {
     transition: 0.3s;

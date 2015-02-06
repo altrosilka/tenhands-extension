@@ -36,7 +36,8 @@ angular.module('config', [])
       createPost: 'posts',
       checkAuth: 'auth/check',
       signIn: 'auth/signIn',
-      sets: 'sets'
+      sets: 'sets',
+      getSetChannels: 'sets/getChannels'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
@@ -86,110 +87,6 @@ App.run([
     });
   }
 ]);
-
-angular.module('App').filter('findGroups', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) { 
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  }
-});
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
-angular.module('App').filter('parseVkText', [function() {
-  return function(input, removeLink) {
-    if (!input) {
-      return;
-    }
-
-    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
-    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
-
-
-
-    var bytes = [];
-
-    for (var i = 0; i < input.length; ++i) {
-      bytes.push(input.charCodeAt(i));
-    }
-
-    var ranges = [
-      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
-      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
-      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
-    ];
-
-    input = emojiParseInText(input);
-      
-    var text = input;
-
-    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
-    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
-
-    return text;
-  }
-}]);
-
-angular.module('App').filter('substring', [function() {
-  return function(text, len) {
-    len = len || 100;
-    if (!text) {
-      return;
-    } 
-
-    if (text.length > len){
-      return text.substring(0,len);
-    } else {
-      return text;
-    }
-  }
-}]);
- 
-angular.module('App').filter('toGIS', function() {
-  return function(time) {
-    if (!time) {
-      return '';
-    }
-    var out = '';
-    var s_last = time % 60;
-    var s_minutes = (time - s_last) / 60;
-    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
-    return out;
-  }
-});
 
 angular.module('App').controller('C_afterAuth', [
   '$scope',
@@ -1541,6 +1438,110 @@ angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_util
   }
 }]);
  
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
+
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
+
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  }
+});
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('App').filter('parseVkText', [function() {
+  return function(input, removeLink) {
+    if (!input) {
+      return;
+    }
+
+    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
+    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
+
+
+
+    var bytes = [];
+
+    for (var i = 0; i < input.length; ++i) {
+      bytes.push(input.charCodeAt(i));
+    }
+
+    var ranges = [
+      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
+      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
+      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
+    ];
+
+    input = emojiParseInText(input);
+      
+    var text = input;
+
+    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
+    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
+
+    return text;
+  }
+}]);
+
+angular.module('App').filter('substring', [function() {
+  return function(text, len) {
+    len = len || 100;
+    if (!text) {
+      return;
+    } 
+
+    if (text.length > len){
+      return text.substring(0,len);
+    } else {
+      return text;
+    }
+  }
+}]);
+ 
+angular.module('App').filter('toGIS', function() {
+  return function(time) {
+    if (!time) {
+      return '';
+    }
+    var out = '';
+    var s_last = time % 60;
+    var s_minutes = (time - s_last) / 60;
+    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
+    return out;
+  }
+});
+
 angular.module('chromeTools', [])
   .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
     var service = {};
@@ -1709,9 +1710,12 @@ angular.module('App')
 
       service.getSetInfo = function(setId) {
         return $http({
-          url: base + __api.paths.sets + '/' + setId,
+          url: base + __api.paths.getSetChannels,
           method: 'GET',
-          withCredentials: true
+          withCredentials: true,
+          params: {
+            id: setId
+          }
         });
       }
 

@@ -56,9 +56,12 @@ angular.module('App')
 
       service.getSetInfo = function(setId) {
         return $http({
-          url: base + __api.paths.sets + '/' + setId,
+          url: base + __api.paths.getSetChannels,
           method: 'GET',
-          withCredentials: true
+          withCredentials: true,
+          params: {
+            id: setId
+          }
         });
       }
 

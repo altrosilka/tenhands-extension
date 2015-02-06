@@ -26020,9 +26020,9 @@ angular.module('vkTools', [])
 
       service.callAuthPopup = function() {
         var defer = $q.defer();
-        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,email,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
+        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
 
-        chrome.tabs.create({
+        chrome.tabs.create({ 
           url: vkAuthenticationUrl,
           selected: true
         }, function(tab) {
@@ -26075,111 +26075,6 @@ angular.module('chromeTools', [])
         S_eventer.sendEvent('loadedDataFromTab', e.data);
       });
 
-      
-      setTimeout(function() {
-        S_eventer.sendEvent('loadedDataFromTab', {
-          "images": [{
-            "alt": "Грелка ",
-            "clientHeight": 450,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 450,
-            "title": "Грелка ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/grelka-_1416265291.jpg"
-          }, {
-            "alt": "Любовь - великая сила ",
-            "clientHeight": 571,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 571,
-            "title": "Любовь - великая сила ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/lyubov-velikaya-sila-_1416314178.jpg"
-          }, {
-            "alt": "Скоро праздники ",
-            "clientHeight": 600,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 600,
-            "title": "Скоро праздники ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/skoro-prazdniki-_1416214236.jpg"
-          }, {
-            "alt": "Фигулька ",
-            "clientHeight": 778,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 778,
-            "title": "Фигулька ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/figulka-_1415910890.jpg"
-          }, {
-            "alt": "Коварная чугунная поня ",
-            "clientHeight": 449,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 449,
-            "title": "Коварная чугунная поня ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/kovarnaya-chugunnaya-ponya-_1416233562.jpg"
-          }, {
-            "alt": "Таблетки для смеха",
-            "clientHeight": 488,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 488,
-            "title": "Таблетки для смеха",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/tabletki-dlya-smeha-_1415531344.jpg"
-          }, {
-            "alt": "Разбуженный грабитель ",
-            "clientHeight": 399,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 399,
-            "title": "Разбуженный грабитель ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/razbuzhennyy-grabitel-_1416233761.jpg"
-          }, {
-            "alt": "Нам бы карася  ",
-            "clientHeight": 429,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 429,
-            "title": "Нам бы карася  ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nam-by-karasya-_1416233413.jpg"
-          }, {
-            "alt": "Нычкарик по призванию ",
-            "clientHeight": 450,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 450,
-            "title": "Нычкарик по призванию ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/nychkarik-po-prizvaniyu-_1416232762.jpg"
-          }, {
-            "alt": "Еда с гавкающим названием ",
-            "clientHeight": 800,
-            "clientWidth": 600,
-            "width": 600,
-            "height": 800,
-            "title": "Еда с гавкающим названием ",
-            "src": "http://lolkot.ru/wp-content/uploads/2014/11/yeda-s-gavkayuschim-nazvaniyem-_1416203979.jpg"
-          }, {
-            "alt": "",
-            "clientHeight": 250,
-            "clientWidth": 250,
-            "width": 250,
-            "height": 250,
-            "title": "",
-            "src": "http://static.lolkot.ru/images/usermatrix1416326402.jpg"
-          }, {
-            "alt": "",
-            "clientHeight": 15,
-            "clientWidth": 88,
-            "width": 88,
-            "height": 15,
-            "title": "",
-            "src": "http://counter.yadro.ru/hit?t26.16;rhttp%3A//yandex.ru/clck/jsredir%3Ffrom%…c%3D2.584962500721156;s1280*800*24;uhttp%3A//lolkot.ru/;0.5310913703870028"
-          }],
-          "title": "Смешные картинки кошек с надписями",
-          "url": "http://lolkot.ru/",
-          "imageSrc": "http://0.gravatar.com/avatar/d2e9e4a8e24a1daf5d3985172ee47078?s=210"
-        })
-      }, 10000000000);
     }
 
 
@@ -26350,16 +26245,16 @@ angular.module('utilsTools', [])
         return defer.promise;
       }
 
-      service.convertUploadedPhotoToAttach = function(photo) {
+      service.convertUploadedPhotoToAttach = function(media_id, media_url, info) {
         return {
-          photo: photo,
-          width: photo.width,
-          clientWidth: photo.width,
-          height: photo.height,
-          clientHeight: photo.height,
-          src: photo.photo_130,
-          src_big: photo.photo_807 || photo.photo_604,
-          type: 'photo'
+          media_id: media_id,
+          width: info.width,
+          clientWidth: info.width,
+          height: info.height,
+          clientHeight: info.height,
+          src: media_url,
+          src_big: media_url,
+          type: 'image'
         }
       }
 
@@ -26467,7 +26362,7 @@ angular.module('utilsTools', [])
         scope.posts = info;
 
         scope.getAttachments = function(post) {
-          if (post.copy_history){
+          if (post.copy_history) {
             return post.copy_history[0].attachments;
           } else {
             return post.attachments;
@@ -26579,6 +26474,73 @@ angular.module('utilsTools', [])
         });
       }
 
+      service.getFailDescription = function(data) {
+        var q;
+
+        if (data.network === 'tw' && data.error && data.error.code && data.error.code === 187) {
+          return "Статус повторяется";
+        }
+
+        if(data.network === 'fb') {
+          if (data.data.error && data.data.error.code && data.data.error.code == 506) {
+            return "Сообщение повторяется";
+          }
+        }
+
+        if (data.network === 'ig') {
+          if (data.error && data.error.code === 'notFull') {
+            return "Необходимо прикрепить изображение"
+          }
+          if (data.error && data.error.code === 'notMedia') {
+            return "Изображение не найдено, повторите загрузку"
+          }
+          if (data.error && data.error.code === 'notSquared') {
+            return "Изображение не квадратное"
+          }
+        }
+
+        return ((data.error) ? JSON.stringify(data.error) : 'не удалось определить');
+      }
+
+      service.configurePostInfo = function(channels, channel_ids) {
+        var postInfo = [];
+        _.forEach(channels, function(channel) {
+          if (channel.disabled || channel.complete || channel.inprogress) return;
+
+          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1)) {
+            postInfo.push({
+              channel_id: channel.id,
+              text: channel.text,
+              attachments: channel.attachments
+            });
+          }
+        });
+        return postInfo;
+      }
+
+      service.trackProgress = function(channels, info) {
+        var q;
+        _.forEach(info, function(_channel) {
+          _.find(channels, function(channel) {
+            return channel.id === _channel.channel_id;
+          }).inprogress = true;
+        });
+      }
+
+      service.getMaxTextLength = function(type, attachments) {
+        switch (type) {
+          case 'tw':
+            {
+              return ((attachments.length) ? 117 : 140);
+            }
+          case 'ig':
+            {
+              return 2200;
+            }
+        }
+        return 10000;
+      }
+
       service.unixTo = function(time, format) {
         return moment(time, 'X').format(format);
       }
@@ -26589,15 +26551,23 @@ angular.module('utilsTools', [])
 
 angular.module('config', [])
   .constant('__vkAppId', 4639658)
+  .constant('__cabinet',{
+    domain: 'smm.dev'
+  })
   .constant('__api', {
     baseUrl: 'http://api.smm.dev/',
     paths: {
-      saveExtensionToken: 'user/saveExtensionToken',
+      saveExtensionVkToken: 'accounts/vkontakte/add',
+      getShortUrl: 'utils/shortUrl',
       getAssignKey: 'user/getAssignKey',
-      uploadPhoto: 'posts/uploadImage',
-      sendPost: 'posts/create',
+      media: 'media',
       getOverrideKey: 'groups/getOverrideKey',
-      getPostsInPeriod: 'posts/getInPeriod'
+      getPostsInPeriod: 'posts/getInPeriod',
+      createPost: 'posts',
+      checkAuth: 'auth/check',
+      signIn: 'auth/signIn',
+      sets: 'sets',
+      getSetChannels: 'sets/getChannels'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')

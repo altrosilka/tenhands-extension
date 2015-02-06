@@ -113,10 +113,10 @@
       var q = layout.getAttribute('data-small-view');
       if (q === null) {
         layout.setAttribute('data-small-view', 'true');
-        layout.style.height = "50%";
+        layout.style['-webkit-transform'] = "translateY(50%)";
       } else {
         layout.removeAttribute('data-small-view');
-        layout.style.height = "100%";
+        layout.style['-webkit-transform'] = "translateY(0)";
       }
     }
   }, false);
