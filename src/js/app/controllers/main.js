@@ -1,24 +1,20 @@
 angular.module('App').controller('C_main', [
   '$scope',
-  '$compile',
   '$timeout',
   'S_utils',
   'S_selfapi',
   'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+  function($scope, $timeout, S_utils, S_selfapi, S_eventer) {
     var ctr = this;
     var _pushedMenu = false;
-    ctr.checkAuth = function() {
-      S_selfapi.checkAuth().then(function(resp) {
+    ctr.getUserInfo = function() {
+      S_selfapi.getUserInfo().then(function(resp) {
         if (resp.data.success) {
           ctr._state = 'post';
-          $timeout(function() {
-            ctr.showBottomPanel = true;
-          }, 1000);
+          S_eventer.sendEvent('userInfoLoaded', resp.data.data);
         } else {
           ctr._state = 'login';
+          S_eventer.sendEvent('hideLoader');
         }
       });
     }
@@ -38,16 +34,20 @@ angular.module('App').controller('C_main', [
     }
 
 
-    ctr.toggleMenu = function(){
+    ctr.toggleMenu = function() {
       _pushedMenu = !_pushedMenu;
-    } 
+    }
 
-    ctr.isPushed = function(){
+    ctr.isPushed = function() {
       return _pushedMenu;
     }
 
 
-    ctr.checkAuth();
+    $scope.$on('hideLoader', function() {
+      ctr.hideLoader = true;
+    });
+
+    ctr.getUserInfo();
 
     return ctr;
   }

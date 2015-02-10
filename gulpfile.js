@@ -56,7 +56,7 @@ var vendorLibsCss = [
   './bower_components/select2/select2.css',
   './bower_components/select2/select2-bootstrap.css',
   './bower_components/angular-ui-select/dist/select.css',
-  './bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css'
+  './bower_components/ionicons/css/ionicons.css'
 ];
 
 

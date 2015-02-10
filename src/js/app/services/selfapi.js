@@ -38,9 +38,9 @@ angular.module('App')
         });
       }
 
-      service.checkAuth = function() {
+      service.getUserInfo = function() {
         return $http({
-          url: base + __api.paths.checkAuth,
+          url: base + __api.paths.getUserInfo,
           method: 'GET',
           withCredentials: true
         });

@@ -1,6 +1,7 @@
 angular.module('App').directive('textareaValidator', [
   '$timeout',
-  function($timeout) {
+  'S_utils',
+  function($timeout, S_utils) {
   return {
     scope: {
       model: '=',
@@ -42,8 +43,9 @@ angular.module('App').directive('textareaValidator', [
 
         if (res !== null) {
           var extra = res[1];
+          var extraFilter = S_utils.escapeRegex(extra);
 
-          var newContent = text.replace(new RegExp(extra + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
+          var newContent = text.replace(new RegExp(extraFilter + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
           DOM.section.html(newContent+'<br>').height(DOM.textarea.height());
         }
 

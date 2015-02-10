@@ -29,6 +29,7 @@
     "angular-ui-select": "~0.9.0",
     "jquery-autosize": "~1.18.15",
     "socket.io-client": "~1.2.1",
-    "malihu-custom-scrollbar-plugin": "~3.0.7"
+    "malihu-custom-scrollbar-plugin": "~3.0.7",
+    "ionicons": "~2.0.1"
   }
 }

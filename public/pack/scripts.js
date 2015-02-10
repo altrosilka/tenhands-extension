@@ -34,7 +34,7 @@ angular.module('config', [])
       getOverrideKey: 'groups/getOverrideKey',
       getPostsInPeriod: 'posts/getInPeriod',
       createPost: 'posts',
-      checkAuth: 'auth/check',
+      getUserInfo: 'users/getCurrentUser',
       signIn: 'auth/signIn',
       sets: 'sets',
       getSetChannels: 'sets/getChannels'
@@ -172,6 +172,9 @@ angular.module('App').controller('C_login', [
   function($scope, S_selfapi) {
     var ctr = this;
 
+
+    
+
     ctr.email = ctr.password = '';
 
     ctr.auth = function(email, password) {
@@ -195,25 +198,21 @@ angular.module('App').controller('C_login', [
 
 angular.module('App').controller('C_main', [
   '$scope',
-  '$compile',
   '$timeout',
   'S_utils',
   'S_selfapi',
   'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+  function($scope, $timeout, S_utils, S_selfapi, S_eventer) {
     var ctr = this;
     var _pushedMenu = false;
-    ctr.checkAuth = function() {
-      S_selfapi.checkAuth().then(function(resp) {
+    ctr.getUserInfo = function() {
+      S_selfapi.getUserInfo().then(function(resp) {
         if (resp.data.success) {
           ctr._state = 'post';
-          $timeout(function() {
-            ctr.showBottomPanel = true;
-          }, 1000);
+          S_eventer.sendEvent('userInfoLoaded', resp.data.data);
         } else {
           ctr._state = 'login';
+          S_eventer.sendEvent('hideLoader');
         }
       });
     }
@@ -233,16 +232,20 @@ angular.module('App').controller('C_main', [
     }
 
 
-    ctr.toggleMenu = function(){
+    ctr.toggleMenu = function() {
       _pushedMenu = !_pushedMenu;
-    } 
+    }
 
-    ctr.isPushed = function(){
+    ctr.isPushed = function() {
       return _pushedMenu;
     }
 
 
-    ctr.checkAuth();
+    $scope.$on('hideLoader', function() {
+      ctr.hideLoader = true;
+    });
+
+    ctr.getUserInfo();
 
     return ctr;
   }
@@ -268,8 +271,7 @@ angular.module('App').controller('C_posting', [
     ctr.attachments = [];
 
 
-
-    ctr.closeAfterSuccess = true;
+    ctr.closeAfterSuccess = false;
 
     S_selfapi.getAllSets().then(function(resp) {
       ctr.sets = resp.data.data;
@@ -294,9 +296,8 @@ angular.module('App').controller('C_posting', [
 
 
 
-
-
     $scope.$on('loadedDataFromTab', function(event, data) {
+
       $scope.$apply(function() {
         ctr.data = data;
 
@@ -322,14 +323,11 @@ angular.module('App').controller('C_posting', [
         }
 
         ctr.link = data.url;
-        /*
-        S_selfapi.getShortUrl(data.url).then(function(resp) {
-          if (resp.data.data) {
-            ctr.link = resp.data.data;
-          } else {
-            ctr.link = data.url;
-          }
-        });*/
+
+        $timeout(function() {
+          S_eventer.sendEvent('hideLoader');
+        });
+
       });
     });
 
@@ -395,8 +393,12 @@ angular.module('App').controller('C_posting', [
     }
 
 
-    ctr.getProgressLineWidth = function() {
-      return (((ctr.completePostsCount) / ctr.postingCount * 100) + '%');
+    ctr.getProgressLineStyles = function() {
+      var d = ctr.completePostsCount / ctr.postingCount;
+      return {
+        width: ((d * 100) + '%'),
+        opacity: d
+      }
     }
 
     ctr.postChannelAgain = function(channel_id) {
@@ -792,6 +794,110 @@ angular.module('App').controller('C_posting_back', [
     return ctr;
   }
 ]);
+
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
+
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
+
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  }
+});
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('App').filter('parseVkText', [function() {
+  return function(input, removeLink) {
+    if (!input) {
+      return;
+    }
+
+    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
+    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
+
+
+
+    var bytes = [];
+
+    for (var i = 0; i < input.length; ++i) {
+      bytes.push(input.charCodeAt(i));
+    }
+
+    var ranges = [
+      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
+      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
+      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
+    ];
+
+    input = emojiParseInText(input);
+      
+    var text = input;
+
+    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
+    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
+
+    return text;
+  }
+}]);
+
+angular.module('App').filter('substring', [function() {
+  return function(text, len) {
+    len = len || 100;
+    if (!text) {
+      return;
+    } 
+
+    if (text.length > len){
+      return text.substring(0,len);
+    } else {
+      return text;
+    }
+  }
+}]);
+ 
+angular.module('App').filter('toGIS', function() {
+  return function(time) {
+    if (!time) {
+      return '';
+    }
+    var out = '';
+    var s_last = time % 60;
+    var s_minutes = (time - s_last) / 60;
+    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
+    return out;
+  }
+});
 
 angular.module('App').directive('attachPoll', [function() {
   return {
@@ -1280,7 +1386,8 @@ angular.module('App').directive('sourceLink', [function() {
 
 angular.module('App').directive('textareaValidator', [
   '$timeout',
-  function($timeout) {
+  'S_utils',
+  function($timeout, S_utils) {
   return {
     scope: {
       model: '=',
@@ -1322,8 +1429,9 @@ angular.module('App').directive('textareaValidator', [
 
         if (res !== null) {
           var extra = res[1];
+          var extraFilter = S_utils.escapeRegex(extra);
 
-          var newContent = text.replace(new RegExp(extra + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
+          var newContent = text.replace(new RegExp(extraFilter + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
           DOM.section.html(newContent+'<br>').height(DOM.textarea.height());
         }
 
@@ -1438,110 +1546,6 @@ angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_util
   }
 }]);
  
-angular.module('App').filter('findGroups', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) { 
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  }
-});
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
-angular.module('App').filter('parseVkText', [function() {
-  return function(input, removeLink) {
-    if (!input) {
-      return;
-    }
-
-    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
-    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
-
-
-
-    var bytes = [];
-
-    for (var i = 0; i < input.length; ++i) {
-      bytes.push(input.charCodeAt(i));
-    }
-
-    var ranges = [
-      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
-      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
-      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
-    ];
-
-    input = emojiParseInText(input);
-      
-    var text = input;
-
-    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
-    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
-
-    return text;
-  }
-}]);
-
-angular.module('App').filter('substring', [function() {
-  return function(text, len) {
-    len = len || 100;
-    if (!text) {
-      return;
-    } 
-
-    if (text.length > len){
-      return text.substring(0,len);
-    } else {
-      return text;
-    }
-  }
-}]);
- 
-angular.module('App').filter('toGIS', function() {
-  return function(time) {
-    if (!time) {
-      return '';
-    }
-    var out = '';
-    var s_last = time % 60;
-    var s_minutes = (time - s_last) / 60;
-    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
-    return out;
-  }
-});
-
 angular.module('chromeTools', [])
   .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
     var service = {};
@@ -1692,9 +1696,9 @@ angular.module('App')
         });
       }
 
-      service.checkAuth = function() {
+      service.getUserInfo = function() {
         return $http({
-          url: base + __api.paths.checkAuth,
+          url: base + __api.paths.getUserInfo,
           method: 'GET',
           withCredentials: true
         });
@@ -1950,7 +1954,7 @@ angular.module('utilsTools', [])
           clientHeight: image.height,
           src: image.url,
           src_big: image.url,
-          type: 'photo'
+          type: 'image'
         }
       }
 
@@ -1985,7 +1989,7 @@ angular.module('utilsTools', [])
       }
 
       service.sortAttachments = function(attaches) {
-        var priority = ['photo', 'video', 'doc', 'audio', 'poll'];
+        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
         return _.sortBy(attaches, function(attach) {
           var i = _.findIndex(priority, function(q) {
             return q === attach.type;
@@ -1998,64 +2002,12 @@ angular.module('utilsTools', [])
         });
       }
 
-      service.getAttachmentsString = function(attaches) {
-        var ret = [];
-        _.forEach(attaches, function(attach) {
-          switch (attach.type) {
-            case "photo":
-              {
-                ret.push('photo' + attach.photo.owner_id + '_' + attach.photo.id);
-                break;
-              }
-            case "video":
-              {
-                ret.push('video' + attach.video.owner_id + '_' + attach.video.id);
-                break;
-              }
-            case "poll":
-              {
-                ret.push('poll' + attach.owner_id + '_' + attach.id);
-                break;
-              }
-          }
-        });
-
-        return ret.join(',');
-      }
-
-      service.formatterTimelineTooltip = function(x, groupped) {
-        var info = groupped[Math.round(x / 1000)];
-
-        if (!info) {
-          return 'Не можем получить данные :(';
-        }
-
-        var scope = $rootScope.$new();
-        scope.posts = info;
-
-        scope.getAttachments = function(post) {
-          if (post.copy_history) {
-            return post.copy_history[0].attachments;
-          } else {
-            return post.attachments;
-          }
-        }
-
-        scope.getText = function(post) {
-          return post.text || post.copy_history[0].text;
-        }
-
-        var el = $compile($templateCache.get('templates/other/timeLinePostTooltip.html'))(scope);
-        scope.$digest();
-        return el[0].outerHTML;
-      }
-
       service.findFirstAttach = function(attaches) {
         if (!attaches || attaches.length === 0) {
           return;
         }
 
-        var priority = ['photo', 'video', 'poll'];
+        var priority = ['image', 'video', 'poll'];
         _.sortBy(attaches, function(attach) {
           var i = _.findIndex(priority, function(q) {
             return q === attach.type;
@@ -2070,82 +2022,6 @@ angular.module('utilsTools', [])
         return attaches[0];
       }
 
-      service.roundToHour = function(time) {
-        var inter = 3600;
-        var raz = time % inter;
-        return time - raz;
-      }
-
-      service.itemsInInterval = function(items, min, max) {
-        return _.filter(items, function(item) {
-          return item.date >= min && item.date <= max;
-        });
-      }
-
-      service.remapForTimeline = function(items, min, max) {
-        var raz, q, inter = __timelinePeriods.grouppingInterval;
-        var itemsFilterd = [];
-        _.forEach(items, function(item) {
-          q = item.date;
-          if (q > max || q < min) {
-            return;
-          }
-          raz = q % inter;
-          if (raz / inter > 0.5) {
-            q += inter - raz;
-          } else {
-            q -= raz;
-          }
-          item.groupDate = q;
-          itemsFilterd.push(item);
-        });
-
-        var groupped = _.groupBy(itemsFilterd, function(item) {
-          return item.groupDate;
-        });
-        var series = _.map(groupped, function(val, i) {
-          return [i * 1000, val.length];
-        });
-
-        _.sortBy(series, function(item) {
-          return item[0];
-        });
-
-        var max = _.max(series, function(e) {
-          return e[1];
-        })[1];
-
-        var stackedSeries = [];
-
-        for (var i = 0; i < max; i++) {
-          var arr = [];
-          _.forEach(series, function(e) {
-            arr.push([e[0], (e[1] > i) ? 1 : 0]);
-          });
-          stackedSeries.push({
-            data: arr,
-            stacking: "normal"
-          });
-        }
-
-        return {
-          max: max,
-          series: stackedSeries,
-          groupped: groupped
-        };
-      }
-
-      service.serverPostsToVkLike = function(posts) {
-        return _.map(posts, function(q) {
-          return {
-            text: q.message,
-            date: q.publish_date,
-            type: 'own_server',
-            attachments: q.attachments
-          }
-        });
-      }
-
       service.getFailDescription = function(data) {
         var q;
 
@@ -2153,7 +2029,7 @@ angular.module('utilsTools', [])
           return "Статус повторяется";
         }
 
-        if(data.network === 'fb') {
+        if (data.network === 'fb') {
           if (data.data.error && data.data.error.code && data.data.error.code == 506) {
             return "Сообщение повторяется";
           }
@@ -2213,8 +2089,37 @@ angular.module('utilsTools', [])
         return 10000;
       }
 
+      service.attachmentsLimitReached = function(network, channelsLenth) {
+        switch (network) {
+          case 'ig':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'fb':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'tw':
+            {
+              return channelsLenth >= 4;
+              break;
+            }
+          case 'vk':
+            {
+              return channelsLenth >= 9;
+              break;
+            }
+        }
+      }
+
       service.unixTo = function(time, format) {
         return moment(time, 'X').format(format);
+      }
+      
+      service.escapeRegex = function(text) {
+        return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
       }
 
       return service;
@@ -3906,7 +3811,7 @@ angular.module('App').controller('CD_channel', [
         //if (ctr.network === 'vk' || ctr.network === 'fb') {
         //  $scope.channel.link = data.url;
         //} else {
-          ctr.text += '\n' + data.url;
+        ctr.text += '\n' + data.url;
         //}
       });
     });
@@ -3927,13 +3832,14 @@ angular.module('App').controller('CD_channel', [
 
     ctr.attachItem = function(type) {
       switch (type) {
-        case 'photo':
+        case 'image':
           {
             S_utils.callAttachPhotoDialog($scope.pageAttachments, {
               before: ctr.pushUploadingAttach,
               after: ctr.afterImageUploaded
             }).then(function(resp) {
-              $scope.channel.attachments = S_utils.sortAttachments(_.uniq($scope.channel.attachments, 'id'));
+              
+              $scope.channel.attachments = S_utils.sortAttachments(_.uniq($scope.channel.attachments.concat(resp), 'id'));
             });
             break;
           }
@@ -4001,23 +3907,7 @@ angular.module('App').controller('CD_channel', [
     }
 
     ctr.attachmentsLimitReached = function(network) {
-      switch (network) {
-        case 'ig':
-          {
-            return $scope.channel.attachments.length >= 1;
-            break;
-          }
-        case 'tw':
-          {
-            return $scope.channel.attachments.length >= 4;
-            break;
-          }
-        case 'vk':
-          {
-            return $scope.channel.attachments.length >= 9;
-            break;
-          }
-      }
+      return S_utils.attachmentsLimitReached(network, $scope.channel.attachments.length);
     }
 
     ctr.getMaxTextLength = function(type, attachments) {
@@ -4111,7 +4001,7 @@ angular.module('App').controller('CM_attachPhoto', [
     ctr.pageAttachments = pageAttachments;
 
     ctr.imagesPlurals = {
-      0: '{} фотогрфий',
+      0: '{} фотографий',
       one: '{} фотографию',
       few: '{} фотографии',
       many: '{} фотографий',

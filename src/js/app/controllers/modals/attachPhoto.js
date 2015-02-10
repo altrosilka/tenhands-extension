@@ -14,7 +14,7 @@ angular.module('App').controller('CM_attachPhoto', [
     ctr.pageAttachments = pageAttachments;
 
     ctr.imagesPlurals = {
-      0: '{} фотогрфий',
+      0: '{} фотографий',
       one: '{} фотографию',
       few: '{} фотографии',
       many: '{} фотографий',

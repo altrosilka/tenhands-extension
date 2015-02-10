@@ -35,7 +35,7 @@
         <!--<div source-link="channel.link"></div>-->
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('fb')">
-          <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('image')">
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
         </div>
@@ -48,7 +48,7 @@
         <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('vk')">
-          <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('image')">
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
           <span class="addAttach ng-hide" ng-click="channel_ctr.attachItem('video')">
@@ -69,7 +69,7 @@
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('tw')">
 
-          <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('image')">
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
         </div>
@@ -82,7 +82,7 @@
         <div textarea-validator max-length="channel_ctr.getMaxTextLength(channel.network, channel.attachments)" model="channel_ctr.text" show-counter="true"></div>
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('ig')">
-          <span class="addAttach" ng-click="channel_ctr.attachItem('photo')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('image')">
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
         </div>

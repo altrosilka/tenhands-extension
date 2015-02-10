@@ -39,7 +39,7 @@ angular.module('App').controller('CD_channel', [
         //if (ctr.network === 'vk' || ctr.network === 'fb') {
         //  $scope.channel.link = data.url;
         //} else {
-          ctr.text += '\n' + data.url;
+        ctr.text += '\n' + data.url;
         //}
       });
     });
@@ -60,13 +60,14 @@ angular.module('App').controller('CD_channel', [
 
     ctr.attachItem = function(type) {
       switch (type) {
-        case 'photo':
+        case 'image':
           {
             S_utils.callAttachPhotoDialog($scope.pageAttachments, {
               before: ctr.pushUploadingAttach,
               after: ctr.afterImageUploaded
             }).then(function(resp) {
-              $scope.channel.attachments = S_utils.sortAttachments(_.uniq($scope.channel.attachments, 'id'));
+              
+              $scope.channel.attachments = S_utils.sortAttachments(_.uniq($scope.channel.attachments.concat(resp), 'id'));
             });
             break;
           }
@@ -134,23 +135,7 @@ angular.module('App').controller('CD_channel', [
     }
 
     ctr.attachmentsLimitReached = function(network) {
-      switch (network) {
-        case 'ig':
-          {
-            return $scope.channel.attachments.length >= 1;
-            break;
-          }
-        case 'tw':
-          {
-            return $scope.channel.attachments.length >= 4;
-            break;
-          }
-        case 'vk':
-          {
-            return $scope.channel.attachments.length >= 9;
-            break;
-          }
-      }
+      return S_utils.attachmentsLimitReached(network, $scope.channel.attachments.length);
     }
 
     ctr.getMaxTextLength = function(type, attachments) {

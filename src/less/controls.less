@@ -14,6 +14,16 @@
     background-color: @colorPrimary;
     border-color: @colorPrimary;
     -webkit-font-smoothing: subpixel-antialiased;
+    &:hover {
+      background-color: #2980B9;
+      border-color: #2980B9;
+    }
+  }
+  &.btn-success {
+    color: #eee;
+    background-color: @colorSuccess;
+    border-color: @colorSuccess;
+    -webkit-font-smoothing: subpixel-antialiased;
     span {
       transition: 0.3s;
       transform: scale(1);
@@ -21,17 +31,15 @@
       text-shadow: 0px 0px transparent;
     }
     &:hover {
-      span {
-        transform: scale(1.05);
-        text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
-      }
+      background-color: #2ECC71;
+      border-color: #2ECC71;
     }
   }
   &.btn-link {
     height: 31px;
-    font-size: 12px;
     color: #45688E;
     text-decoration: none;
+    border-color: transparent;
     &:hover {
       color: #000;
       cursor: pointer;
@@ -91,9 +99,9 @@ select.form-control {
     }
   }
   &[data-network="ig"] {
-    background-color: rgba(67, 69, 95, 0.11);
+    background-color: rgba(139, 92, 52, 0.11);
     &.deep {
-      background-color: rgba(67, 69, 95, 1);
+      background-color: rgba(139, 92, 52, 1);
     }
   }
   &[data-network="tw"] {

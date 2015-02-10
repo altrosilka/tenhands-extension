@@ -166,7 +166,7 @@ angular.module('utilsTools', [])
           clientHeight: image.height,
           src: image.url,
           src_big: image.url,
-          type: 'photo'
+          type: 'image'
         }
       }
 
@@ -201,7 +201,7 @@ angular.module('utilsTools', [])
       }
 
       service.sortAttachments = function(attaches) {
-        var priority = ['photo', 'video', 'doc', 'audio', 'poll'];
+        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
         return _.sortBy(attaches, function(attach) {
           var i = _.findIndex(priority, function(q) {
             return q === attach.type;
@@ -214,64 +214,12 @@ angular.module('utilsTools', [])
         });
       }
 
-      service.getAttachmentsString = function(attaches) {
-        var ret = [];
-        _.forEach(attaches, function(attach) {
-          switch (attach.type) {
-            case "photo":
-              {
-                ret.push('photo' + attach.photo.owner_id + '_' + attach.photo.id);
-                break;
-              }
-            case "video":
-              {
-                ret.push('video' + attach.video.owner_id + '_' + attach.video.id);
-                break;
-              }
-            case "poll":
-              {
-                ret.push('poll' + attach.owner_id + '_' + attach.id);
-                break;
-              }
-          }
-        });
-
-        return ret.join(',');
-      }
-
-      service.formatterTimelineTooltip = function(x, groupped) {
-        var info = groupped[Math.round(x / 1000)];
-
-        if (!info) {
-          return 'Не можем получить данные :(';
-        }
-
-        var scope = $rootScope.$new();
-        scope.posts = info;
-
-        scope.getAttachments = function(post) {
-          if (post.copy_history) {
-            return post.copy_history[0].attachments;
-          } else {
-            return post.attachments;
-          }
-        }
-
-        scope.getText = function(post) {
-          return post.text || post.copy_history[0].text;
-        }
-
-        var el = $compile($templateCache.get('templates/other/timeLinePostTooltip.html'))(scope);
-        scope.$digest();
-        return el[0].outerHTML;
-      }
-
       service.findFirstAttach = function(attaches) {
         if (!attaches || attaches.length === 0) {
           return;
         }
 
-        var priority = ['photo', 'video', 'poll'];
+        var priority = ['image', 'video', 'poll'];
         _.sortBy(attaches, function(attach) {
           var i = _.findIndex(priority, function(q) {
             return q === attach.type;
@@ -286,82 +234,6 @@ angular.module('utilsTools', [])
         return attaches[0];
       }
 
-      service.roundToHour = function(time) {
-        var inter = 3600;
-        var raz = time % inter;
-        return time - raz;
-      }
-
-      service.itemsInInterval = function(items, min, max) {
-        return _.filter(items, function(item) {
-          return item.date >= min && item.date <= max;
-        });
-      }
-
-      service.remapForTimeline = function(items, min, max) {
-        var raz, q, inter = __timelinePeriods.grouppingInterval;
-        var itemsFilterd = [];
-        _.forEach(items, function(item) {
-          q = item.date;
-          if (q > max || q < min) {
-            return;
-          }
-          raz = q % inter;
-          if (raz / inter > 0.5) {
-            q += inter - raz;
-          } else {
-            q -= raz;
-          }
-          item.groupDate = q;
-          itemsFilterd.push(item);
-        });
-
-        var groupped = _.groupBy(itemsFilterd, function(item) {
-          return item.groupDate;
-        });
-        var series = _.map(groupped, function(val, i) {
-          return [i * 1000, val.length];
-        });
-
-        _.sortBy(series, function(item) {
-          return item[0];
-        });
-
-        var max = _.max(series, function(e) {
-          return e[1];
-        })[1];
-
-        var stackedSeries = [];
-
-        for (var i = 0; i < max; i++) {
-          var arr = [];
-          _.forEach(series, function(e) {
-            arr.push([e[0], (e[1] > i) ? 1 : 0]);
-          });
-          stackedSeries.push({
-            data: arr,
-            stacking: "normal"
-          });
-        }
-
-        return {
-          max: max,
-          series: stackedSeries,
-          groupped: groupped
-        };
-      }
-
-      service.serverPostsToVkLike = function(posts) {
-        return _.map(posts, function(q) {
-          return {
-            text: q.message,
-            date: q.publish_date,
-            type: 'own_server',
-            attachments: q.attachments
-          }
-        });
-      }
-
       service.getFailDescription = function(data) {
         var q;
 
@@ -369,7 +241,7 @@ angular.module('utilsTools', [])
           return "Статус повторяется";
         }
 
-        if(data.network === 'fb') {
+        if (data.network === 'fb') {
           if (data.data.error && data.data.error.code && data.data.error.code == 506) {
             return "Сообщение повторяется";
           }
@@ -429,8 +301,37 @@ angular.module('utilsTools', [])
         return 10000;
       }
 
+      service.attachmentsLimitReached = function(network, channelsLenth) {
+        switch (network) {
+          case 'ig':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'fb':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'tw':
+            {
+              return channelsLenth >= 4;
+              break;
+            }
+          case 'vk':
+            {
+              return channelsLenth >= 9;
+              break;
+            }
+        }
+      }
+
       service.unixTo = function(time, format) {
         return moment(time, 'X').format(format);
+      }
+      
+      service.escapeRegex = function(text) {
+        return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
       }
 
       return service;

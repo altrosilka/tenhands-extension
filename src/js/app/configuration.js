@@ -13,7 +13,7 @@ angular.module('config', [])
       getOverrideKey: 'groups/getOverrideKey',
       getPostsInPeriod: 'posts/getInPeriod',
       createPost: 'posts',
-      checkAuth: 'auth/check',
+      getUserInfo: 'users/getCurrentUser',
       signIn: 'auth/signIn',
       sets: 'sets',
       getSetChannels: 'sets/getChannels'

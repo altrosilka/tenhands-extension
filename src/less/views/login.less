@@ -1,6 +1,16 @@
 .v_login {
+  background: @primaryLight;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   form {
-    margin-top: 100px;
+    position: absolute;
+    top: 50%;
+    margin-top: -77px;
+    left: 0;
+    right: 0;
     &.error {
       -webkit-animation: bounceMargin 0.5s 1;
     }
@@ -70,15 +80,15 @@
     z-index: 100;
     padding: 2.15em 0.75em 0;
     width: 100%;
-    background: transparent;
-    color: #fff;
+    background: rgba(0, 0, 0, 0);
+    color: #000;
     font-size: 0.85em;
   }
   .input__label--juro {
     padding: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: #FFF;
     text-align: left;
   }
   .input__label-content--juro {
@@ -88,6 +98,7 @@
     -webkit-transition: -webkit-transform 0.3s, color 0.3s;
     transition: transform 0.3s, color 0.3s;
     text-rendering: geometricPrecision;
+    font-weight: 300;
   }
   .input__label--juro::before {
     content: '';
@@ -102,12 +113,11 @@
   }
   .input__field--juro:focus + .input__label--juro::before, .input--filled .input__label--juro::before {
     border-width: 8px;
-    border-color: @colorPrimary;
+    border-color: @secondaryLight;
     border-top-width: 2em;
   }
   .input__field--juro:focus + .input__label--juro .input__label-content--juro, .input--filled .input__label--juro .input__label-content--juro {
-    color: #eee;
-    text-shadow: 0px 0px 1px rgba(0,0,0,0.5);
+    color: #626262;
     -webkit-transform: translate3d(0, -1.5em, 0) scale3d(0.75, 0.75, 1);
     transform: translate3d(0, -1.5em, 0) scale3d(0.75, 0.75, 1) translateZ(1px);
   }

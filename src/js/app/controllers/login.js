@@ -4,6 +4,9 @@ angular.module('App').controller('C_login', [
   function($scope, S_selfapi) {
     var ctr = this;
 
+
+    
+
     ctr.email = ctr.password = '';
 
     ctr.auth = function(email, password) {

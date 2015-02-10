@@ -1,14 +1,14 @@
 <div class="attaches clearfix">
   <div class="attach" ng-repeat="attach in attachments" ng-class="{selected: ctr.attachIsSelected(attach)}">
     <div class="process">
-      <i class="fa fa-circle-o-notch fa-spin"></i>
+      <i class="ion-load-c fa-spin"></i>
     </div>
     <div class="image" ng-click="ctr.onAttachClick(attach)" ng-style="{'background-image':'url('+attach.src+')'}">
     </div>
     <div class="lower" ng-click="ctr.remove(attach)"></div>
     <div class="actions">
       <div class="check lay" ng-click="ctr.toggle(attach)">
-        <i class="fa fa-check"></i>
+        <i class="ion-checkmark-round"></i>
       </div>
     </div>
 

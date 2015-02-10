@@ -30,7 +30,7 @@ body {
   background-size: cover;*/
   
   background: fixed #fff url(../images/bg/repeat.jpg) repeat;
-  background: #E9EAED;
+  background: @primaryLight;
   font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans';
   font-weight: 300;
   font-size: 12px;
@@ -62,7 +62,7 @@ a {
 .link {
   text-decoration: none;
   border-bottom: 1px solid;
-  transition: @fastTime;
+  transition: 0.2s;
 }
 .link:hover {
   text-decoration: none;
@@ -77,10 +77,7 @@ a {
   text-decoration: none!important;
   cursor: default!important;
 }
-.translateArea {
-  -webkit-perspective: 1942px;
-}
-.pushed {
+.translateArea {} .pushed {
   .translateArea {
     .filterArea {
       -webkit-transform: translateX(300px);
@@ -106,6 +103,7 @@ header.top {
     transition: 0.2s;
     color: #222;
     top: 19px;
+    text-shadow: 0px 0px 1px #fff;
     &:hover {
       opacity: 1;
       cursor: pointer;
@@ -116,7 +114,6 @@ header.top {
     left: 50%;
     margin-left: -30px;
     text-align: center;
-    font-size: 26px;
     border-radius: 50%;
     background-color: #FFF;
     opacity: 0.5;
@@ -126,14 +123,14 @@ header.top {
     cursor: pointer;
     display: block;
     transition: 0.2s;
-    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
-    -webkit-transform: translateY(0px);
+    box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);
     color: #666;
-    font-size: 12px;
-    padding-top: 41px;
+    font-size: 21px;
+    padding-top: 34px;
     -webkit-transform: translateY(0px);
-    .fa {
+    .arrow {
       transition: 0.5s;
+      display: inline-block;
     }
     &:hover {
       opacity: 1;
@@ -141,14 +138,42 @@ header.top {
     }
   }
   .remover {
-    right: 28px;
-    font-size: 28px;
+    right: 17px;
+    font-size: 19px;
+    width: 27px;
+    text-align: center;
   }
   .menuver {
     width: 40px;
     left: 20px;
     text-align: center;
     font-size: 26px;
+    display: none;
+  }
+}
+.prepareExtensionLoading {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background: #F5F5F5;
+  z-index: 20;
+  font-size: 20px;
+  transition: 0.3s;
+  opacity: 1;
+  visibility: visible;
+  i {
+    position: absolute;
+    font-size: 2em;
+    left: 50%;
+    top: 50%;
+    margin: -19px;
+    color: #555;
+  }
+  &.hidethis {
+    opacity: 0;
+    visibility: hidden;
   }
 }
 .setSelecterArea {
@@ -229,7 +254,7 @@ header.top {
 body.min {
   .resizer {
     color: #4F73AB;
-    .fa {
+    .arrow {
       -webkit-transform: rotate(180deg);
     }
   }
@@ -287,18 +312,19 @@ body.min {
     }
     .process {
       opacity: 0;
-      position: absolute;
-      font-size: 22px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      top: 0;
-      bottom: 0;
-      line-height: 132px;
-      visibility: hidden;
-      transition: 0.2s;
-      z-index: 6;
-      background-color: rgba(255, 255, 255, 0.8);
+position: absolute;
+font-size: 2em;
+left: 0;
+right: 0;
+text-align: center;
+top: 0;
+bottom: 0;
+line-height: 87px;
+visibility: hidden;
+transition: 0.2s;
+z-index: 6;
+background-color: rgba(255, 255, 255, 0.9);
+box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.2);
     }
     .image {
       height: 100%;
@@ -688,6 +714,9 @@ body.min {
   left: 0;
   height: 73px;
   display: none;
+  background: #F4F4F4;
+  border-top: 1px solid #E5E5E5;
+  z-index: 10;
   &.active {
     display: block;
   }
@@ -753,16 +782,16 @@ body.min {
   left: 0;
   right: 0;
   .greenLine {
-    background-color: @colorPrimary;
+    background-color: #09F;
     position: relative;
     height: 100%;
     z-index: 1;
-    opacity: 0.5;
+    opacity: 0;
     transition: 0.2s;
   }
   .progress-bar {
     position: absolute;
-    background-color: transparent;
+    background-color: rgba(210, 210, 210, 0.5);
     height: 100%;
     z-index: 2;
     left: 0;
@@ -774,7 +803,7 @@ body.min {
     }
   }
   .numbers {
-    color: #CFCFCF;
+    color: #1B1B1B;
     position: absolute;
     top: 0;
     left: 0;

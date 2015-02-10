@@ -18,8 +18,7 @@ angular.module('App').controller('C_posting', [
     ctr.attachments = [];
 
 
-
-    ctr.closeAfterSuccess = true;
+    ctr.closeAfterSuccess = false;
 
     S_selfapi.getAllSets().then(function(resp) {
       ctr.sets = resp.data.data;
@@ -44,9 +43,8 @@ angular.module('App').controller('C_posting', [
 
 
 
-
-
     $scope.$on('loadedDataFromTab', function(event, data) {
+
       $scope.$apply(function() {
         ctr.data = data;
 
@@ -72,14 +70,11 @@ angular.module('App').controller('C_posting', [
         }
 
         ctr.link = data.url;
-        /*
-        S_selfapi.getShortUrl(data.url).then(function(resp) {
-          if (resp.data.data) {
-            ctr.link = resp.data.data;
-          } else {
-            ctr.link = data.url;
-          }
-        });*/
+
+        $timeout(function() {
+          S_eventer.sendEvent('hideLoader');
+        });
+
       });
     });
 
@@ -145,8 +140,12 @@ angular.module('App').controller('C_posting', [
     }
 
 
-    ctr.getProgressLineWidth = function() {
-      return (((ctr.completePostsCount) / ctr.postingCount * 100) + '%');
+    ctr.getProgressLineStyles = function() {
+      var d = ctr.completePostsCount / ctr.postingCount;
+      return {
+        width: ((d * 100) + '%'),
+        opacity: d
+      }
     }
 
     ctr.postChannelAgain = function(channel_id) {
