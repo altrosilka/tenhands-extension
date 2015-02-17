@@ -30,6 +30,7 @@
     "jquery-autosize": "~1.18.15",
     "socket.io-client": "~1.2.1",
     "malihu-custom-scrollbar-plugin": "~3.0.7",
-    "ionicons": "~2.0.1"
+    "ionicons": "~2.0.1",
+    "angular-local-storage": "~0.1.5"
   }
 }

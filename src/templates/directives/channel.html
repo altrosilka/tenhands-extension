@@ -30,11 +30,26 @@
 
       <!-- FACEBOOK -->
       <div ng-if="channel_ctr.network === 'fb'">
-        <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
+        <textarea class="form-control" autosize-textarea ng-model="channel.text"></textarea>
 
         <!--<div source-link="channel.link"></div>-->
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('fb')">
+          <span class="addAttach" ng-click="channel_ctr.attachItem('image')">
+            <i class="fa fa-picture-o"></i><span>изображение</span>
+          </span>
+        </div>
+ 
+        <div class="attachesArea" select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
+      </div>
+
+      <!-- OK -->
+      <div ng-if="channel_ctr.network === 'ok'">
+        <textarea class="form-control" autosize-textarea ng-model="channel.text"></textarea>
+
+        <!--<div source-link="channel.link"></div>-->
+
+        <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('ok')">
           <span class="addAttach" ng-click="channel_ctr.attachItem('image')">
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
@@ -45,7 +60,7 @@
 
       <!-- VK -->
       <div ng-if="channel_ctr.network === 'vk'">
-        <textarea class="form-control" autosize-textarea ng-model="channel_ctr.text"></textarea>
+        <textarea class="form-control" autosize-textarea ng-model="channel.text"></textarea>
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('vk')">
           <span class="addAttach" ng-click="channel_ctr.attachItem('image')">
@@ -65,7 +80,7 @@
       <!-- TWITTER -->
       <div ng-if="channel_ctr.network === 'tw'">
 
-        <div textarea-validator max-length="channel_ctr.getMaxTextLength(channel.network, channel.attachments)" model="channel_ctr.text" show-counter="true"></div>
+        <div textarea-validator max-length="channel_ctr.getMaxTextLength(channel.network, channel.attachments, channel.text)" channel-info="channel" show-counter="true"></div>
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('tw')">
 
@@ -79,7 +94,7 @@
       <!-- INSTAGRAM -->
       <div ng-if="channel_ctr.network === 'ig'">
 
-        <div textarea-validator max-length="channel_ctr.getMaxTextLength(channel.network, channel.attachments)" model="channel_ctr.text" show-counter="true"></div>
+        <div textarea-validator max-length="channel_ctr.getMaxTextLength(channel.network, channel.attachments, channel.text)" model="channel.text" show-counter="true"></div>
 
         <div class="selectAttachments" ng-hide="channel_ctr.attachmentsLimitReached('ig')">
           <span class="addAttach" ng-click="channel_ctr.attachItem('image')">

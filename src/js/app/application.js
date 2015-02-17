@@ -1,4 +1,5 @@
 var App = angular.module('App', [
+  'LocalStorageModule',
   'config',
   'vkTools',
   'chromeTools',
@@ -8,4 +9,4 @@ var App = angular.module('App', [
   'ui.select',
   'templates'
 ]); 
-  
+   

@@ -1,4 +1,5 @@
 var App = angular.module('App', [
+  'LocalStorageModule',
   'config',
   'vkTools',
   'chromeTools',
@@ -8,7 +9,7 @@ var App = angular.module('App', [
   'ui.select',
   'templates'
 ]); 
-  
+   
 App.config([
   '$httpProvider',
   function($httpProvider) {
@@ -47,6 +48,11 @@ angular.module('config', [])
     grouppingInterval: 30 * 60,
     minOffset: -5 * 3600,
     maxOffset: 24 * 3600,
+  })
+  .constant('__twitterConstants',{
+    maxSymbols: 140,
+    linkLen: 22,
+    mediaLen: 23
   })
 App.run([
   '__vkAppId',
@@ -274,7 +280,14 @@ angular.module('App').controller('C_posting', [
     ctr.closeAfterSuccess = false;
 
     S_selfapi.getAllSets().then(function(resp) {
-      ctr.sets = resp.data.data;
+
+      ctr.sets = resp.data.data.own;
+
+      ctr.sets = ctr.sets.concat(_.map(resp.data.data.guest, function(q) {
+        q.guest = true;
+        return q;
+      }));
+
       ctr.selectedSet = ctr.sets[0];
     });
 
@@ -283,63 +296,63 @@ angular.module('App').controller('C_posting', [
     }, function(setId) {
       if (!setId) return;
 
+      ctr.channelsIsLoaded = false;
       ctr.allPostsComplete = false;
       ctr.postingCount = 0;
+      ctr.channels = [];
 
       S_selfapi.getSetInfo(setId).then(function(resp) {
         ctr.channels = _.filter(resp.data.data, function(channel) {
           return !channel.disabled;
         });
         ctr.channelsIsLoaded = true;
+
+        S_eventer.sendEvent('loadedDataFromArea', ctr.data);
       });
     });
 
 
 
     $scope.$on('loadedDataFromTab', function(event, data) {
-
-      $scope.$apply(function() {
-        ctr.data = data;
-
-        if (data.imageSrc && data.imageSrc !== '') {
-          data.images.unshift({
-            src: data.imageSrc,
-            big_src: data.imageSrc
-          });
-        }
-
-        var images = _.map(data.images, function(q) {
-          q.type = 'photo';
-          q.id = S_utils.getRandomString(16);
-          return q;
-        });
-        ctr.pageAttachments = ctr.attachments.concat(images);
-        if (images.length) {
-          ctr.attachments.push(images[0]);
-        }
-
-        if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title);
-        }
-
-        ctr.link = data.url;
-
-        $timeout(function() {
-          S_eventer.sendEvent('hideLoader');
-        });
-
+      ctr.data = data;
+      S_eventer.sendEvent('loadedDataFromArea', ctr.data);
+      $timeout(function() {
+        S_eventer.sendEvent('hideLoader');
       });
     });
 
     ctr.createPost = function(channel_ids) {
       var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
       ctr.postingCount = postInfo.length;
+      ctr.postingInProgress = true;
       ctr.completePostsCount = 0;
-      S_utils.trackProgress(ctr.channels, postInfo);
 
+      ctr.errorPostCount = 0;
 
+      if (ctr.postingNow) {
+        S_utils.trackProgress(ctr.channels, postInfo);
+      }
 
-      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId).then(function(resp) {
+      /*
+            $timeout(function() {
+              ctr.completePostsCount++;
+              onChannelInfoRecieved();
+            }, 500);
+
+            $timeout(function() {
+              ctr.completePostsCount++;
+              ctr.errorPostCount++;
+              onChannelInfoRecieved();
+            }, 1000);
+
+            $timeout(function() {
+              ctr.completePostsCount++;
+              onChannelInfoRecieved();
+            }, 1500);
+            return;
+      */
+
+      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? ctr.postingUnixTime : undefined)).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
         _socketListeningId = resp.data.data.hash;
 
@@ -369,6 +382,7 @@ angular.module('App').controller('C_posting', [
           if (channel) {
             $scope.$apply(function() {
               ctr.completePostsCount++;
+              ctr.errorPostCount++;
               channel.inprogress = false;
               channel.error = true;
               channel.errorData = data;
@@ -376,22 +390,32 @@ angular.module('App').controller('C_posting', [
             });
           }
         });
+
+        socket.on('post_planned_success', function(data) {
+          $scope.$apply(function() {
+            ctr.postingInProgress = true;
+            ctr.allPostsComplete = true;
+          });
+        });
       });
 
       function onChannelInfoRecieved() {
         if (ctr.completePostsCount === ctr.postingCount) {
-          if (ctr.channels.length === ctr.completePostsCount) {
+          if (ctr.errorPostCount) {
+            ctr.postingInProgress = false;
+          } else {
             ctr.allPostsComplete = true;
             if (ctr.closeAfterSuccess) {
               S_eventer.sayToFrame('close');
             }
-          } else {
-            ctr.postingCount = 0;
           }
         }
       }
     }
 
+    ctr.showPostProcessingLayer = function() {
+      return ctr.postingInProgress;
+    }
 
     ctr.getProgressLineStyles = function() {
       var d = ctr.completePostsCount / ctr.postingCount;
@@ -422,6 +446,62 @@ angular.module('App').controller('C_posting', [
     };
 
 
+    ctr.minDate = new Date();
+    ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
+    ctr.postingNow = true;
+    ctr.postingTime = new Date();
+
+
+    $scope.$watch(function() {
+      return ctr.postingNow;
+    }, function(q) {
+      if (typeof q === 'undefined') return;
+
+      if (q === false) {
+        var secondsFromStart = moment().diff(moment().hour(0).minute(0).second(0), 'seconds');
+        var daySeconds = 3600 * 24;
+        var offset = secondsFromStart + 3600 * 3;
+        if (offset > daySeconds) {
+          ctr.postingTime = offset - daySeconds;
+          ctr.postingDate = moment(ctr.postingDate).add(1, 'days').toDate();
+        } else {
+          ctr.postingTime = offset;
+        }
+        ctr.onTimeChange(ctr.postingTime);
+      } else {
+        ctr.postingUnixTime = S_utils.getCurrentTime();
+      }
+    });
+
+    ctr.onTimeChange = function(time) {
+      ctr.pastTime = false;
+
+      if (!ctr.postingTime || !ctr.postingDate) return;
+
+      if (time) {
+        ctr.postingTime = time;
+      }
+
+      var dateUnix = +moment(ctr.postingDate).format('X');
+      var startDate = ctr.postingTime;
+
+      var res = dateUnix + startDate;
+
+      if (res > S_utils.getCurrentTime()) {
+        ctr.postingUnixTime = dateUnix + startDate;
+      } else {
+        ctr.pastTime = true;
+      }
+    }
+
+    ctr.addTimer = function() {
+      ctr.timerIsEnabled = true;
+      ctr.postingNow = false;
+    }
+    ctr.removeTimer = function() {
+      ctr.timerIsEnabled = false;
+      ctr.postingNow = true;
+    }
 
     return ctr;
   }
@@ -925,9 +1005,7 @@ angular.module('App').directive('channel', [function() {
   return {
     scope:{
       channel: "=",
-      parsedLink: "=",
-      parsedText: "=",
-      pageAttachments: "=",
+      pageData: "=",
       postChannelAgain: "&"
     },
     templateUrl: 'templates/directives/channel.html',
@@ -994,6 +1072,20 @@ angular.module('App')
     }
   ])
 
+angular.module('App').directive('halfHeight', ["$window", function($window) {
+  return {
+    link: function($scope, $element) {
+      $window.addEventListener('resize',callHeight);
+
+      callHeight();
+
+      function callHeight(){
+        $element.height($window.innerHeight/2);
+      }
+    }
+  }
+}]);
+ 
 angular.module('App').directive('imageUploadArea', ['$timeout', '__api', function($timeout, __api) {
   return {
     scope: {
@@ -1371,6 +1463,19 @@ angular.module('App')
     }
   ])
 
+angular.module('App').directive('socialTemplateEditor', [function() {
+  return {
+    scope:{
+
+    },
+    templateUrl: 'templates/directives/socialTemplateEditor.html',
+    controller: 'CD_socialTemplateEditor as ctr',
+    link: function($scope, $element, attrs, ctr) {
+     
+    }
+  }
+}]);
+
 angular.module('App').directive('sourceLink', [function() {
   return {
     scope:{
@@ -1391,16 +1496,19 @@ angular.module('App').directive('textareaValidator', [
   return {
     scope: {
       model: '=',
-      maxLength: '=',
+      channel: '=channelInfo',
       showCounter: '='
     }, 
     templateUrl: 'templates/directives/textareaValidator.html',
     link: function($scope, $element, attrs, ngModelCtrl) {
+      var maxLength = 0;
+
 
       var DOM = {
         parent: $element.find('.textareaValidator'),
         textarea: $element.find('.textarea'),
         section: $element.find('.text'),
+        urls: $element.find('.urls'),
         counter: $element.find('.counter span')
       }
 
@@ -1408,24 +1516,30 @@ angular.module('App').directive('textareaValidator', [
         $timeout(track);
       }).on('scroll',function(){
         DOM.section.scrollTop($(this).scrollTop());
-      })
-      $scope.$watch('model', function(q) {
+      });
+
+
+      $scope.$watch('channel.text', function(q) {
         if (!q) return;
 
         DOM.textarea.val(q);
         track();
       });
 
-      $scope.$watch('maxLength', function(q) {
+      $scope.$watch(function(){
+        return S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
+      }, function(q) {
         if (!q) return;
+        maxLength = q;
         track(); 
       });
 
       function track() {
         var separateSymbol = 'Ξ';
-        var text = DOM.textarea.val().replace(/\n/g, separateSymbol);
- 
-        var res = text.match(new RegExp('.{' + $scope.maxLength + '}(.*)'));
+        var val = DOM.textarea.val();
+        var text = val.replace(/\n/g, separateSymbol);
+
+        var res = text.match(new RegExp('.{' + maxLength + '}(.*)'));
 
         if (res !== null) {
           var extra = res[1];
@@ -1433,16 +1547,18 @@ angular.module('App').directive('textareaValidator', [
 
           var newContent = text.replace(new RegExp(extraFilter + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
           DOM.section.html(newContent+'<br>').height(DOM.textarea.height());
+        } else {
+          DOM.section.html('');
         }
 
         if ($scope.showCounter){
           DOM.counter.empty();
-          var last = $scope.maxLength - text.length;
+          var last = maxLength - text.length;
           var className = 'zero';
           if (last > 0) className = 'more';
           if (last < 0) className = 'less';
 
-          if (text.length / $scope.maxLength > 0.5){
+          if (text.length / maxLength > 0.1){
             className += ' active';
           }
 
@@ -1450,6 +1566,8 @@ angular.module('App').directive('textareaValidator', [
         }
 
         DOM.textarea.trigger('scroll');
+
+        $scope.channel.text = val;
       }
 
     }
@@ -1516,6 +1634,8 @@ angular.module('App').directive('timeSelect', [function() {
         var z = time % 3600;
         ctr.hour = Math.floor((time - z) / 3600);
         ctr.minute = Math.floor(z / 60);
+
+        
       });
 
       return ctr;
@@ -1674,14 +1794,15 @@ angular.module('App')
         });
       }
 
-      service.createPost = function(setId, postInfo, socket_channel) {
+      service.createPost = function(setId, postInfo, socket_channel, time) {
         return $http({
           url: base + __api.paths.createPost,
           method: 'POST',
           data: {
             setId: setId,
             postInfo: postInfo,
-            socket_channel: socket_channel
+            socket_channel: socket_channel,
+            time: time
           }
         });
       }
@@ -1786,6 +1907,36 @@ angular.module('App')
     }
   ]);
 
+angular.module('App')
+  .service('S_templater',
+
+    ["localStorageService", "S_eventer", function(localStorageService, S_eventer) {
+      var service = {};
+
+      var templateKeyName = 'template';
+      var defaultTemplate = '{{title}}\n\n{{url}}';
+
+      service.getTemplate = function() {
+
+        var q = localStorageService.get(templateKeyName);
+
+        if (q) {
+          return q.text;
+        } else {
+          return defaultTemplate;
+        }
+      }
+
+      service.setTemplate = function(tpl) {
+
+        localStorageService.set(templateKeyName, {text: tpl});
+        S_eventer.sendEvent('trigger:templateChanged');
+      }
+
+      return service;
+    }]
+  );
+
 angular.module('utilsTools', [])
   .service('S_utils', [
     '$modal',
@@ -1794,7 +1945,8 @@ angular.module('utilsTools', [])
     '$compile',
     '$rootScope',
     '__timelinePeriods',
-    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods) {
+    '__twitterConstants',
+    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods, __twitterConstants) {
       var service = {};
 
       service.getUrlParameterValue = function(url, parameterName) {
@@ -2075,11 +2227,22 @@ angular.module('utilsTools', [])
         });
       }
 
-      service.getMaxTextLength = function(type, attachments) {
+      service.getMaxTextLength = function(type, attachments, text) {
         switch (type) {
           case 'tw':
             {
-              return ((attachments.length) ? 117 : 140);
+              var lc = service.getLinksFromText(text);
+              var len = __twitterConstants.maxSymbols;
+
+              _.forEach(lc, function(link) {
+                len += (link.length - __twitterConstants.linkLen);
+              });
+
+              if (attachments.length) {
+                len -= __twitterConstants.mediaLen;
+              }
+
+              return len;
             }
           case 'ig':
             {
@@ -2087,6 +2250,16 @@ angular.module('utilsTools', [])
             }
         }
         return 10000;
+      }
+
+      service.getLinksFromText = function(text) {
+        text = text || '';
+        var links = [];
+        var urlRegex = /(https?:\/\/[^\s]+)/g;
+        text.replace(urlRegex, function(url) {
+          links.push(url);
+        });
+        return links;
       }
 
       service.attachmentsLimitReached = function(network, channelsLenth) {
@@ -2117,7 +2290,7 @@ angular.module('utilsTools', [])
       service.unixTo = function(time, format) {
         return moment(time, 'X').format(format);
       }
-      
+
       service.escapeRegex = function(text) {
         return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
       }
@@ -3770,10 +3943,8 @@ angular.module('App').controller('CD_attachPoll', [
   }
 ]);
 
-angular.module('App').controller('CD_channel', [
-  '$scope',
-  'S_utils',
-  function($scope, S_utils) {
+angular.module('App').controller('CD_channel',
+  ["$scope", "$interpolate", "S_utils", "S_templater", function($scope, $interpolate, S_utils, S_templater) {
     var ctr = this;
 
     ctr.network = $scope.channel.network;
@@ -3784,43 +3955,45 @@ angular.module('App').controller('CD_channel', [
     ctr.selectedAttachments = [];
     ctr.uploadingAttaches = [];
     ctr.processingAttachments = [];
+    ctr.pageAttachments = [];
 
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
+    $scope.$on('loadedDataFromArea', function(event, data) {
+      parseData(data);
+    });
 
-        if (data.imageSrc && data.imageSrc !== '') {
-          data.images.unshift({
-            src: data.imageSrc,
-            big_src: data.imageSrc
-          });
-        }
+    $scope.$on('trigger:templateChanged', function() {
+      parseData(ctr.data);
+    });
 
-        var images = _.map(data.images, function(q) {
-          q.type = 'image';
-          q.id = S_utils.getRandomString(16);
-          return q;
+
+    if ($scope.pageData) {
+      parseData($scope.pageData);
+    }
+
+    function parseData(data) {
+      ctr.data = data;
+
+      if (data.imageSrc && data.imageSrc !== '') {
+        data.images.unshift({
+          src: data.imageSrc,
+          big_src: data.imageSrc
         });
-        ctr.pageAttachments = $scope.channel.attachments.concat(images);
-        if (images.length) {
-          $scope.channel.attachments.push(images[0]);
-        }
+      }
 
-        ctr.text = ctr.text = $scope.channel.text = S_utils.decodeEntities(data.selection || data.title);
-
-        //if (ctr.network === 'vk' || ctr.network === 'fb') {
-        //  $scope.channel.link = data.url;
-        //} else {
-        ctr.text += '\n' + data.url;
-        //}
+      var images = _.map(data.images, function(q) {
+        q.type = 'image';
+        q.id = S_utils.getRandomString(16);
+        return q;
       });
-    });
+      if (images.length) {
+        $scope.pageAttachments = $scope.channel.attachments.concat(images);
+        $scope.channel.attachments.length = 0;
+        $scope.channel.attachments.push(images[0]);
+      }
 
-    $scope.$watch(function() {
-      return ctr.text;
-    }, function(text) {
-      $scope.channel.text = text;
-    });
+      //S_utils.decodeEntities(data.selection || data.title)
+      $scope.channel.text = $interpolate(S_templater.getTemplate())(ctr.data);
+    }
 
     ctr.isComplete = function() {
       return $scope.channel.complete;
@@ -3838,7 +4011,7 @@ angular.module('App').controller('CD_channel', [
               before: ctr.pushUploadingAttach,
               after: ctr.afterImageUploaded
             }).then(function(resp) {
-              
+
               $scope.channel.attachments = S_utils.sortAttachments(_.uniq($scope.channel.attachments.concat(resp), 'id'));
             });
             break;
@@ -3910,10 +4083,7 @@ angular.module('App').controller('CD_channel', [
       return S_utils.attachmentsLimitReached(network, $scope.channel.attachments.length);
     }
 
-    ctr.getMaxTextLength = function(type, attachments) {
-      return S_utils.getMaxTextLength(type, attachments);
 
-    }
 
     ctr.showActions = function(channel) {
       return !channel.inprogress && !channel.error && !channel.complete;
@@ -3923,9 +4093,14 @@ angular.module('App').controller('CD_channel', [
       return channel.inprogress;
     }
 
+    ctr.setChannelText = function(text) {
+      console.log(text);
+      $scope.channel.text = text;
+    }
+
     return ctr;
-  }
-]);
+  }]
+);
 
 angular.module('App').controller('CD_instagramArea', [
   '$scope',
@@ -3970,6 +4145,35 @@ angular.module('App').controller('CD_photobankSearch', [
     return ctr;
   }
 ]);
+
+angular.module('App').controller('CD_socialTemplateEditor',
+  ["$scope", "S_templater", function($scope, S_templater) {
+    var ctr = this;
+
+    ctr.data = {};
+
+    ctr.template = S_templater.getTemplate();
+
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      ctr.data = data;
+    });
+
+
+    ctr.setTemplate = function(){
+      S_templater.setTemplate(ctr.template);
+    }
+
+    ctr.getVar = function(q) {
+      if (ctr.data[q]) {
+        return ctr.data[q];
+      } else {
+        return '[нет значения]';
+      }
+    }
+
+    return ctr;
+  }]
+);
 
 angular.module('App').controller('CD_sourceLink', [
   '$scope',

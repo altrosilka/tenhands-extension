@@ -40,6 +40,8 @@ angular.module('App').directive('timeSelect', [function() {
         var z = time % 3600;
         ctr.hour = Math.floor((time - z) / 3600);
         ctr.minute = Math.floor(z / 60);
+
+        
       });
 
       return ctr;

@@ -1,0 +1,48 @@
+<div class="socialTemplateEditor">
+  <h3>Редактор шаблона</h3>
+  <p>Укажите в поле ниже какую именно информацию с сайта нужно использовать и в каком порядке</p>
+  <textarea class="form-control" ng-model="ctr.template" ng-blur="ctr.setTemplate()"></textarea>
+  Можно использовать как простой текст, так и переменные. Переменные выделяются двойными фигурными скобками, например <code ng-non-bindable>{{title}}</code>
+  <p>Доступны следующие переменные:</p>
+  <ul>
+    <li><code ng-non-bindable>{{title}}</code> - заголовок страницы
+    </li>
+    <li><code ng-non-bindable>{{description}}</code> - содержимое метатега description
+    </li>
+    <li><code ng-non-bindable>{{url}}</code> - ссылка на сайт</li>
+    <li><code ng-non-bindable>{{h1}}</code><code ng-non-bindable>{{h2}}</code><code ng-non-bindable>{{h3}}</code> - текст из первых тегов <b>h1</b>, <b>h2</b> или <b>h3</b>
+    </li>
+    <li class="hide"><code ng-non-bindable>{{url_clear_hash}}</code> - ссылка на сайт без якоря (текст после символа <code>#</code>)
+    </li>
+    <li class="hide"><code ng-non-bindable>{{url_clear_search}}</code> - ссылка на сайт без текста после символа <code>?</code>
+    </li>
+  </ul> 
+
+  <div class="vars">
+    <p><b>Значения переменных</b> на текущей странице (для примера):</p>
+    <div class="var">
+      <h4>title</h4>
+      <div class="val" ng-bind="ctr.getVar('title')"></div>
+    </div>
+    <div class="var">
+      <h4>description</h4>
+      <div class="val" ng-bind="ctr.getVar('description')"></div>
+    </div>
+    <div class="var">
+      <h4>url</h4>
+      <div class="val" ng-bind="ctr.getVar('url')"></div>
+    </div>
+    <div class="var">
+      <h4>h1</h4>
+      <div class="val" ng-bind="ctr.getVar('h1')"></div>
+    </div>
+    <div class="var">
+      <h4>h2</h4>
+      <div class="val" ng-bind="ctr.getVar('h2')"></div>
+    </div>
+    <div class="var">
+      <h4>h3</h4>
+      <div class="val" ng-bind="ctr.getVar('h3')"></div>
+    </div>
+  </div>
+</div>

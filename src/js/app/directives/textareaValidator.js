@@ -5,16 +5,19 @@ angular.module('App').directive('textareaValidator', [
   return {
     scope: {
       model: '=',
-      maxLength: '=',
+      channel: '=channelInfo',
       showCounter: '='
     }, 
     templateUrl: 'templates/directives/textareaValidator.html',
     link: function($scope, $element, attrs, ngModelCtrl) {
+      var maxLength = 0;
+
 
       var DOM = {
         parent: $element.find('.textareaValidator'),
         textarea: $element.find('.textarea'),
         section: $element.find('.text'),
+        urls: $element.find('.urls'),
         counter: $element.find('.counter span')
       }
 
@@ -22,24 +25,30 @@ angular.module('App').directive('textareaValidator', [
         $timeout(track);
       }).on('scroll',function(){
         DOM.section.scrollTop($(this).scrollTop());
-      })
-      $scope.$watch('model', function(q) {
+      });
+
+
+      $scope.$watch('channel.text', function(q) {
         if (!q) return;
 
         DOM.textarea.val(q);
         track();
       });
 
-      $scope.$watch('maxLength', function(q) {
+      $scope.$watch(function(){
+        return S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
+      }, function(q) {
         if (!q) return;
+        maxLength = q;
         track(); 
       });
 
       function track() {
         var separateSymbol = 'Ξ';
-        var text = DOM.textarea.val().replace(/\n/g, separateSymbol);
- 
-        var res = text.match(new RegExp('.{' + $scope.maxLength + '}(.*)'));
+        var val = DOM.textarea.val();
+        var text = val.replace(/\n/g, separateSymbol);
+
+        var res = text.match(new RegExp('.{' + maxLength + '}(.*)'));
 
         if (res !== null) {
           var extra = res[1];
@@ -47,16 +56,18 @@ angular.module('App').directive('textareaValidator', [
 
           var newContent = text.replace(new RegExp(extraFilter + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
           DOM.section.html(newContent+'<br>').height(DOM.textarea.height());
+        } else {
+          DOM.section.html('');
         }
 
         if ($scope.showCounter){
           DOM.counter.empty();
-          var last = $scope.maxLength - text.length;
+          var last = maxLength - text.length;
           var className = 'zero';
           if (last > 0) className = 'more';
           if (last < 0) className = 'less';
 
-          if (text.length / $scope.maxLength > 0.5){
+          if (text.length / maxLength > 0.1){
             className += ' active';
           }
 
@@ -64,6 +75,8 @@ angular.module('App').directive('textareaValidator', [
         }
 
         DOM.textarea.trigger('scroll');
+
+        $scope.channel.text = val;
       }
 
     }

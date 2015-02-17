@@ -27,3 +27,8 @@ angular.module('config', [])
     minOffset: -5 * 3600,
     maxOffset: 24 * 3600,
   })
+  .constant('__twitterConstants',{
+    maxSymbols: 140,
+    linkLen: 22,
+    mediaLen: 23
+  })

@@ -18,7 +18,7 @@
     layout.setAttribute("style", "");
 
     var paddingArea = d.createElement("div");
-    paddingArea.setAttribute("style", "height:" + (window.innerHeight/2) + "px");
+    paddingArea.setAttribute("style", "height:" + (window.innerHeight / 2) + "px");
     paddingArea.setAttribute("id", __id + "additionalPadding");
     d.body.appendChild(paddingArea);
 
@@ -98,10 +98,12 @@
   var eventer = window[eventMethod];
   var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
 
-  eventer(messageEvent, function(e) {
+  eventer(messageEvent, onPostMessage, false);
+
+  function onPostMessage(e) {
     var key = e.message ? "message" : "data";
     var data = e[key];
-
+    console.log(1);
     if (data === isMessage('close')) {
       close();
       setTimeout(function() {
@@ -119,7 +121,8 @@
         layout.style['-webkit-transform'] = "translateY(0)";
       }
     }
-  }, false);
+  }
+
 
   function createButton(mode, text) {
     var elem = d.createElement("div");
@@ -152,7 +155,10 @@
     layout.style.transform = 'translateY(100px)';
     layout.style.opacity = '0';
     layout.style.visibility = 'hidden';
-    d.removeChild(d.getElementById(__id + "additionalPadding"));
+
+
+    window.removeEventListener(messageEvent, onPostMessage)
+    d.body.removeChild(d.getElementById(__id + "additionalPadding"));
     setTimeout(function() {
       layout.style.display = 'none';
     }, 400);

@@ -81,7 +81,7 @@ select.form-control {
   top: 3px;
   content: "\f107";
   font-family: FontAwesome;
-  z-index: 1;
+  z-index: 2;
   color: #CCC;
   font-size: 14px;
 }
@@ -116,7 +116,7 @@ select.form-control {
   background-color: #000;
 }
 .social_bg[data-network="ok"] {
-  background-color: #000;
+  background-color: #F2952A;
 }
 .modal {
   background: rgba(0, 0, 0, 0.7);
@@ -195,14 +195,6 @@ select.form-control {
   position: absolute;
   right: 0;
 }
-.modal.in.fade .modal-dialog {
-  -webkit-transform: scale(1);
-  transform: scale(1);
-}
-.modal.fade .modal-dialog {
-  -webkit-transform: scale(0.9);
-  transform: scale(0.9);
-}
 html,
 body {
   height: 100%;
@@ -255,6 +247,9 @@ body:before {
 body.min:before {
   opacity: 1;
 }
+body .halfHeight {
+  display: none;
+}
 a {
   color: #fff;
 }
@@ -282,8 +277,15 @@ a:hover {
   text-decoration: none!important;
   cursor: default!important;
 }
+.translateArea .slidingFooter,
+.translateArea .window {
+  transition: 0.4s;
+}
+.pushed .translateArea .slidingFooter,
+.pushed .translateArea .window {
+  -webkit-transform: translateX(500px);
+}
 .pushed .translateArea .filterArea {
-  -webkit-transform: translateX(300px);
   opacity: 0.3;
 }
 .pushed .translateArea .filterArea .fakePushOverlay {
@@ -348,11 +350,10 @@ header.top .remover {
   text-align: center;
 }
 header.top .menuver {
-  width: 40px;
+  width: 27px;
   left: 20px;
   text-align: center;
-  font-size: 26px;
-  display: none;
+  font-size: 21px;
 }
 .prepareExtensionLoading {
   position: fixed;
@@ -449,10 +450,19 @@ header.top .menuver {
   bottom: 0;
   left: 0;
   background-color: #f9f9f9;
-  width: 300px;
+  width: 500px;
   transition: 0.4s;
-  -webkit-transform: translateX(-300px);
+  -webkit-transform: translateX(-500px);
   z-index: 2;
+  padding: 25px;
+  overflow: auto;
+}
+.leftMenu h2 {
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  margin: 0px 30px 20px;
+  color: #999;
 }
 body.min .resizer {
   color: #4F73AB;
@@ -460,12 +470,12 @@ body.min .resizer {
 body.min .resizer .arrow {
   -webkit-transform: rotate(180deg);
 }
+body.min .halfHeight {
+  display: block;
+}
 .centered {
   margin: auto;
   width: 960px;
-}
-.window {
-  padding-bottom: 100px;
 }
 .window h2 {
   font-size: 17px;
@@ -893,126 +903,141 @@ body.min .resizer .arrow {
   flex-wrap: wrap;
   display: flex;
 }
+.v_channels .noChannels {
+  text-align: center;
+  font-size: 15px;
+  color: #777;
+}
 .slidingFooter {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  height: 73px;
-  display: none;
+  height: 150px;
   background: #F4F4F4;
   border-top: 1px solid #E5E5E5;
   z-index: 10;
-}
-.slidingFooter.active {
-  display: block;
-}
-.slidingFooter .bottomFooter {
-  color: #EEE;
-  z-index: 13;
-  height: 73px;
+  color: #999;
   position: relative;
 }
-.slidingFooter .bottomFooter .controls-list {
+.slidingFooter.planned .publicWord {
+  display: none!important;
+}
+.slidingFooter.planned .planWord {
+  display: block!important;
+}
+.slidingFooter.planned .postingTimerArea .postingTimer {
+  opacity: 1;
+  visibility: visible;
+}
+.slidingFooter.publishing .sendPanel .progress-bar {
+  opacity: 1;
+}
+.slidingFooter.publishing .disableLayer {
+  opacity: 0.7;
+  visibility: visible;
+}
+.slidingFooter .disableLayer {
+  opacity: 0.8;
+  background: #F4F4F4;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  z-index: 4;
+  transition: 0.3s;
+  opacity: 0;
+  visibility: hidden;
+}
+.slidingFooter .controls-list {
   display: inline-block;
   margin-right: 26px;
   position: relative;
   top: 1px;
 }
-.slidingFooter .bottomFooter .controls-list label {
+.slidingFooter .controls-list label {
   display: inline-block;
 }
-.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_dragger .mCSB_dragger_bar {
-  height: 10px;
+.slidingFooter .publicWord {
+  display: block!important;
 }
-.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_draggerRail {
-  width: 100%;
-  height: 10px;
-  margin: 6px 0;
-}
-.mCSB_scrollTools {
-  right: 20px!important;
-  left: 19px!important;
-}
-.inFromBottom {
-  transform: translateY(100px);
-  transition: 0.4s;
-  opacity: 0;
-  visibility: hidden;
-}
-.inFromBottom.inFromBottom-in {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0px);
+.slidingFooter .planWord {
+  display: none!important;
 }
 .fancybox-skin {
   background: none;
   background-color: transparent;
 }
-.postingTimer {
+.postingTimerArea {
+  transition: 0.3s;
+  -webkit-transform: translateY(10px);
+}
+.postingTimerArea h3 {
+  font-size: 12px;
+  margin: 0 0 10px;
+}
+.postingTimerArea .addTimer {
+  color: #353535;
+  cursor: pointer;
+}
+.postingTimerArea .postingTimer {
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s;
   margin-top: 4px;
 }
-.postingTimer .inline {
+.postingTimerArea .postingTimer .inline {
   float: left;
 }
-.postingTimer .in {
+.postingTimerArea .postingTimer .in {
   position: relative;
   top: 4px;
   margin: 0 6px;
-}
-.postingProgressPanel {
-  visibility: hidden;
-  position: absolute;
-  opacity: 0;
-  height: 100%;
-  left: 0;
-  right: 0;
-}
-.postingProgressPanel .greenLine {
-  background-color: #09F;
-  position: relative;
-  height: 100%;
-  z-index: 1;
-  opacity: 0;
-  transition: 0.2s;
-}
-.postingProgressPanel .progress-bar {
-  position: absolute;
-  background-color: rgba(210, 210, 210, 0.5);
-  height: 100%;
   z-index: 2;
-  left: 0;
-  width: 100%;
-  top: 0;
-  transition: 0.2s;
 }
-.postingProgressPanel .progress-bar.hideLine {
-  opacity: 0;
+.postingTimerArea .postingTimer .sep {
+  z-index: 2;
 }
-.postingProgressPanel .numbers {
-  color: #1B1B1B;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  line-height: 72px;
-  text-align: center;
-  font-size: 20px;
-  z-index: 11;
-}
-.postingProgressPanel.active {
-  visibility: visible;
-  opacity: 1;
+.postingTimerArea .postingTimer select {
+  background: #fff;
 }
 .sendPanel {
-  padding: 20px 0;
-  opacity: 0;
-  visibility: hidden;
+  padding: 25px 0;
+  transition: 0.3s;
 }
-.sendPanel.active {
-  opacity: 1;
-  visibility: visible;
+.sendPanel .sendButton {
+  width: 140px;
+  transition: 0.3s;
+  position: relative;
+  height: 33px;
+  z-index: 6;
+}
+.sendPanel .sendButton span {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  text-align: center;
+  transition: 0.3s;
+  position: absolute;
+  display: none;
+}
+.sendPanel .progress-bar {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: -2px;
+  bottom: -2px;
+  z-index: 7;
+  float: none;
+  height: auto;
+  width: auto;
+  box-shadow: none;
+  background-color: #25AB22;
+  transition: 0.2s;
+  opacity: 0;
+}
+.sendPanel .progress-bar .loader {
+  display: block;
+  font-size: 20px;
+  line-height: 33px;
 }
 .blackModal {
   background-color: rgba(0, 0, 0, 0.6);
@@ -1291,6 +1316,29 @@ body.min .resizer .arrow {
   100% {
     transform: translateX(0px);
   }
+}
+.socialTemplateEditor h3 {
+  margin: 25px 0 10px;
+  font-size: 18px;
+}
+.socialTemplateEditor textarea {
+  height: 130px;
+  margin-bottom: 13px;
+  padding: 5px;
+}
+.socialTemplateEditor .vars {
+  margin-top: 20px;
+}
+.socialTemplateEditor .vars .var {
+  margin-top: 10px;
+}
+.socialTemplateEditor .vars h4 {
+  font-size: 12px;
+  font-weight: bold;
+  margin: 0 0 6px;
+}
+.socialTemplateEditor .vars .val {
+  font-size: 10px;
 }
 .instagramArea {
   overflow: auto;
@@ -1657,21 +1705,25 @@ body.min .resizer .arrow {
   height: 25px;
   padding: 3px 7px;
   width: 156px;
+  position: relative;
+  z-index: 2;
 }
-.dateButton .fa {
+.dateButton .cal {
   position: absolute;
   right: 6px;
-  top: 5px;
+  top: -1px;
   color: #2B587A;
+  z-index: 3;
+  font-size: 19px;
+  opacity: 0.4;
 }
 .dateButton .dropdown-menu {
-  top: 28px!important;
-  left: 0px!important;
-  width: 210px!important;
+  width: 284px!important;
   overflow: hidden;
   border-radius: 0px;
   background: #FFF;
-  box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
+  box-shadow: 0 0px 2px rgba(6, 33, 63, 0.13);
+  z-index: 1;
 }
 .jcropArea .image {
   padding: 0px;
@@ -1801,6 +1853,11 @@ body.min .resizer .arrow {
 .calendar .dropdown-menu {
   outline: none;
   padding: 0;
+  position: absolute;
+  bottom: -9px;
+  top: auto!important;
+  padding-bottom: 50px;
+  left: -10px !important;
 }
 .calendar .btn.btn-default {
   padding: 0px 3px;
@@ -1810,14 +1867,17 @@ body.min .resizer .arrow {
   color: #000;
   border-radius: 0px;
 }
+.calendar .btn.btn-default:hover {
+  background: transparent;
+}
+.calendar .btn.btn-default.btn-info {
+  background: #F5F5F5;
+  box-shadow: inset 0px 0px 6px #CCC;
+}
 .calendar .btn-default[disabled] {
   background: #f9f9f9;
   cursor: default!important;
   color: #ccc!important;
-}
-.calendar .text-info {
-  color: #3A65BE;
-  font-weight: bold;
 }
 .calendar table {
   border-collapse: collapse;
@@ -1855,10 +1915,11 @@ body.min .resizer .arrow {
   content: "\f105" !important;
 }
 .calendar table tr:first-child th .btn:hover {
-  background-color: #eee;
+  background-color: transparent;
 }
 .calendar table tr:first-child th .btn:active {
-  background-color: #ddd;
+  background-color: transparent;
+  box-shadow: none;
 }
 .calendar table tr:first-child th:nth-child(2) .btn strong {
   font-weight: normal;
@@ -1873,6 +1934,8 @@ body.min .resizer .arrow {
   font-family: FontAwesome!important;
   font-size: 22px;
   color: #707070;
+  position: relative;
+  top: 5px;
 }
 .calendar table tr:last-child th {
   background-color: #fff;
@@ -1888,6 +1951,7 @@ body.min .resizer .arrow {
   height: 27px;
   width: 32px;
   padding: 0;
+  cursor: default;
 }
 .calendar table td .btn {
   height: 100%;
@@ -1896,9 +1960,8 @@ body.min .resizer .arrow {
 .calendar .text-muted {
   color: #A9A9A9;
 }
-.calendar button.btn.btn-default.btn-sm.btn-info.active {
-  box-shadow: inset 0px 0px 0px 2px #009ee0;
-  color: #000;
+.calendar button.btn.btn-default.btn-sm.active {
+  background: #f5f5f5;
 }
 .calendar .btn.btn-default:focus {
   background: transparent;

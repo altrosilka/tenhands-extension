@@ -6,7 +6,8 @@ angular.module('utilsTools', [])
     '$compile',
     '$rootScope',
     '__timelinePeriods',
-    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods) {
+    '__twitterConstants',
+    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods, __twitterConstants) {
       var service = {};
 
       service.getUrlParameterValue = function(url, parameterName) {
@@ -287,11 +288,22 @@ angular.module('utilsTools', [])
         });
       }
 
-      service.getMaxTextLength = function(type, attachments) {
+      service.getMaxTextLength = function(type, attachments, text) {
         switch (type) {
           case 'tw':
             {
-              return ((attachments.length) ? 117 : 140);
+              var lc = service.getLinksFromText(text);
+              var len = __twitterConstants.maxSymbols;
+
+              _.forEach(lc, function(link) {
+                len += (link.length - __twitterConstants.linkLen);
+              });
+
+              if (attachments.length) {
+                len -= __twitterConstants.mediaLen;
+              }
+
+              return len;
             }
           case 'ig':
             {
@@ -299,6 +311,16 @@ angular.module('utilsTools', [])
             }
         }
         return 10000;
+      }
+
+      service.getLinksFromText = function(text) {
+        text = text || '';
+        var links = [];
+        var urlRegex = /(https?:\/\/[^\s]+)/g;
+        text.replace(urlRegex, function(url) {
+          links.push(url);
+        });
+        return links;
       }
 
       service.attachmentsLimitReached = function(network, channelsLenth) {
@@ -329,7 +351,7 @@ angular.module('utilsTools', [])
       service.unixTo = function(time, format) {
         return moment(time, 'X').format(format);
       }
-      
+
       service.escapeRegex = function(text) {
         return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
       }

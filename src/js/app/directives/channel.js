@@ -2,9 +2,7 @@ angular.module('App').directive('channel', [function() {
   return {
     scope:{
       channel: "=",
-      parsedLink: "=",
-      parsedText: "=",
-      pageAttachments: "=",
+      pageData: "=",
       postChannelAgain: "&"
     },
     templateUrl: 'templates/directives/channel.html',

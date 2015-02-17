@@ -16,14 +16,15 @@ angular.module('App')
         });
       }
 
-      service.createPost = function(setId, postInfo, socket_channel) {
+      service.createPost = function(setId, postInfo, socket_channel, time) {
         return $http({
           url: base + __api.paths.createPost,
           method: 'POST',
           data: {
             setId: setId,
             postInfo: postInfo,
-            socket_channel: socket_channel
+            socket_channel: socket_channel,
+            time: time
           }
         });
       }

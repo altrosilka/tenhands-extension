@@ -1,7 +1,5 @@
-angular.module('App').controller('CD_channel', [
-  '$scope',
-  'S_utils',
-  function($scope, S_utils) {
+angular.module('App').controller('CD_channel',
+  function($scope, $interpolate, S_utils, S_templater) {
     var ctr = this;
 
     ctr.network = $scope.channel.network;
@@ -12,43 +10,45 @@ angular.module('App').controller('CD_channel', [
     ctr.selectedAttachments = [];
     ctr.uploadingAttaches = [];
     ctr.processingAttachments = [];
+    ctr.pageAttachments = [];
 
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
+    $scope.$on('loadedDataFromArea', function(event, data) {
+      parseData(data);
+    });
 
-        if (data.imageSrc && data.imageSrc !== '') {
-          data.images.unshift({
-            src: data.imageSrc,
-            big_src: data.imageSrc
-          });
-        }
+    $scope.$on('trigger:templateChanged', function() {
+      parseData(ctr.data);
+    });
 
-        var images = _.map(data.images, function(q) {
-          q.type = 'image';
-          q.id = S_utils.getRandomString(16);
-          return q;
+
+    if ($scope.pageData) {
+      parseData($scope.pageData);
+    }
+
+    function parseData(data) {
+      ctr.data = data;
+
+      if (data.imageSrc && data.imageSrc !== '') {
+        data.images.unshift({
+          src: data.imageSrc,
+          big_src: data.imageSrc
         });
-        ctr.pageAttachments = $scope.channel.attachments.concat(images);
-        if (images.length) {
-          $scope.channel.attachments.push(images[0]);
-        }
+      }
 
-        ctr.text = ctr.text = $scope.channel.text = S_utils.decodeEntities(data.selection || data.title);
-
-        //if (ctr.network === 'vk' || ctr.network === 'fb') {
-        //  $scope.channel.link = data.url;
-        //} else {
-        ctr.text += '\n' + data.url;
-        //}
+      var images = _.map(data.images, function(q) {
+        q.type = 'image';
+        q.id = S_utils.getRandomString(16);
+        return q;
       });
-    });
+      if (images.length) {
+        $scope.pageAttachments = $scope.channel.attachments.concat(images);
+        $scope.channel.attachments.length = 0;
+        $scope.channel.attachments.push(images[0]);
+      }
 
-    $scope.$watch(function() {
-      return ctr.text;
-    }, function(text) {
-      $scope.channel.text = text;
-    });
+      //S_utils.decodeEntities(data.selection || data.title)
+      $scope.channel.text = $interpolate(S_templater.getTemplate())(ctr.data);
+    }
 
     ctr.isComplete = function() {
       return $scope.channel.complete;
@@ -66,7 +66,7 @@ angular.module('App').controller('CD_channel', [
               before: ctr.pushUploadingAttach,
               after: ctr.afterImageUploaded
             }).then(function(resp) {
-              
+
               $scope.channel.attachments = S_utils.sortAttachments(_.uniq($scope.channel.attachments.concat(resp), 'id'));
             });
             break;
@@ -138,10 +138,7 @@ angular.module('App').controller('CD_channel', [
       return S_utils.attachmentsLimitReached(network, $scope.channel.attachments.length);
     }
 
-    ctr.getMaxTextLength = function(type, attachments) {
-      return S_utils.getMaxTextLength(type, attachments);
 
-    }
 
     ctr.showActions = function(channel) {
       return !channel.inprogress && !channel.error && !channel.complete;
@@ -151,6 +148,11 @@ angular.module('App').controller('CD_channel', [
       return channel.inprogress;
     }
 
+    ctr.setChannelText = function(text) {
+      console.log(text);
+      $scope.channel.text = text;
+    }
+
     return ctr;
   }
-]);
+);

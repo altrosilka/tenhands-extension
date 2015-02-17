@@ -11,7 +11,8 @@ var gulp = require("gulp"),
   less = require('gulp-less'),
   //livereload = require('gulp-livereload'),
   moment = require('moment'),
-  templateCache = require('gulp-angular-templatecache');
+  templateCache = require('gulp-angular-templatecache'),
+  ngAnnotate = require('gulp-ng-annotate');
 
 
 
@@ -45,7 +46,7 @@ var vendorLibs = [
   './bower_components/highcharts/highcharts.src.js',
   './bower_components/jquery-autosize/jquery.autosize.js',
   './bower_components/jquery-mousewheel/jquery.mousewheel.js',
-  './bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.js'
+  './bower_components/angular-local-storage/dist/angular-local-storage.js'
 ];
 
 var vendorLibsCss = [
@@ -62,6 +63,7 @@ var vendorLibsCss = [
 
 gulp.task('scripts', function() {
   gulp.src(['./src/js/app/**/*.js'])
+    .pipe(ngAnnotate())
     .pipe(concat('scripts.js'))
     .pipe(gulp.dest('./public/pack'))
 
@@ -76,6 +78,7 @@ gulp.task('scripts', function() {
 
 gulp.task('background-scripts', function() {
   gulp.src(backgroundScripts)
+    .pipe(ngAnnotate())
     .pipe(concat('background.js'))
     .pipe(gulp.dest('./public/pack'))
 });
@@ -83,6 +86,7 @@ gulp.task('background-scripts', function() {
 
 gulp.task('dist-enviroment', function() {
   gulp.src(enviromentScripts)
+    .pipe(ngAnnotate())
     .pipe(concat('pageEnviroment.js'))
     .pipe(gulp.dest('./public/pack'))
 });

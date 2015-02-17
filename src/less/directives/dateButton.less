@@ -13,20 +13,24 @@
     height: 25px;
     padding: 3px 7px;
     width: 156px;
+    position: relative;
+    z-index: 2;
   }
-  .fa {
+  .cal {
     position: absolute;
     right: 6px;
-    top: 5px;
+    top: -1px;
     color: #2B587A;
+    z-index: 3;
+    font-size: 19px;
+    opacity: 0.4;
   }
   .dropdown-menu {
-    top: 28px!important;
-    left: 0px!important;
-    width: 210px!important;
+    width: 284px!important;
     overflow: hidden;
     border-radius: 0px;
     background: #FFF;
-    box-shadow: 0 1px 2px rgba(6, 33, 63, 0.13);
+    box-shadow: 0 0px 2px rgba(6, 33, 63, 0.13);
+    z-index: 1;
   }
 }

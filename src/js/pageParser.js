@@ -8,7 +8,7 @@
   for (var i = 0, l = imagesColection.length; i < l; i++) {
     image = imagesColection.item(i);
     //console.log(image, image.src)
- 
+
     if (image.src === 'http://www.lookatme.ru/mag/live/experience-news/209627-trailer') {
       //debugger
     }
@@ -17,7 +17,7 @@
     }
     res = image.width / image.height;
 
-    if (res > 4 || res < 0.25){
+    if (res > 4 || res < 0.25) {
       continue;
     }
     images.push({
@@ -37,8 +37,12 @@
   var data = {
     images: images,
     title: document.title,
+    description: getDescription(),
     url: document.location.href,
-    imageSrc: getImageFromMeta()
+    imageSrc: getImageFromMeta(),
+    h1: getByQuery('h1'),
+    h2: getByQuery('h2'),
+    h3: getByQuery('h3')
   }
 
   function getImageFromMeta() {
@@ -54,6 +58,27 @@
     if (dom !== null) return dom.getAttribute('content');
 
     return dom;
+  }
+ 
+  function getByQuery(q) {
+    var dom;
+
+    dom = document.querySelector(q);
+    if (dom !== null) return dom.innerHTML.replace(/(<([^>]+)>)/ig,"").replace(/(\n)+/g, '\n');
+
+    return;
+  }
+
+  function getDescription() {
+    var dom;
+
+    dom = document.querySelector('meta[name="description"]');
+    if (dom !== null) return dom.getAttribute('content');
+
+    dom = document.querySelector('meta[name="Description"]');
+    if (dom !== null) return dom.getAttribute('content');
+
+    return '';
   }
 
   function sendToIframe() {

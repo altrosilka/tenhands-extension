@@ -8,7 +8,7 @@
   for (var i = 0, l = imagesColection.length; i < l; i++) {
     image = imagesColection.item(i);
     //console.log(image, image.src)
- 
+
     if (image.src === 'http://www.lookatme.ru/mag/live/experience-news/209627-trailer') {
       //debugger
     }
@@ -17,7 +17,7 @@
     }
     res = image.width / image.height;
 
-    if (res > 4 || res < 0.25){
+    if (res > 4 || res < 0.25) {
       continue;
     }
     images.push({
@@ -37,8 +37,12 @@
   var data = {
     images: images,
     title: document.title,
+    description: getDescription(),
     url: document.location.href,
-    imageSrc: getImageFromMeta()
+    imageSrc: getImageFromMeta(),
+    h1: getByQuery('h1'),
+    h2: getByQuery('h2'),
+    h3: getByQuery('h3')
   }
 
   function getImageFromMeta() {
@@ -54,6 +58,27 @@
     if (dom !== null) return dom.getAttribute('content');
 
     return dom;
+  }
+ 
+  function getByQuery(q) {
+    var dom;
+
+    dom = document.querySelector(q);
+    if (dom !== null) return dom.innerHTML.replace(/(<([^>]+)>)/ig,"").replace(/(\n)+/g, '\n');
+
+    return;
+  }
+
+  function getDescription() {
+    var dom;
+
+    dom = document.querySelector('meta[name="description"]');
+    if (dom !== null) return dom.getAttribute('content');
+
+    dom = document.querySelector('meta[name="Description"]');
+    if (dom !== null) return dom.getAttribute('content');
+
+    return '';
   }
 
   function sendToIframe() {
@@ -105,7 +130,7 @@
     layout.setAttribute("style", "");
 
     var paddingArea = d.createElement("div");
-    paddingArea.setAttribute("style", "height:" + (window.innerHeight/2) + "px");
+    paddingArea.setAttribute("style", "height:" + (window.innerHeight / 2) + "px");
     paddingArea.setAttribute("id", __id + "additionalPadding");
     d.body.appendChild(paddingArea);
 
@@ -185,10 +210,12 @@
   var eventer = window[eventMethod];
   var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
 
-  eventer(messageEvent, function(e) {
+  eventer(messageEvent, onPostMessage, false);
+
+  function onPostMessage(e) {
     var key = e.message ? "message" : "data";
     var data = e[key];
-
+    console.log(1);
     if (data === isMessage('close')) {
       close();
       setTimeout(function() {
@@ -206,7 +233,8 @@
         layout.style['-webkit-transform'] = "translateY(0)";
       }
     }
-  }, false);
+  }
+
 
   function createButton(mode, text) {
     var elem = d.createElement("div");
@@ -239,7 +267,10 @@
     layout.style.transform = 'translateY(100px)';
     layout.style.opacity = '0';
     layout.style.visibility = 'hidden';
-    d.removeChild(d.getElementById(__id + "additionalPadding"));
+
+
+    window.removeEventListener(messageEvent, onPostMessage)
+    d.body.removeChild(d.getElementById(__id + "additionalPadding"));
     setTimeout(function() {
       layout.style.display = 'none';
     }, 400);

@@ -43,7 +43,7 @@
 
   <header class="top">
     <div class="menuver" ng-click="ctr.toggleMenu()">
-      <i class="fa fa-bars"></i>
+      <i class="ion-settings"></i>
     </div>
 
     <div class="resizer" ng-click="ctr.resizeIframe()">
@@ -60,7 +60,9 @@
   </div>
 
   <div class="leftMenu">
-    asdasd
+    <h2>Настройки расширения</h2>
+
+    <section social-template-editor></section>
   </div>
 
   <div class="translateArea ">
@@ -69,77 +71,77 @@
       <div class="fakePushOverlay" ng-click="ctr.toggleMenu()"></div>
       <section ng-if="ctr._state === 'post'" ng-controller="C_posting as post_ctr">
 
-        <section class="setSelecterArea" ng-show="post_ctr.showSetSelect()">
+
+
+        <section class="window">
+
+          <section class="setSelecterArea" ng-show="post_ctr.showSetSelect()">
 
 
 
 
-          <span class="sharePhrase">Поделиться записью в</span>
-          <span class="groupSelect">
+            <span class="sharePhrase">Поделиться записью в</span>
+            <span class="groupSelect">
           <ui-select ng-model="post_ctr.selectedSet" theme="select2">
             <ui-select-match placeholder="Выбери набор, в который нужно разместить запись" ng-bind="$select.selected.name"></ui-select-match>
             <ui-select-choices repeat="set in post_ctr.sets | findGroups: {name: $select.search}">
               <span class="name" ng-bind-html="set.name | highlight: $select.search"></span>
-          <span class="count">
+            <span class="count">
                 <span ng-pluralize count="post_ctr.getChannelsCount(set.feed_ids)" when="post_ctr.channelsPlural">
                 </span>
-          </span>
-          </ui-select-choices>
-          </ui-select>
-          </span>
-        </section>
-
-        <section class="window">
-
-
+            </span>
+            </ui-select-choices>
+            </ui-select>
+            </span>
+          </section>
           <section class="v_channels">
             <div class="channelsList">
-              <span channel="channel" ng-repeat="channel in post_ctr.channels" parsed-text="post_ctr.text" parsed-link="post_ctr.link" page-attachments="post_ctr.pageAttachments" post-channel-again="post_ctr.postChannelAgain(channel.id)"></span>
+              <span channel="channel" ng-repeat="channel in post_ctr.channels" page-data="post_ctr.data" post-channel-again="post_ctr.postChannelAgain(channel.id)"></span>
+            </div>
+
+            <div class="noChannels" ng-if="post_ctr.channelsIsLoaded && !post_ctr.channels.length">
+              В данном наборе еще нет каналов. Публикация невозможна :(
             </div>
           </section>
 
-          <footer class="slidingFooter active">
-            <section class="bottomFooter" ng-if="ctr._state === 'post'">
 
-              <div class="postingProgressPanel" ng-class="{'active':post_ctr.postingCount > 0}">
-                <div class="greenLine" ng-style="post_ctr.getProgressLineStyles()">
-
-                </div>
-                <div class="progress-bar progress-bar-info progress-bar-striped active" ng-class="{'hideLine':post_ctr.allPostsComplete}"></div>
-                <div class="numbers">
-                  <span ng-show="post_ctr.allPostsComplete">Все записи размещены!</span>
-                  <span ng-hide="post_ctr.allPostsComplete">
-                    <span ng-bind="post_ctr.completePostsCount"></span>/<span ng-bind="post_ctr.postingCount"></span>
-                  </span>
-                </div>
-              </div>
-
-
-
-              <div class="centered clearfix sendPanel" ng-class="{'active':!post_ctr.postingCount}">
-
-                <div class="dark postingTimer pull-left ng-hide">
-                  <div class="calendar inline" date-button="" min-date="ctr.minDate" max-date="ctr.maxDate" data-model="ctr.postingDate" class="picker_inputs"></div>
-                  <span class="in inline">в</span>
-                  <div class="timec inline" time-select="" time="ctr.postingTime" set-new-time="ctr.onTimeChange(time)"></div>
-                </div>
-
-                <div class="pull-right">
-                  <div class="checkboxList controls-list">
-                    <label>
-                      <input type="checkbox" ng-model="post_ctr.closeAfterSuccess">
-                      <span>Закрыть после публикации</span>
-                    </label>
-                  </div>
-
-                  <button type="button" class="btn btn-success" ng-disabled="post_ctr.paidIsEnd || post_ctr.processingAttachments.length" ng-click="post_ctr.createPost()">
-                    <span>Опубликовать</span>
-                  </button>
-                </div>
-              </div>
-            </section>
-          </footer>
         </section>
+
+        <footer class="slidingFooter" ng-if="ctr._state === 'post' && post_ctr.channelsIsLoaded && post_ctr.channels.length" ng-class="{'planned':post_ctr.timerIsEnabled, 'publishing': post_ctr.showPostProcessingLayer()}">
+          <section class="disableLayer"></section>
+
+            <div class="centered clearfix sendPanel" ng-class="{'active':!post_ctr.showPostProcessingLayer()}">
+              <section class="postingTimerArea pull-left">
+                <h3 ng-hide="post_ctr.timerIsEnabled">Разместить запись <strong>сейчас</strong> / <span class="link addTimer" ng-click="post_ctr.addTimer()">Добавить таймер</span></h3>
+                <h3 ng-show="post_ctr.timerIsEnabled">Разместить отложенную запись / <span class="link addTimer" ng-click="post_ctr.removeTimer()">Разместить сейчас</span></h3>
+
+
+                <div class="postingTimer">
+                  <div class="calendar inline" date-button min-date="post_ctr.minDate" max-date="post_ctr.maxDate" data-model="post_ctr.postingDate" class="picker_inputs"></div>
+                  <span class="in inline">в</span>
+                  <div class="timec inline" time-select time="post_ctr.postingTime" set-new-time="post_ctr.onTimeChange(time)"></div>
+                </div>
+              </section>
+
+              <div class="pull-right">
+                <div class="checkboxList controls-list">
+                  <label>
+                    <input type="checkbox" ng-model="post_ctr.closeAfterSuccess">
+                    <span>Закрыть после публикации</span>
+                  </label>
+                </div>
+
+                <button type="button" class="btn btn-success sendButton" ng-disabled="post_ctr.paidIsEnd || post_ctr.processingAttachments.length" ng-click="post_ctr.createPost()">
+                  <span class="publicWord">Опубликовать</span>
+                  <span class="planWord">Запланировать</span>
+                  <div class="progress-bar progress-bar-info progress-bar-striped active" ng-class="{'hideLine':post_ctr.allPostsComplete}">
+                    <span class="ion-load-c loader fa-spin"></span>
+                  </div>
+                </button>
+              </div>
+            </div>
+    
+        </footer>
       </section>
 
       <section ng-if="ctr._state === 'login'" ng-include="'templates/views/login.html'">
@@ -148,6 +150,7 @@
     </div>
   </div>
 
+  <div half-height class="halfHeight"></div>
 
 
   <script type="text/javascript" src="/pack/vendor.js"></script>
