@@ -4,6 +4,7 @@ var App = angular.module('App', [
   'vkTools',
   'chromeTools',
   'ngSanitize',
+  'ngAnimate',
   'utilsTools',
   'ui.bootstrap',
   'ui.select',
@@ -21,13 +22,9 @@ App.config([
 ]);
   
 angular.module('config', [])
-  .constant('__vkAppId', 4639658)
-  .constant('__cabinet',{
-    domain: 'smm.dev'
-  })
   .constant('__api', {
-    baseUrl: 'http://api.smm.dev/',
-    paths: {
+    baseUrl: 'http://api.10hands.io/',
+    paths: { 
       saveExtensionVkToken: 'accounts/vkontakte/add',
       getShortUrl: 'utils/shortUrl',
       getAssignKey: 'user/getAssignKey',
@@ -44,23 +41,17 @@ angular.module('config', [])
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
   .constant('__maxPollVariants', 10)
   .constant('__maxAttachments', 9)
-  .constant('__timelinePeriods', {
-    grouppingInterval: 30 * 60,
-    minOffset: -5 * 3600,
-    maxOffset: 24 * 3600,
-  })
   .constant('__twitterConstants',{
     maxSymbols: 140,
     linkLen: 22,
     mediaLen: 23
   })
 App.run([
-  '__vkAppId',
   'S_chrome',
   'S_vk',
   'S_google',
   'S_selfapi',
-  function(__vkAppId, S_chrome, S_vk, S_google, S_selfapi) {
+  function(S_chrome, S_vk, S_google, S_selfapi) {
 
     Highcharts.setOptions({
       global: {
@@ -76,55 +67,8 @@ App.run([
 
     S_google.init();
 
-    S_chrome.getVkToken().then(function(token) {
-
-      S_vk.setToken(token);
-      S_vk.testRequest(function() {
-        console.log(1);
-      }, function() {
-        console.log(2);
-      });
-    }, function() {
-      chrome.runtime.sendMessage({
-        vk_auth: true
-      }, function(response) {
-        console.log(response.farewell);
-      });
-    });
   }
 ]);
-
-angular.module('App').controller('C_afterAuth', [
-  '$scope',
-  'S_vk',
-  'S_selfapi',
-  'S_chrome',
-  'S_eventer',
-  function($scope, S_vk, S_selfapi, S_chrome, S_eventer) {
-    var ctr = this;
-
-
-    S_chrome.getVkToken().then(function(token) {
-      if (token) {
-        S_selfapi.sendExtensionToken(token).then(function(resp) {
-          ctr.canClose = true;
-          ctr.accountName = resp.data.data.screen_name;
-        });
-      } else {
-        location.href = '/pages/afterInstall.html';
-      }
-    })
-
-
-
-    ctr.closeWindow = function() {
-      window.close();
-    }
-
-    return ctr;
-  }
-]);
-
 angular.module('App').controller('C_afterInstall', [
   '$scope',
   '$location',
@@ -132,41 +76,6 @@ angular.module('App').controller('C_afterInstall', [
   function($scope, $location, S_vk) {
     var ctr = this;
 
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('C_authVk', [
-  '$scope',
-  '$location',
-  'S_vk',
-  function($scope, $location, S_vk) {
-    var ctr = this;
-    
-    ctr.singIn = function() {
-      var currentTab;
-
-      chrome.tabs.getCurrent(function(tab) {
-        currentTab = tab;
-
-        S_vk.callAuthPopup().then(function(tab) {
-
-
-          chrome.tabs.remove(tab.id, function() {});
-
-
-          chrome.tabs.update(
-            currentTab.id, {
-              'url': '/pages/afterAuth.html',
-              'active': true
-            },
-            function(tab) {}
-          );
-        })
-      })
-
-    }
 
     return ctr;
   }
@@ -242,6 +151,10 @@ angular.module('App').controller('C_main', [
       _pushedMenu = !_pushedMenu;
     }
 
+    ctr.emptyChannels = function(){
+      S_eventer.sendEvent('emptyChannels');
+    }
+
     ctr.isPushed = function() {
       return _pushedMenu;
     }
@@ -253,20 +166,21 @@ angular.module('App').controller('C_main', [
 
     ctr.getUserInfo();
 
+    $scope.$on('showSuccessProgress', function() {
+      ctr.showSing = true;
+      $timeout(function() {
+        ctr.showSing = false;
+      }, 2000);  
+    });
+
+
+
     return ctr;
   }
 ]);
 
-angular.module('App').controller('C_posting', [
-  '$scope',
-  '$compile',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+angular.module('App').controller('C_posting',
+  ["$scope", "$compile", "$timeout", "S_utils", "S_selfapi", "S_eventer", function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
     var ctr = this;
 
     var _socketListeningId;
@@ -311,6 +225,10 @@ angular.module('App').controller('C_posting', [
       });
     });
 
+    $scope.$on('emptyChannels', function() {
+      ctr.allPostsComplete = false;
+      S_utils.disableProgress(ctr.channels);
+    });
 
 
     $scope.$on('loadedDataFromTab', function(event, data) {
@@ -332,25 +250,6 @@ angular.module('App').controller('C_posting', [
       if (ctr.postingNow) {
         S_utils.trackProgress(ctr.channels, postInfo);
       }
-
-      /*
-            $timeout(function() {
-              ctr.completePostsCount++;
-              onChannelInfoRecieved();
-            }, 500);
-
-            $timeout(function() {
-              ctr.completePostsCount++;
-              ctr.errorPostCount++;
-              onChannelInfoRecieved();
-            }, 1000);
-
-            $timeout(function() {
-              ctr.completePostsCount++;
-              onChannelInfoRecieved();
-            }, 1500);
-            return;
-      */
 
       S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? ctr.postingUnixTime : undefined)).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
@@ -393,8 +292,10 @@ angular.module('App').controller('C_posting', [
 
         socket.on('post_planned_success', function(data) {
           $scope.$apply(function() {
-            ctr.postingInProgress = true;
+            ctr.postingInProgress = false;
             ctr.allPostsComplete = true;
+
+            S_eventer.sendEvent('showSuccessProgress');
           });
         });
       });
@@ -403,10 +304,15 @@ angular.module('App').controller('C_posting', [
         if (ctr.completePostsCount === ctr.postingCount) {
           if (ctr.errorPostCount) {
             ctr.postingInProgress = false;
+            S_eventer.sendEvent('showSuccessProgress');
           } else {
             ctr.allPostsComplete = true;
+            ctr.postingInProgress = false;
+            S_eventer.sendEvent('showSuccessProgress');
             if (ctr.closeAfterSuccess) {
-              S_eventer.sayToFrame('close');
+              $timeout(function() {
+                S_eventer.sayToFrame('close');
+              }, 2000);
             }
           }
         }
@@ -423,6 +329,10 @@ angular.module('App').controller('C_posting', [
         width: ((d * 100) + '%'),
         opacity: d
       }
+    }
+
+    ctr.showFooter = function() {
+      return ctr.channelsIsLoaded && ctr.channels.length && !ctr.allPostsComplete;
     }
 
     ctr.postChannelAgain = function(channel_id) {
@@ -469,7 +379,7 @@ angular.module('App').controller('C_posting', [
         }
         ctr.onTimeChange(ctr.postingTime);
       } else {
-        ctr.postingUnixTime = S_utils.getCurrentTime();
+        ctr.postingUnixTime = +moment.utc().format('X');
       }
     });
 
@@ -482,30 +392,21 @@ angular.module('App').controller('C_posting', [
         ctr.postingTime = time;
       }
 
-      var dateUnix = +moment(ctr.postingDate).format('X');
+      var dateUnix = +moment.utc(ctr.postingDate).format('X');
       var startDate = ctr.postingTime;
 
       var res = dateUnix + startDate;
 
-      if (res > S_utils.getCurrentTime()) {
+      if (res > moment.utc().format('X')) {
         ctr.postingUnixTime = dateUnix + startDate;
       } else {
         ctr.pastTime = true;
       }
     }
 
-    ctr.addTimer = function() {
-      ctr.timerIsEnabled = true;
-      ctr.postingNow = false;
-    }
-    ctr.removeTimer = function() {
-      ctr.timerIsEnabled = false;
-      ctr.postingNow = true;
-    }
-
     return ctr;
-  }
-]);
+  }]
+);
 
 angular.module('App').controller('C_posting_back', [
   '$scope',
@@ -874,110 +775,6 @@ angular.module('App').controller('C_posting_back', [
     return ctr;
   }
 ]);
-
-angular.module('App').filter('findGroups', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) { 
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  }
-});
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
-angular.module('App').filter('parseVkText', [function() {
-  return function(input, removeLink) {
-    if (!input) {
-      return;
-    }
-
-    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
-    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
-
-
-
-    var bytes = [];
-
-    for (var i = 0; i < input.length; ++i) {
-      bytes.push(input.charCodeAt(i));
-    }
-
-    var ranges = [
-      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
-      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
-      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
-    ];
-
-    input = emojiParseInText(input);
-      
-    var text = input;
-
-    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
-    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
-
-    return text;
-  }
-}]);
-
-angular.module('App').filter('substring', [function() {
-  return function(text, len) {
-    len = len || 100;
-    if (!text) {
-      return;
-    } 
-
-    if (text.length > len){
-      return text.substring(0,len);
-    } else {
-      return text;
-    }
-  }
-}]);
- 
-angular.module('App').filter('toGIS', function() {
-  return function(time) {
-    if (!time) {
-      return '';
-    }
-    var out = '';
-    var s_last = time % 60;
-    var s_minutes = (time - s_last) / 60;
-    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
-    return out;
-  }
-});
 
 angular.module('App').directive('attachPoll', [function() {
   return {
@@ -1489,108 +1286,95 @@ angular.module('App').directive('sourceLink', [function() {
   }
 }]);
 
-angular.module('App').directive('textareaValidator', [
-  '$timeout',
-  'S_utils',
-  function($timeout, S_utils) {
-  return {
-    scope: {
-      model: '=',
-      channel: '=channelInfo',
-      showCounter: '='
-    }, 
-    templateUrl: 'templates/directives/textareaValidator.html',
-    link: function($scope, $element, attrs, ngModelCtrl) {
-      var maxLength = 0;
+angular.module('App').directive('textareaValidator',
+  ["$timeout", "S_utils", function($timeout, S_utils) {
+    return {
+      scope: {
+        model: '=',
+        channel: '=channelInfo',
+        showCounter: '='
+      },
+      templateUrl: 'templates/directives/textareaValidator.html',
+      link: function($scope, $element, attrs, ngModelCtrl) {
+        var maxLength = 0;
 
 
-      var DOM = {
-        parent: $element.find('.textareaValidator'),
-        textarea: $element.find('.textarea'),
-        section: $element.find('.text'),
-        urls: $element.find('.urls'),
-        counter: $element.find('.counter span')
-      }
-
-      DOM.textarea.on('keyup keydown keypress', function(){
-        $timeout(track);
-      }).on('scroll',function(){
-        DOM.section.scrollTop($(this).scrollTop());
-      });
-
-
-      $scope.$watch('channel.text', function(q) {
-        if (!q) return;
-
-        DOM.textarea.val(q);
-        track();
-      });
-
-      $scope.$watch(function(){
-        return S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
-      }, function(q) {
-        if (!q) return;
-        maxLength = q;
-        track(); 
-      });
-
-      function track() {
-        var separateSymbol = 'Ξ';
-        var val = DOM.textarea.val();
-        var text = val.replace(/\n/g, separateSymbol);
-
-        var res = text.match(new RegExp('.{' + maxLength + '}(.*)'));
-
-        if (res !== null) {
-          var extra = res[1];
-          var extraFilter = S_utils.escapeRegex(extra);
-
-          var newContent = text.replace(new RegExp(extraFilter + '$'),"<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
-          DOM.section.html(newContent+'<br>').height(DOM.textarea.height());
-        } else {
-          DOM.section.html('');
+        var DOM = {
+          parent: $element.find('.textareaValidator'),
+          textarea: $element.find('.textarea'),
+          section: $element.find('.text'),
+          urls: $element.find('.urls'),
+          counter: $element.find('.counter span')
         }
 
-        if ($scope.showCounter){
-          DOM.counter.empty();
-          var last = maxLength - text.length;
-          var className = 'zero';
-          if (last > 0) className = 'more';
-          if (last < 0) className = 'less';
+        DOM.textarea.on('keyup keydown keypress', function() {
+          $timeout(track);
+        }).on('scroll', function() {
+          DOM.section.scrollTop($(this).scrollTop());
+        });
 
-          if (text.length / maxLength > 0.1){
-            className += ' active';
+
+        $scope.$watch('channel.text', function(q, old) {
+          if (!q) return;
+          console.log(q);
+
+          track(q);
+        });
+
+
+        $scope.$on('emptyChannels', function(event, data) {
+          DOM.textarea.val('');
+          track();
+        });
+
+        $scope.$watch(function() {
+          return S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
+        }, function(q, z) {
+          if (!q || q === z) return;
+          maxLength = q;
+          track();
+        });
+
+        function track(q) {
+          var separateSymbol = 'Ξ';
+          var val = q || DOM.textarea.val();
+          var text = val.replace(/\n/g, separateSymbol);
+
+          var res = text.match(new RegExp('.{' + maxLength + '}(.*)'));
+
+          if (res !== null) {
+            var extra = res[1];
+            var extraFilter = S_utils.escapeRegex(extra);
+
+            var newContent = text.replace(new RegExp(extraFilter + '$'), "<span class='highlight'>" + extra + "</span>").replace(new RegExp(separateSymbol, 'g'), "<br>");
+            DOM.section.html(newContent + '<br>').height(DOM.textarea.height());
+          } else {
+            DOM.section.html('');
           }
 
-          DOM.counter.removeClass().addClass(className).html(last);
+          if ($scope.showCounter) {
+            DOM.counter.empty();
+            var last = maxLength - text.length;
+            var className = 'zero';
+            if (last > 0) className = 'more';
+            if (last < 0) className = 'less';
+
+            if (text.length / maxLength > 0.1) {
+              className += ' active';
+            }
+
+            DOM.counter.removeClass().addClass(className).html(last);
+          }
+
+          DOM.textarea.trigger('scroll');
+          DOM.textarea.val(val);
+          if (!q) {
+            $scope.channel.text = val;
+          }
         }
-
-        DOM.textarea.trigger('scroll');
-
-        $scope.channel.text = val;
       }
-
-    }
-  };
-}]).filter('cut', function() {
-  return function(value, wordwise, max, tail) {
-    if (!value) return '';
-
-    max = parseInt(max, 10);
-    if (!max) return value;
-    if (value.length <= max) return value;
-
-    value = value.substr(0, max);
-    if (wordwise) {
-      var lastspace = value.lastIndexOf(' ');
-      if (lastspace != -1) {
-        value = value.substr(0, lastspace);
-      }
-    }
-
-    return value + (tail);
-  };
-});;
+    };
+  }])
 
 angular.module('App').directive('timeSelect', [function() {
   return {
@@ -1666,6 +1450,110 @@ angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_util
   }
 }]);
  
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
+
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
+
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  }
+});
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('App').filter('parseVkText', [function() {
+  return function(input, removeLink) {
+    if (!input) {
+      return;
+    }
+
+    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
+    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
+
+
+
+    var bytes = [];
+
+    for (var i = 0; i < input.length; ++i) {
+      bytes.push(input.charCodeAt(i));
+    }
+
+    var ranges = [
+      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
+      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
+      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
+    ];
+
+    input = emojiParseInText(input);
+      
+    var text = input;
+
+    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
+    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
+
+    return text;
+  }
+}]);
+
+angular.module('App').filter('substring', [function() {
+  return function(text, len) {
+    len = len || 100;
+    if (!text) {
+      return;
+    } 
+
+    if (text.length > len){
+      return text.substring(0,len);
+    } else {
+      return text;
+    }
+  }
+}]);
+ 
+angular.module('App').filter('toGIS', function() {
+  return function(time) {
+    if (!time) {
+      return '';
+    }
+    var out = '';
+    var s_last = time % 60;
+    var s_minutes = (time - s_last) / 60;
+    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
+    return out;
+  }
+});
+
 angular.module('chromeTools', [])
   .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
     var service = {};
@@ -1675,26 +1563,10 @@ angular.module('chromeTools', [])
       window.addEventListener('message', function(e) {
         S_eventer.sendEvent('loadedDataFromTab', e.data);
       });
-
     }
-
-
-    service.getVkToken = function() {
-      var defer = $q.defer();
-      chrome.storage.local.get({
-        'vkaccess_token': {}
-      }, function(items) {
-        if (items.vkaccess_token.length !== undefined) {
-          defer.resolve(items.vkaccess_token);
-        } else {
-          defer.reject();
-        }
-      });
-      return defer.promise;
-    }
-
 
     service.showExtensionPopup = function(tab, info) {
+      debugger 
       chrome.tabs.executeScript(tab.id, {
         file: "pack/pageEnviroment.js"
       });
@@ -1715,8 +1587,7 @@ angular.module('App')
   .service('S_eventer', [
     '$rootScope',
     '__postMessagePrepend',
-    '__cabinet',
-    function($rootScope, __postMessagePrepend, __cabinet) {
+    function($rootScope, __postMessagePrepend) {
       var service = {};
 
       service.sendEvent = function(name, arguments) {
@@ -1944,9 +1815,8 @@ angular.module('utilsTools', [])
     '$templateCache',
     '$compile',
     '$rootScope',
-    '__timelinePeriods',
     '__twitterConstants',
-    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods, __twitterConstants) {
+    function($modal, $q, $templateCache, $compile, $rootScope, __twitterConstants) {
       var service = {};
 
       service.getUrlParameterValue = function(url, parameterName) {
@@ -2218,6 +2088,14 @@ angular.module('utilsTools', [])
         return postInfo;
       }
 
+      service.disableProgress = function(channels) {
+        _.forEach(channels, function(channel) {
+          channel.inprogress = false;
+          channel.complete = false;
+          channel.error = false;
+        });
+      }
+
       service.trackProgress = function(channels, info) {
         var q;
         _.forEach(info, function(_channel) {
@@ -2304,148 +2182,8 @@ angular.module('vkTools', [])
     '$q',
     '$http',
     'S_utils',
-    '__vkAppId',
-    function($q, $http, S_utils, __vkAppId) {
+    function($q, $http, S_utils ) {
       var service = {};
-
-      service.default = {
-        version: '5.26',
-        language: 'ru'
-      };
-
-      var _requestStack = [];
-
-      function listenerHandler(authenticationTabId, afterAuth) {
-        "use strict";
-
-        return function tabUpdateListener(tabId, changeInfo) {
-          var vkAccessToken,
-            vkAccessTokenExpiredFlag;
-
-          if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
-
-            if (changeInfo.url.indexOf('oauth.vk.com/blank.html') > -1) {
-              authenticationTabId = null;
-              chrome.tabs.onUpdated.removeListener(tabUpdateListener);
-
-              vkAccessToken = S_utils.getUrlParameterValue(changeInfo.url, 'access_token');
-
-              if (vkAccessToken === undefined || vkAccessToken.length === undefined) {
-                displayeAnError('vk auth response problem', 'access_token length = 0 or vkAccessToken == undefined');
-                return;
-              }
-
-              vkAccessTokenExpiredFlag = Number(S_utils.getUrlParameterValue(changeInfo.url, 'expires_in'));
-
-              if (vkAccessTokenExpiredFlag !== 0) {
-                displayeAnError('vk auth response problem', 'vkAccessTokenExpiredFlag != 0' + vkAccessToken);
-                return;
-              }
-              service.setToken(vkAccessToken);
-              chrome.storage.local.set({
-                'vkaccess_token': vkAccessToken
-              }, function() {
-                afterAuth();
-              });
-            }
-          }
-        };
-      }
-
-
-      service.request = function(_method, _params, _response) {
-        var defer = $q.defer();
-
-        service.getToken().then(function(token) {
-
-          var path = '/method/' + _method + '?' + 'access_token=' + service.token;
-          _params['v'] = _params['v'] || service.default.version;
-          _params['lang'] = _params['lang'] || service.default.language;
-
-          for (var key in _params) {
-            if (key === "message") {
-              path += ('&' + key + '=' + encodeURIComponent(_params[key]));
-            } else {
-              path += ('&' + key + '=' + _params[key]);
-            }
-          }
-
-
-          $http.get('https://api.vk.com' + path).then(function(res) {
-            if (typeof _response === 'function') {
-              _response(res.data);
-            } else {
-              defer.resolve(res.data);
-            }
-          });
-        });
-
-        return defer.promise;
-      };
-
-      service.setToken = function(token) {
-        service.token = token;
-        if (_requestStack.length > 0) {
-          angular.forEach(_requestStack, function(request) {
-            request.resolve(token);
-          });
-        }
-      };
-
-      service.testRequest = function() {
-        var defer = $q.defer();
-        service.request('users.get', {}, function(resp) {
-          if (resp.success) {
-            defer.resolve();
-          } else {
-            defer.reject();
-          }
-        })
-        return defer.promise;
-      }
-
-      service.callAuthPopup = function() {
-        var defer = $q.defer();
-        var vkAuthenticationUrl = 'https://oauth.vk.com/authorize?client_id=' + __vkAppId + '&scope=' + 'groups,photos,friends,video,audio,wall,offline,docs,stats' + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
-
-        chrome.tabs.create({ 
-          url: vkAuthenticationUrl,
-          selected: true
-        }, function(tab) {
-
-          chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, function() {
-            defer.resolve(tab);
-          }));
-        });
-
-        return defer.promise;
-      }
-
-      service.createPoll = function(attach, group_id) {
-        return service.request('polls.create', {
-          question: attach.question,
-          is_anonymous: (attach.is_anonymous) ? 1 : 0,
-          owner_id: "-"+group_id,
-          add_answers: JSON.stringify(_.uniq(_.reduce(attach.variants,function(max, q){
-            if (q.text && q.text !== ''){
-              max.push(q.text);
-            }
-            return max;
-          },[])))
-        });
-      }
-
-      service.getToken = function() {
-        var defer = $q.defer();
-
-        if (service.token) {
-          defer.resolve(service.token);
-        } else {
-          _requestStack.push(defer);
-        }
-
-        return defer.promise;
-      };
 
       return service;
     }
@@ -3961,6 +3699,14 @@ angular.module('App').controller('CD_channel',
       parseData(data);
     });
 
+    $scope.$on('emptyChannels', function(event, data) {
+      ctr.data = {};
+      ctr.text = '';
+      $scope.channel.text = '';
+
+      $scope.channel.attachments.length = 0;
+    });
+
     $scope.$on('trigger:templateChanged', function() {
       parseData(ctr.data);
     });
@@ -3991,7 +3737,6 @@ angular.module('App').controller('CD_channel',
         $scope.channel.attachments.push(images[0]);
       }
 
-      //S_utils.decodeEntities(data.selection || data.title)
       $scope.channel.text = $interpolate(S_templater.getTemplate())(ctr.data);
     }
 
@@ -4083,19 +3828,12 @@ angular.module('App').controller('CD_channel',
       return S_utils.attachmentsLimitReached(network, $scope.channel.attachments.length);
     }
 
-
-
     ctr.showActions = function(channel) {
       return !channel.inprogress && !channel.error && !channel.complete;
     }
 
     ctr.showProgress = function(channel) {
       return channel.inprogress;
-    }
-
-    ctr.setChannelText = function(text) {
-      console.log(text);
-      $scope.channel.text = text;
     }
 
     return ctr;
@@ -4174,7 +3912,7 @@ angular.module('App').controller('CD_socialTemplateEditor',
     return ctr;
   }]
 );
-
+ 
 angular.module('App').controller('CD_sourceLink', [
   '$scope',
   'S_vk',

@@ -4,27 +4,17 @@
   margin: 15px;
   float: left;
   position: relative;
+  overflow: hidden;
+  transition: 0.5s;
+  max-height:1000px;
+  &.inprogress {
+
+  }
   header {
     padding: 10px 15px;
     position: relative;
     border-radius: 1px;
-    .progress-bar {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      z-index: 2;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.4s;
-      width: 100%;
-      background-color: rgba(0, 0, 0, 0)!important;
-      &.showed {
-        opacity: 1;
-        visibility: visible;
-      }
-    }
+    
     .screen_name {
       z-index: 3;
       position: relative;

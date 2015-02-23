@@ -26,3 +26,4 @@ angular.module('App').controller('CD_socialTemplateEditor',
     return ctr;
   }
 );
+ 

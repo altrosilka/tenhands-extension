@@ -9,9 +9,6 @@
     image = imagesColection.item(i);
     //console.log(image, image.src)
 
-    if (image.src === 'http://www.lookatme.ru/mag/live/experience-news/209627-trailer') {
-      //debugger
-    }
     if (image.hidden || image.naturalHeight < 100 || image.naturalWidth < 100 || image.width < 150 || image.height < 150) {
       continue;
     }
@@ -88,7 +85,7 @@
       setTimeout(sendToIframe, 300);
     } else {
       setTimeout(function() {
-        frame.contentWindow.postMessage(data, 'chrome-extension://njbifdlkgjknapheokjpilhjpemjbmnk');
+        frame.contentWindow.postMessage(data, 'chrome-extension://'+chrome.runtime.id);
       }, 500);
     }
   }

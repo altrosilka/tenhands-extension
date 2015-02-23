@@ -16,6 +16,14 @@ angular.module('App').controller('CD_channel',
       parseData(data);
     });
 
+    $scope.$on('emptyChannels', function(event, data) {
+      ctr.data = {};
+      ctr.text = '';
+      $scope.channel.text = '';
+
+      $scope.channel.attachments.length = 0;
+    });
+
     $scope.$on('trigger:templateChanged', function() {
       parseData(ctr.data);
     });
@@ -46,7 +54,6 @@ angular.module('App').controller('CD_channel',
         $scope.channel.attachments.push(images[0]);
       }
 
-      //S_utils.decodeEntities(data.selection || data.title)
       $scope.channel.text = $interpolate(S_templater.getTemplate())(ctr.data);
     }
 
@@ -138,19 +145,12 @@ angular.module('App').controller('CD_channel',
       return S_utils.attachmentsLimitReached(network, $scope.channel.attachments.length);
     }
 
-
-
     ctr.showActions = function(channel) {
       return !channel.inprogress && !channel.error && !channel.complete;
     }
 
     ctr.showProgress = function(channel) {
       return channel.inprogress;
-    }
-
-    ctr.setChannelText = function(text) {
-      console.log(text);
-      $scope.channel.text = text;
     }
 
     return ctr;

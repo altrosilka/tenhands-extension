@@ -1,8 +1,6 @@
-<div class="channel socialBg" data-network="{{channel_ctr.network}}" ng-class="{'complete': channel_ctr.isComplete(), 'fail': channel_ctr.isFail()}">
+<div class="channel socialBg" data-network="{{channel_ctr.network}}" ng-class="{'complete': channel_ctr.isComplete(), 'fail': channel_ctr.isFail(), 'inprogress':channel_ctr.showProgress(channel)}">
   <div class="workArea">
     <header class="social_bg deep" data-network="{{channel_ctr.network}}">
-      <div class="progress-bar progress-bar-info progress-bar-striped active" ng-class="{'showed':channel_ctr.showProgress(channel)}"></div>
-
       <span class="actions" ng-show="channel_ctr.showActions(channel)">
         <span class="visibility" ng-click="channel_ctr.toggleVisibility(channel)">
           <i class="fa fa-eye" ng-class="{'active': channel.disabled}"></i>
@@ -91,7 +89,7 @@
         <div class="attachesArea" select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
 
-      <!-- INSTAGRAM -->
+      <!-- INSTAGRAM 
       <div ng-if="channel_ctr.network === 'ig'">
 
         <div textarea-validator max-length="channel_ctr.getMaxTextLength(channel.network, channel.attachments, channel.text)" model="channel.text" show-counter="true"></div>
@@ -101,9 +99,10 @@
             <i class="fa fa-picture-o"></i><span>изображение</span>
           </span>
         </div>
-        <!--<div instagram-area="channel_ctr.attachments[0]"></div>-->
+
         <div class="attachesArea" select-crop-area selected-attachments="channel_ctr.selectedAttachments" processing-attachments="channel_ctr.processingAttachments" attachments="channel.attachments" main-mode="true"></div>
       </div>
+      -->
     </div>
   </div>
   <div class="completeArea">

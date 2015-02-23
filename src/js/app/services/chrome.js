@@ -7,26 +7,10 @@ angular.module('chromeTools', [])
       window.addEventListener('message', function(e) {
         S_eventer.sendEvent('loadedDataFromTab', e.data);
       });
-
     }
-
-
-    service.getVkToken = function() {
-      var defer = $q.defer();
-      chrome.storage.local.get({
-        'vkaccess_token': {}
-      }, function(items) {
-        if (items.vkaccess_token.length !== undefined) {
-          defer.resolve(items.vkaccess_token);
-        } else {
-          defer.reject();
-        }
-      });
-      return defer.promise;
-    }
-
 
     service.showExtensionPopup = function(tab, info) {
+      debugger 
       chrome.tabs.executeScript(tab.id, {
         file: "pack/pageEnviroment.js"
       });

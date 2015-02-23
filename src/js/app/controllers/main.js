@@ -38,6 +38,10 @@ angular.module('App').controller('C_main', [
       _pushedMenu = !_pushedMenu;
     }
 
+    ctr.emptyChannels = function(){
+      S_eventer.sendEvent('emptyChannels');
+    }
+
     ctr.isPushed = function() {
       return _pushedMenu;
     }
@@ -48,6 +52,15 @@ angular.module('App').controller('C_main', [
     });
 
     ctr.getUserInfo();
+
+    $scope.$on('showSuccessProgress', function() {
+      ctr.showSing = true;
+      $timeout(function() {
+        ctr.showSing = false;
+      }, 2000);  
+    });
+
+
 
     return ctr;
   }

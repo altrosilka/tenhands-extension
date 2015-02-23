@@ -2,8 +2,7 @@ angular.module('App')
   .service('S_eventer', [
     '$rootScope',
     '__postMessagePrepend',
-    '__cabinet',
-    function($rootScope, __postMessagePrepend, __cabinet) {
+    function($rootScope, __postMessagePrepend) {
       var service = {};
 
       service.sendEvent = function(name, arguments) {

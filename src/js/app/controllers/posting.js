@@ -1,13 +1,5 @@
-angular.module('App').controller('C_posting', [
-  '$scope',
-  '$compile',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
+angular.module('App').controller('C_posting',
+  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
     var ctr = this;
 
     var _socketListeningId;
@@ -52,6 +44,10 @@ angular.module('App').controller('C_posting', [
       });
     });
 
+    $scope.$on('emptyChannels', function() {
+      ctr.allPostsComplete = false;
+      S_utils.disableProgress(ctr.channels);
+    });
 
 
     $scope.$on('loadedDataFromTab', function(event, data) {
@@ -73,25 +69,6 @@ angular.module('App').controller('C_posting', [
       if (ctr.postingNow) {
         S_utils.trackProgress(ctr.channels, postInfo);
       }
-
-      /*
-            $timeout(function() {
-              ctr.completePostsCount++;
-              onChannelInfoRecieved();
-            }, 500);
-
-            $timeout(function() {
-              ctr.completePostsCount++;
-              ctr.errorPostCount++;
-              onChannelInfoRecieved();
-            }, 1000);
-
-            $timeout(function() {
-              ctr.completePostsCount++;
-              onChannelInfoRecieved();
-            }, 1500);
-            return;
-      */
 
       S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? ctr.postingUnixTime : undefined)).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
@@ -134,8 +111,10 @@ angular.module('App').controller('C_posting', [
 
         socket.on('post_planned_success', function(data) {
           $scope.$apply(function() {
-            ctr.postingInProgress = true;
+            ctr.postingInProgress = false;
             ctr.allPostsComplete = true;
+
+            S_eventer.sendEvent('showSuccessProgress');
           });
         });
       });
@@ -144,10 +123,15 @@ angular.module('App').controller('C_posting', [
         if (ctr.completePostsCount === ctr.postingCount) {
           if (ctr.errorPostCount) {
             ctr.postingInProgress = false;
+            S_eventer.sendEvent('showSuccessProgress');
           } else {
             ctr.allPostsComplete = true;
+            ctr.postingInProgress = false;
+            S_eventer.sendEvent('showSuccessProgress');
             if (ctr.closeAfterSuccess) {
-              S_eventer.sayToFrame('close');
+              $timeout(function() {
+                S_eventer.sayToFrame('close');
+              }, 2000);
             }
           }
         }
@@ -164,6 +148,10 @@ angular.module('App').controller('C_posting', [
         width: ((d * 100) + '%'),
         opacity: d
       }
+    }
+
+    ctr.showFooter = function() {
+      return ctr.channelsIsLoaded && ctr.channels.length && !ctr.allPostsComplete;
     }
 
     ctr.postChannelAgain = function(channel_id) {
@@ -210,7 +198,7 @@ angular.module('App').controller('C_posting', [
         }
         ctr.onTimeChange(ctr.postingTime);
       } else {
-        ctr.postingUnixTime = S_utils.getCurrentTime();
+        ctr.postingUnixTime = +moment.utc().format('X');
       }
     });
 
@@ -223,27 +211,18 @@ angular.module('App').controller('C_posting', [
         ctr.postingTime = time;
       }
 
-      var dateUnix = +moment(ctr.postingDate).format('X');
+      var dateUnix = +moment.utc(ctr.postingDate).format('X');
       var startDate = ctr.postingTime;
 
       var res = dateUnix + startDate;
 
-      if (res > S_utils.getCurrentTime()) {
+      if (res > moment.utc().format('X')) {
         ctr.postingUnixTime = dateUnix + startDate;
       } else {
         ctr.pastTime = true;
       }
     }
 
-    ctr.addTimer = function() {
-      ctr.timerIsEnabled = true;
-      ctr.postingNow = false;
-    }
-    ctr.removeTimer = function() {
-      ctr.timerIsEnabled = false;
-      ctr.postingNow = true;
-    }
-
     return ctr;
   }
-]);
+);

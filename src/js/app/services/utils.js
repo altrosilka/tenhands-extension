@@ -5,9 +5,8 @@ angular.module('utilsTools', [])
     '$templateCache',
     '$compile',
     '$rootScope',
-    '__timelinePeriods',
     '__twitterConstants',
-    function($modal, $q, $templateCache, $compile, $rootScope, __timelinePeriods, __twitterConstants) {
+    function($modal, $q, $templateCache, $compile, $rootScope, __twitterConstants) {
       var service = {};
 
       service.getUrlParameterValue = function(url, parameterName) {
@@ -277,6 +276,14 @@ angular.module('utilsTools', [])
           }
         });
         return postInfo;
+      }
+
+      service.disableProgress = function(channels) {
+        _.forEach(channels, function(channel) {
+          channel.inprogress = false;
+          channel.complete = false;
+          channel.error = false;
+        });
       }
 
       service.trackProgress = function(channels, info) {

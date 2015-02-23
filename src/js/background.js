@@ -5,29 +5,14 @@ angular.module('mock', [])
 
 var App = angular.module('App', [
   'config',
-  'vkTools',
   'chromeTools',
   'utilsTools',
   'mock'
 ]);
 
 App.run([
-  '__vkAppId',
   'S_chrome',
-  'S_vk',
-  function(__vkAppId, S_chrome, S_vk) {
-
-
-    S_chrome.getVkToken().then(function(token) {
-
-      S_vk.setToken(token);
-
-
-    }, function() {
-      //S_vk.callAuthPopup().then(function() {
-      //  location.reload();
-      //});
-    })
+  function(S_chrome) {
 
 
     chrome.contextMenus.create({
@@ -51,12 +36,7 @@ App.run([
 
     chrome.browserAction.onClicked.addListener(function(tab) {
       if (tab) {
-        S_chrome.getVkToken().then(function(token) {
-          S_chrome.showExtensionPopup(tab);
-        }, function() {
-          S_chrome.openPreAuthPage();
-        });
-
+        S_chrome.showExtensionPopup(tab);
       }
     });
 
@@ -72,7 +52,6 @@ App.run([
 
 
     function openPostCreationFromContext(info, tab) {
-      debugger
       S_chrome.showExtensionPopup(tab, info);
     }
 

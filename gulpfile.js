@@ -9,16 +9,18 @@ var gulp = require("gulp"),
   bump = require('gulp-bump'),
   git = require('gulp-git'),
   less = require('gulp-less'),
-  //livereload = require('gulp-livereload'),
   moment = require('moment'),
+  zip = require('gulp-zip'),
   templateCache = require('gulp-angular-templatecache'),
   ngAnnotate = require('gulp-ng-annotate');
 
+var gulpsync = require('gulp-sync')(gulp);
 
+var urlConfig = require('./config/urls');
+var extensionConfig = require('./config/extension');
 
 var backgroundScripts = [
   './bower_components/angular/angular.js',
-  './src/js/app/services/vk.js',
   './src/js/app/services/chrome.js',
   './src/js/app/services/utils.js',
   './src/js/app/configuration.js',
@@ -34,6 +36,7 @@ var vendorLibs = [
   './bower_components/bootstrap/dist/js/bootstrap.js',
   './bower_components/angular/angular.js',
   './bower_components/angular-sanitize/angular-sanitize.js',
+  './bower_components/angular-animate/angular-animate.js',
   './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
   './bower_components/fancybox/source/jquery.fancybox.js',
   './bower_components/Jcrop/js/jquery.Jcrop.js',
@@ -63,6 +66,15 @@ var vendorLibsCss = [
 
 gulp.task('scripts', function() {
   gulp.src(['./src/js/app/**/*.js'])
+    .pipe(replace({
+      patterns: [{
+        match: 'apiServer',
+        replacement: urlConfig.apiServer_dev
+      }, {
+        match: 'extensionId',
+        replacement: extensionConfig.extensionId_dev
+      }]
+    }))
     .pipe(ngAnnotate())
     .pipe(concat('scripts.js'))
     .pipe(gulp.dest('./public/pack'))
@@ -72,20 +84,33 @@ gulp.task('scripts', function() {
     .pipe(gulp.dest('./public/pack'))
 });
 
-
-
-
-
 gulp.task('background-scripts', function() {
-  gulp.src(backgroundScripts)
+  return gulp.src(backgroundScripts)
+    .pipe(replace({
+      patterns: [{
+        match: 'apiServer',
+        replacement: urlConfig.apiServer_dev
+      }, {
+        match: 'extensionId',
+        replacement: extensionConfig.extensionId_dev
+      }]
+    }))
     .pipe(ngAnnotate())
     .pipe(concat('background.js'))
     .pipe(gulp.dest('./public/pack'))
 });
 
-
 gulp.task('dist-enviroment', function() {
-  gulp.src(enviromentScripts)
+  return gulp.src(enviromentScripts)
+    .pipe(replace({
+      patterns: [{
+        match: 'apiServer',
+        replacement: urlConfig.apiServer_dev
+      }, {
+        match: 'extensionId',
+        replacement: extensionConfig.extensionId_dev
+      }]
+    }))
     .pipe(ngAnnotate())
     .pipe(concat('pageEnviroment.js'))
     .pipe(gulp.dest('./public/pack'))
@@ -94,13 +119,13 @@ gulp.task('dist-enviroment', function() {
 
 
 gulp.task('less', function() {
-  gulp.src('./src/less/styles.less')
+  return gulp.src('./src/less/styles.less')
     .pipe(less())
     .pipe(gulp.dest('./public/pack'));
 });
 
 gulp.task('less-page', function() {
-  gulp.src('./src/less/page.less')
+  return gulp.src('./src/less/page.less')
     .pipe(less())
     .pipe(gulp.dest('./public/pack'));
 });
@@ -108,7 +133,7 @@ gulp.task('less-page', function() {
 
 
 gulp.task('templates', function() {
-  gulp.src('./src/templates/**/*.html')
+  return gulp.src('./src/templates/**/*.html')
     .pipe(templateCache('templates.js', {
       standalone: true,
       root: './templates/'
@@ -119,7 +144,7 @@ gulp.task('templates', function() {
 
 
 gulp.task('vendors-styles', function() {
-  gulp.src(vendorLibsCss)
+  return gulp.src(vendorLibsCss)
     .pipe(minifyCSS({
       keepBreaks: true
     }))
@@ -127,19 +152,15 @@ gulp.task('vendors-styles', function() {
     .pipe(gulp.dest('./public/pack'))
 });
 
-gulp.task('scripts-deploy', function() {
-  gulp.src(['./src/js/**/*.js'])
-    .pipe(concat('scripts.js'))
+
+gulp.task('scripts_pack_uglify', function() {
+  return gulp.src(['./public/pack/*.js'])
     .pipe(uglify())
-    .pipe(gulp.dest('./public/pack'))
-  gulp.src(vendorLibs)
-    .pipe(concat('vendor.js'))
-    .pipe(uglify())
-    .pipe(gulp.dest('./public/pack'))
+    .pipe(gulp.dest('./public/pack'));
 });
 
 gulp.task('styles-deploy', function() {
-  gulp.src([
+  return gulp.src([
       './public/pack/styles.css'
     ])
     .pipe(minifyCSS({
@@ -153,7 +174,7 @@ gulp.task('styles-deploy', function() {
 gulp.task('dist-manifest', function() {
   var pkg = getPackageJson();
 
-  gulp.src(['./src/manifest.json'])
+  return gulp.src(['./src/manifest.json'])
     .pipe(bump({
       version: pkg.version
     }))
@@ -162,18 +183,75 @@ gulp.task('dist-manifest', function() {
 
 
 gulp.task('dist-background', function() {
-  gulp.src(['./src/background.html'])
+  return gulp.src(['./src/background.html'])
     .pipe(gulp.dest('./public'));
 });
 
 gulp.task('dist-pages', function() {
-  gulp.src(['./src/pages/**/*.html'])
+  return gulp.src(['./src/pages/**/*.html'])
     .pipe(gulp.dest('./public/pages'));
 });
 
 
+gulp.task('scripts-deploy', function() {
+  gulp.src(['./src/js/app/**/*.js'])
+    .pipe(replace({
+      patterns: [{
+        match: 'apiServer',
+        replacement: urlConfig.apiServer
+      }, {
+        match: 'extensionId',
+        replacement: extensionConfig.extensionId
+      }]
+    }))
+    .pipe(ngAnnotate())
+    .pipe(concat('scripts.js'))
+    .pipe(gulp.dest('./public/pack'))
+
+  gulp.src(vendorLibs)
+    .pipe(concat('vendor.js'))
+    .pipe(gulp.dest('./public/pack'))
+});
+
+gulp.task('background-scripts-deploy', function() {
+  return gulp.src(backgroundScripts)
+    .pipe(replace({
+      patterns: [{
+        match: 'apiServer',
+        replacement: urlConfig.apiServer
+      }, {
+        match: 'extensionId',
+        replacement: extensionConfig.extensionId
+      }]
+    }))
+    .pipe(ngAnnotate())
+    .pipe(concat('background.js'))
+    .pipe(gulp.dest('./public/pack'))
+});
+
+gulp.task('dist-enviroment-deploy', function() {
+  return gulp.src(enviromentScripts)
+    .pipe(replace({
+      patterns: [{
+        match: 'apiServer',
+        replacement: urlConfig.apiServer
+      }, {
+        match: 'extensionId',
+        replacement: extensionConfig.extensionId
+      }]
+    }))
+    .pipe(ngAnnotate())
+    .pipe(concat('pageEnviroment.js'))
+    .pipe(gulp.dest('./public/pack'))
+});
+
+gulp.task('zip_public', function() {
+  return gulp.src('./public/**')
+    .pipe(zip('extension.zip'))
+    .pipe(gulp.dest('./'));
+});
+
 gulp.task("watch", function() {
-  //livereload.listen();
   gulp.watch('./src/js/**', ["scripts", "dist-enviroment"]);
   gulp.watch('./src/less/**', ["less"]);
   gulp.watch('./src/less/page.less', ["less-page"]);
@@ -183,19 +261,25 @@ gulp.task("watch", function() {
   gulp.watch('./src/pages/**', ["dist-pages"]);
   gulp.watch('./src/templates/**', ["templates"]);
   gulp.watch('./src/js/*.js', ["background-scripts"]);
-  //gulp.watch('./public/pack//**').on('change', livereload.changed);
 });
 
-gulp.task('build', [
+
+gulp.task('build', gulpsync.sync([
+  ['dist-enviroment-deploy',
     'less',
-    'vendors-styles',
+    'less-page',
+    'dist-manifest',
+    'dist-background',
+    'dist-pages',
     'templates',
     'scripts-deploy',
-    'styles-deploy'
+    'background-scripts-deploy'
   ],
-  function() {
+  'scripts_pack_uglify',
+  'zip_public'
+]));
 
-  });
+
 
 
 /* VERSION */

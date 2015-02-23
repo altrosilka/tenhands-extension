@@ -4,6 +4,7 @@ var App = angular.module('App', [
   'vkTools',
   'chromeTools',
   'ngSanitize',
+  'ngAnimate',
   'utilsTools',
   'ui.bootstrap',
   'ui.select',

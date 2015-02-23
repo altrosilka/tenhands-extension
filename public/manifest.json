@@ -4,13 +4,13 @@
   },
   "description": "Размещайте контент в социальные сети за пару кликов",
   "icons": {
-    "16": "icons/16.jpg",
-    "48": "icons/48.jpg",
-    "128": "icons/128.jpg"
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
   },
   "browser_action": {
     "default_title": "Print this page",
-    "default_icon": "icons/48.jpg"
+    "default_icon": "icons/48.png"
   },
   "manifest_version": 2,
   "homepage_url": "http://10hands.io",
@@ -37,19 +37,8 @@
       "css": [
         "pack/page.css"
       ]
-    },
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": [
-        "pack/cabinetExecute.js"
-      ],
-      "run_at": "document_end",
-      "all_frames": false
     }
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://*.vk.com https://*.google.com; object-src 'self'",
-  "version": "0.0.7"
+  "version": "0.1.0"
 }
