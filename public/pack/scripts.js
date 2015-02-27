@@ -111,26 +111,13 @@ angular.module('App').controller('C_login', [
   }
 ]);
 
-angular.module('App').controller('C_main', [
-  '$scope',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  function($scope, $timeout, S_utils, S_selfapi, S_eventer) {
+angular.module('App').controller('C_main',
+  ["$scope", "$timeout", "S_utils", "S_selfapi", "S_eventer", "S_tour", function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour) {
     var ctr = this;
     var _pushedMenu = false;
-    ctr.getUserInfo = function() {
-      S_selfapi.getUserInfo().then(function(resp) {
-        if (resp.data.success) {
-          ctr._state = 'post';
-          S_eventer.sendEvent('userInfoLoaded', resp.data.data);
-        } else {
-          ctr._state = 'login';
-          S_eventer.sendEvent('hideLoader');
-        }
-      });
-    }
+
+
+    ctr._state = 'post';
 
     ctr.showExtension = function() {
       return ctr._state;
@@ -142,7 +129,7 @@ angular.module('App').controller('C_main', [
       S_eventer.sayToFrame('toggle');
     }
 
-    ctr.closeIframe = function() {
+    ctr.closeIframe = function() { 
       S_eventer.sayToFrame('close');
     }
 
@@ -151,7 +138,7 @@ angular.module('App').controller('C_main', [
       _pushedMenu = !_pushedMenu;
     }
 
-    ctr.emptyChannels = function(){
+    ctr.emptyChannels = function() {
       S_eventer.sendEvent('emptyChannels');
     }
 
@@ -162,22 +149,28 @@ angular.module('App').controller('C_main', [
 
     $scope.$on('hideLoader', function() {
       ctr.hideLoader = true;
+
+      S_tour.init();
+    });
+    $scope.$on('badLogin', function() {
+      ctr._state = 'login';
     });
 
-    ctr.getUserInfo();
 
     $scope.$on('showSuccessProgress', function() {
       ctr.showSing = true;
       $timeout(function() {
         ctr.showSing = false;
-      }, 2000);  
+      }, 2000);
     });
 
 
 
+
+
     return ctr;
-  }
-]);
+  }]
+);
 
 angular.module('App').controller('C_posting',
   ["$scope", "$compile", "$timeout", "S_utils", "S_selfapi", "S_eventer", function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
@@ -194,7 +187,10 @@ angular.module('App').controller('C_posting',
     ctr.closeAfterSuccess = false;
 
     S_selfapi.getAllSets().then(function(resp) {
-
+      if (resp.data.error){
+        S_eventer.sendEvent('badLogin');
+        return;
+      }
       ctr.sets = resp.data.data.own;
 
       ctr.sets = ctr.sets.concat(_.map(resp.data.data.guest, function(q) {
@@ -1808,6 +1804,140 @@ angular.module('App')
     }]
   );
 
+angular.module('App')
+  .service('S_tour',
+    ["localStorageService", "$timeout", function(localStorageService, $timeout) {
+      var service = {};
+
+      var tour;
+
+      var tourKeyName = 'tour.base';
+
+      service.init = function() {
+
+        var q = localStorageService.get(tourKeyName) || {};
+
+        if (q.complete){
+          return;
+        }
+
+        tour = new Shepherd.Tour({
+          defaults: {
+            classes: 'shepherd-theme-arrows',
+            scrollTo: true
+          }
+        });
+
+        tour.on('complete', function(){
+          localStorageService.set(tourKeyName, {
+            complete: 1
+          });
+        });
+
+        tour.addStep('step1', {
+          text: 'В настойках можно отредактировать шаблон сбора информации со страницы',
+          attachTo: '[data-step="settings"]',
+          buttons: [{
+            text: 'Ясно',
+            action: tour.next
+          }]
+        });
+
+        tour.addStep('step3', {
+          text: 'Можно свернуть окошко расширения и увидеть на заднем плане сайт. Чтобы скопировать что-то, например',
+          attachTo: '[data-step="resizer"] bottom',
+          buttons: [{
+            text: 'Хорошо',
+            action: tour.next
+          }]
+        });
+
+        tour.addStep('step4', {
+          text: 'Закрыть расширение можно этим крестиком',
+          attachTo: '[data-step="remover"]',
+          buttons: [{
+            text: 'Все понятно',
+            action: tour.next
+          }]
+        });
+
+        if ($('body').find('[data-step="shareSetName"]').length) {
+          tour.addStep('step5', {
+            text: 'Всегда можно выбрать нужный для публикации набор',
+            attachTo: '[data-step="shareSetName"] bottom',
+            buttons: [{
+              text: 'Все понятно',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="channel"]').length) {
+          tour.addStep('step5', {
+            text: 'Это канал в социальной сети. Для каждого канала своё окно для публикации',
+            attachTo: '[data-step="channel"] top',
+            buttons: [{
+              text: 'Понятно',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="changeChannelVisibility"]').length) {
+          tour.addStep('changeChannelVisibility', {
+            text: 'Можно не публиковать запись в некоторые каналы',
+            attachTo: '[data-step="changeChannelVisibility"]',
+            buttons: [{
+              text: 'Дальше',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="publicNow"]').length) {
+          tour.addStep('step5', {
+            text: 'Записи можно разместить сейчас',
+            attachTo: '[data-step="publicNow"] top',
+            buttons: [{
+              text: 'Так-так...',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'А можно и запланировать их на будущее',
+            attachTo: '[data-step="publicLater"] top',
+            buttons: [{
+              text: 'Это хорошо',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'Можно закрыть окно расширения сразу после успешной публикации',
+            attachTo: '[data-step="closeAfterPosting"] top',
+            buttons: [{
+              text: 'ОК',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'Послать все записи в социальные сети',
+            attachTo: '[data-step="publicButton"] top',
+            buttons: [{
+              text: 'ОК',
+              action: tour.next
+            }]
+          });
+        }
+
+         tour.start();
+      }
+
+
+
+      return service;
+    }]
+  );
+
 angular.module('utilsTools', [])
   .service('S_utils', [
     '$modal',
@@ -1821,7 +1951,7 @@ angular.module('utilsTools', [])
 
       service.getUrlParameterValue = function(url, parameterName) {
         "use strict";
-
+ 
         var urlParameters = url.substr(url.indexOf("#") + 1),
           parameterValue = "",
           index,
@@ -3635,6 +3765,150 @@ var VKS = function(_options) {
   };
 };
 
+angular.module('App').controller('CM_attachPhoto', [
+  '$scope',
+  'S_vk',
+  'S_selfapi',
+  'S_chrome',
+  '$modalInstance',
+  'pageAttachments',
+  'uploadCallbacks',
+  function($scope, S_vk, S_selfapi, S_chrome, $modalInstance, pageAttachments, uploadCallbacks) {
+    var ctr = this;
+
+    ctr.selectedAttachments = [];
+
+    ctr.pageAttachments = pageAttachments;
+
+    ctr.imagesPlurals = {
+      0: '{} фотографий',
+      one: '{} фотографию',
+      few: '{} фотографии',
+      many: '{} фотографий',
+      other: '{} фотографий'
+    };
+
+
+    ctr.closeDialog = function() {
+      $modalInstance.close(ctr.selectedAttachments);
+    }
+
+    ctr.sendAttach = function(attach){
+      ctr.selectedAttachments = [attach];
+      ctr.closeDialog();
+    }
+
+    ctr.beforeUploading = function(q,w,e,r){
+      uploadCallbacks.before(q,w,e,r);
+      ctr.closeDialog();
+    }
+
+    ctr.afterUploading = function(q,w,e,r){
+      uploadCallbacks.after(q,w,e,r);
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CM_attachVideo', [
+  '$scope',
+  'S_vk',
+  'S_selfapi',
+  'S_utils',
+  '$modalInstance',
+  'group_id',
+  function($scope, S_vk, S_selfapi, S_utils, $modalInstance, group_id) {
+    var ctr = this;
+
+    ctr.hd = true;
+    ctr.adult = true;
+    ctr.sort = 2;
+
+    ctr.selectedAttachments = [];
+
+    ctr.closeDialog = function() {
+      $modalInstance.close(ctr.selectedAttachments);
+    }
+
+    ctr.selectVideo = function(attach) {
+      ctr.selectedAttachments = [attach];
+      ctr.closeDialog();
+    }
+
+
+    ctr.search = function() {
+      if (!ctr.q || ctr.q === '') {
+        return;
+      }
+      ctr.searchInProgress = true;
+      S_vk.request('video.search', {
+        q: ctr.q,
+        adult: (ctr.adult) ? 0 : 1,
+        hd: (ctr.hd) ? 1 : 0,
+        sort: ctr.sort
+      }).then(function(resp) {
+        ctr.searchedVideos = resp.response.items;
+        ctr.searchInProgress = false;
+      });
+    }
+
+
+    ctr.loadUserVideos = function(){
+      ctr.loadUserVideosInProgress = true;
+      S_vk.request('video.get', {
+        width: 320
+      }).then(function(resp) {
+        ctr.userVideos = resp.response.items;
+        ctr.loadUserVideosInProgress = false;
+      });
+    }
+
+    ctr.loadGroupVideos = function(){
+      ctr.groupSearchError = undefined;
+      ctr.loadGroupVideosInProgress = true;
+      S_vk.request('video.get', {
+        width: 320,
+        owner_id: '-'+group_id
+      }).then(function(resp) {
+        ctr.loadGroupVideosInProgress = false;
+        if (resp.error){
+          if (resp.error.error_code === 15){
+            ctr.groupSearchError = 'Видеозаписи группы заблокированы или отсутствуют';
+            return;
+          }
+
+          ctr.groupSearchError = 'Ошибка при получении видозаписей';
+        } else {
+          ctr.groupVideos = resp.response.items;
+        }
+      });
+    }
+
+
+    ctr.getVideoQuality = function(video) {
+      return S_utils.getVideoQuality(video);
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CM_videoPlayer', [
+  '$scope',
+  '$sce',
+  'videoSrc',
+  'title',
+  function($scope, $sce, videoSrc, title) {
+    var ctr = this;
+
+    ctr.videoSrc = $sce.trustAsResourceUrl(videoSrc);
+    ctr.title = title;
+
+    return ctr;
+  }
+]);
+
 angular.module('App').controller('CD_attachPoll', [
   '$scope',
   'S_vk',
@@ -3922,150 +4196,6 @@ angular.module('App').controller('CD_sourceLink', [
   function($scope, S_vk, S_selfapi, S_chrome, __maxPollVariants) {
     var ctr = this;
   
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('CM_attachPhoto', [
-  '$scope',
-  'S_vk',
-  'S_selfapi',
-  'S_chrome',
-  '$modalInstance',
-  'pageAttachments',
-  'uploadCallbacks',
-  function($scope, S_vk, S_selfapi, S_chrome, $modalInstance, pageAttachments, uploadCallbacks) {
-    var ctr = this;
-
-    ctr.selectedAttachments = [];
-
-    ctr.pageAttachments = pageAttachments;
-
-    ctr.imagesPlurals = {
-      0: '{} фотографий',
-      one: '{} фотографию',
-      few: '{} фотографии',
-      many: '{} фотографий',
-      other: '{} фотографий'
-    };
-
-
-    ctr.closeDialog = function() {
-      $modalInstance.close(ctr.selectedAttachments);
-    }
-
-    ctr.sendAttach = function(attach){
-      ctr.selectedAttachments = [attach];
-      ctr.closeDialog();
-    }
-
-    ctr.beforeUploading = function(q,w,e,r){
-      uploadCallbacks.before(q,w,e,r);
-      ctr.closeDialog();
-    }
-
-    ctr.afterUploading = function(q,w,e,r){
-      uploadCallbacks.after(q,w,e,r);
-    }
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('CM_attachVideo', [
-  '$scope',
-  'S_vk',
-  'S_selfapi',
-  'S_utils',
-  '$modalInstance',
-  'group_id',
-  function($scope, S_vk, S_selfapi, S_utils, $modalInstance, group_id) {
-    var ctr = this;
-
-    ctr.hd = true;
-    ctr.adult = true;
-    ctr.sort = 2;
-
-    ctr.selectedAttachments = [];
-
-    ctr.closeDialog = function() {
-      $modalInstance.close(ctr.selectedAttachments);
-    }
-
-    ctr.selectVideo = function(attach) {
-      ctr.selectedAttachments = [attach];
-      ctr.closeDialog();
-    }
-
-
-    ctr.search = function() {
-      if (!ctr.q || ctr.q === '') {
-        return;
-      }
-      ctr.searchInProgress = true;
-      S_vk.request('video.search', {
-        q: ctr.q,
-        adult: (ctr.adult) ? 0 : 1,
-        hd: (ctr.hd) ? 1 : 0,
-        sort: ctr.sort
-      }).then(function(resp) {
-        ctr.searchedVideos = resp.response.items;
-        ctr.searchInProgress = false;
-      });
-    }
-
-
-    ctr.loadUserVideos = function(){
-      ctr.loadUserVideosInProgress = true;
-      S_vk.request('video.get', {
-        width: 320
-      }).then(function(resp) {
-        ctr.userVideos = resp.response.items;
-        ctr.loadUserVideosInProgress = false;
-      });
-    }
-
-    ctr.loadGroupVideos = function(){
-      ctr.groupSearchError = undefined;
-      ctr.loadGroupVideosInProgress = true;
-      S_vk.request('video.get', {
-        width: 320,
-        owner_id: '-'+group_id
-      }).then(function(resp) {
-        ctr.loadGroupVideosInProgress = false;
-        if (resp.error){
-          if (resp.error.error_code === 15){
-            ctr.groupSearchError = 'Видеозаписи группы заблокированы или отсутствуют';
-            return;
-          }
-
-          ctr.groupSearchError = 'Ошибка при получении видозаписей';
-        } else {
-          ctr.groupVideos = resp.response.items;
-        }
-      });
-    }
-
-
-    ctr.getVideoQuality = function(video) {
-      return S_utils.getVideoQuality(video);
-    }
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('CM_videoPlayer', [
-  '$scope',
-  '$sce',
-  'videoSrc',
-  'title',
-  function($scope, $sce, videoSrc, title) {
-    var ctr = this;
-
-    ctr.videoSrc = $sce.trustAsResourceUrl(videoSrc);
-    ctr.title = title;
 
     return ctr;
   }

@@ -11,7 +11,7 @@ angular.module('utilsTools', [])
 
       service.getUrlParameterValue = function(url, parameterName) {
         "use strict";
-
+ 
         var urlParameters = url.substr(url.indexOf("#") + 1),
           parameterValue = "",
           index,

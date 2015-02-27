@@ -143,6 +143,9 @@ a {
 }
 .translateArea {
   transition: 0.4s;
+  min-height: 100%;
+  position:relative;
+  z-index:1;
   .fakePushOverlay {
     display: none;
     position: absolute;
@@ -807,7 +810,7 @@ body.min {
       opacity: 0.7;
       visibility: visible;
     }
-    .progress-bars{
+    .progress-bars {
       opacity: 1;
     }
   }
@@ -913,7 +916,7 @@ body.min {
     box-shadow: none;
     background-color: #25AB22;
     background-image: none;
-    transition:0.3s;
+    transition: 0.3s;
     opacity: 0;
     .loader {
       display: block;

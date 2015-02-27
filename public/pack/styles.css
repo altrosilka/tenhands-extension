@@ -118,6 +118,45 @@ select.form-control {
 .social_bg[data-network="ok"] {
   background-color: #F2952A;
 }
+.shepherd-element.shepherd-theme-arrows {
+  z-index: 2;
+}
+.shepherd-element.shepherd-theme-arrows .shepherd-content {
+  filter: none;
+  -webkit-filter: none;
+  background: #353535;
+  color: #EEE;
+  width: 400px;
+  border-radius: 0px;
+  padding: 10px;
+}
+.shepherd-element.shepherd-theme-arrows .shepherd-content footer .shepherd-buttons li .shepherd-button {
+  text-decoration: none;
+}
+.shepherd-element.shepherd-theme-arrows .shepherd-content footer .shepherd-buttons li .shepherd-button:hover {
+  background-color: #56ABFF;
+}
+.shepherd-element.shepherd-theme-arrows.shepherd-element-attached-top.shepherd-element-attached-center .shepherd-content:before {
+  border-bottom-color: #353535;
+}
+.shepherd-element.shepherd-theme-arrows.shepherd-element-attached-bottom.shepherd-element-attached-center .shepherd-content:before {
+  border-top-color: #353535;
+}
+.shepherd-element.shepherd-theme-arrows.shepherd-element-attached-left.shepherd-element-attached-middle .shepherd-content:before {
+  border-right-color: #353535;
+}
+.tourFader {
+  transition: 0.3s;
+}
+.shepherd-active .tourFader {
+  opacity: 0.3;
+}
+.shepherd-active .tourFader.shepherd-enabled {
+  opacity: 1;
+}
+[data-shepherd-step="changeChannelVisibility"] .tourFader[data-step="channel"]:first-child {
+  opacity: 1;
+}
 .modal {
   background: rgba(0, 0, 0, 0.7);
   transform: translate3d(0, 0, 0);
@@ -348,6 +387,9 @@ a:hover {
 }
 .translateArea {
   transition: 0.4s;
+  min-height: 100%;
+  position: relative;
+  z-index: 1;
 }
 .translateArea .fakePushOverlay {
   display: none;

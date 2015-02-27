@@ -1,23 +1,10 @@
-angular.module('App').controller('C_main', [
-  '$scope',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  function($scope, $timeout, S_utils, S_selfapi, S_eventer) {
+angular.module('App').controller('C_main',
+  function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour) {
     var ctr = this;
     var _pushedMenu = false;
-    ctr.getUserInfo = function() {
-      S_selfapi.getUserInfo().then(function(resp) {
-        if (resp.data.success) {
-          ctr._state = 'post';
-          S_eventer.sendEvent('userInfoLoaded', resp.data.data);
-        } else {
-          ctr._state = 'login';
-          S_eventer.sendEvent('hideLoader');
-        }
-      });
-    }
+
+
+    ctr._state = 'post';
 
     ctr.showExtension = function() {
       return ctr._state;
@@ -29,7 +16,7 @@ angular.module('App').controller('C_main', [
       S_eventer.sayToFrame('toggle');
     }
 
-    ctr.closeIframe = function() {
+    ctr.closeIframe = function() { 
       S_eventer.sayToFrame('close');
     }
 
@@ -38,7 +25,7 @@ angular.module('App').controller('C_main', [
       _pushedMenu = !_pushedMenu;
     }
 
-    ctr.emptyChannels = function(){
+    ctr.emptyChannels = function() {
       S_eventer.sendEvent('emptyChannels');
     }
 
@@ -49,19 +36,25 @@ angular.module('App').controller('C_main', [
 
     $scope.$on('hideLoader', function() {
       ctr.hideLoader = true;
+
+      S_tour.init();
+    });
+    $scope.$on('badLogin', function() {
+      ctr._state = 'login';
     });
 
-    ctr.getUserInfo();
 
     $scope.$on('showSuccessProgress', function() {
       ctr.showSing = true;
       $timeout(function() {
         ctr.showSing = false;
-      }, 2000);  
+      }, 2000);
     });
+
+
 
 
 
     return ctr;
   }
-]);
+);

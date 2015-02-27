@@ -49,7 +49,8 @@ var vendorLibs = [
   './bower_components/highcharts/highcharts.src.js',
   './bower_components/jquery-autosize/jquery.autosize.js',
   './bower_components/jquery-mousewheel/jquery.mousewheel.js',
-  './bower_components/angular-local-storage/dist/angular-local-storage.js'
+  './bower_components/angular-local-storage/dist/angular-local-storage.js',
+  './bower_components/shepherd.js/shepherd.js'
 ];
 
 var vendorLibsCss = [
@@ -60,7 +61,8 @@ var vendorLibsCss = [
   './bower_components/select2/select2.css',
   './bower_components/select2/select2-bootstrap.css',
   './bower_components/angular-ui-select/dist/select.css',
-  './bower_components/ionicons/css/ionicons.css'
+  './bower_components/ionicons/css/ionicons.css', 
+  './bower_components/shepherd.js/css/shepherd-theme-arrows.css'
 ];
 
 
@@ -141,7 +143,7 @@ gulp.task('templates', function() {
     .pipe(gulp.dest('./public/pack'));
 });
 
-
+ 
 
 gulp.task('vendors-styles', function() {
   return gulp.src(vendorLibsCss)

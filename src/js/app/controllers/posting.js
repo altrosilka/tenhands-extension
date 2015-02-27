@@ -13,7 +13,10 @@ angular.module('App').controller('C_posting',
     ctr.closeAfterSuccess = false;
 
     S_selfapi.getAllSets().then(function(resp) {
-
+      if (resp.data.error){
+        S_eventer.sendEvent('badLogin');
+        return;
+      }
       ctr.sets = resp.data.data.own;
 
       ctr.sets = ctr.sets.concat(_.map(resp.data.data.guest, function(q) {

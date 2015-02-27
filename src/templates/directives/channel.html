@@ -2,7 +2,7 @@
   <div class="workArea">
     <header class="social_bg deep" data-network="{{channel_ctr.network}}">
       <span class="actions" ng-show="channel_ctr.showActions(channel)">
-        <span class="visibility" ng-click="channel_ctr.toggleVisibility(channel)">
+        <span class="visibility tourFader" data-step="changeChannelVisibility" ng-click="channel_ctr.toggleVisibility(channel)">
           <i class="fa fa-eye" ng-class="{'active': channel.disabled}"></i>
           <i class="fa fa-eye-slash" ng-class="{'active': !channel.disabled}"></i>
         </span>
