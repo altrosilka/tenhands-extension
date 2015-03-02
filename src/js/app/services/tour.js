@@ -7,11 +7,11 @@ angular.module('App')
 
       var tourKeyName = 'tour.base';
 
-      service.init = function() {
+      service.init = function(force) {
 
         var q = localStorageService.get(tourKeyName) || {};
 
-        if (q.complete){
+        if (!force && q.complete){
           return;
         }
 

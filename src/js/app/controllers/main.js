@@ -33,6 +33,10 @@ angular.module('App').controller('C_main',
       return _pushedMenu;
     }
 
+    ctr.openTour = function(){
+      S_tour.init(true);
+    }
+
 
     $scope.$on('hideLoader', function() {
       ctr.hideLoader = true;

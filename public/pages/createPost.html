@@ -48,12 +48,18 @@
 
       <section class="window">
 
-        <ul class="topMenu">
+        <ul class="topMenu left">
           <li class="tourFader" ng-click="ctr.toggleMenu()" data-step="settings">
             <i class="ion-ios-settings-strong"></i><span>Настройки</span>
           </li>
           <li class="tourFader" ng-click="ctr.emptyChannels()" data-step="newPost" ng-show="post_ctr.channels.length">
             <i class="ion-compose"></i><span>Новый пост</span>
+          </li>
+        </ul>
+
+        <ul class="topMenu right">
+          <li class="tourFader" ng-click="ctr.openTour()">
+            <i class="ion-help-buoy"></i><span>Тур</span>
           </li>
         </ul>
 

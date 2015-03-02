@@ -149,7 +149,7 @@ select.form-control {
   transition: 0.3s;
 }
 .shepherd-active .tourFader {
-  opacity: 0.3;
+  opacity: 0.15;
 }
 .shepherd-active .tourFader.shepherd-enabled {
   opacity: 1;
@@ -432,7 +432,6 @@ header.top .resizer {
   margin-left: -30px;
   text-align: center;
   border-radius: 50%;
-  background-color: #FFF;
   opacity: 0.5;
   position: fixed;
   z-index: 11;
@@ -441,7 +440,6 @@ header.top .resizer {
   cursor: pointer;
   display: block;
   transition: 0.2s;
-  box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);
   color: #666;
   font-size: 18px;
   padding-top: 37px;
@@ -495,7 +493,7 @@ header.top .remover {
   opacity: 1;
 }
 .setSelecterArea {
-  color: #A39090;
+  color: #C0C0C0;
   z-index: 11;
   text-align: center;
   margin-bottom: 40px;
@@ -551,7 +549,12 @@ body.min .halfHeight {
   top: 19px;
   list-style-type: none;
   padding: 0;
+}
+.topMenu.left {
   left: 30px;
+}
+.topMenu.right {
+  right: 70px;
 }
 .topMenu li {
   float: left;
@@ -776,6 +779,7 @@ body.min .halfHeight {
 .groupSelect .select2-container .select2-choice:hover {
   opacity: 1;
   cursor: pointer;
+  text-shadow: 0px 0px 6px rgba(0, 168, 255, 0.5);
 }
 .groupSelect .select2-container .select2-choice .select2-arrow {
   border: none;

@@ -1,4 +1,4 @@
 {
-	"apiServer_dev": "http://api.smm.dev/",
-	"apiServer": "http://api.10hands.io/"
+	"apiServer_dev": "http://api.smm.dev/api/",
+	"apiServer": "http://api.10hands.io/api/"
 }

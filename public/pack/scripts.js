@@ -10,7 +10,7 @@ var App = angular.module('App', [
   'ui.select',
   'templates'
 ]); 
-   
+    
 App.config([
   '$httpProvider',
   function($httpProvider) {
@@ -23,7 +23,7 @@ App.config([
   
 angular.module('config', [])
   .constant('__api', {
-    baseUrl: 'http://api.10hands.io/',
+    baseUrl: 'http://api.smm.dev/',
     paths: { 
       saveExtensionVkToken: 'accounts/vkontakte/add',
       getShortUrl: 'utils/shortUrl',
@@ -144,6 +144,10 @@ angular.module('App').controller('C_main',
 
     ctr.isPushed = function() {
       return _pushedMenu;
+    }
+
+    ctr.openTour = function(){
+      S_tour.init(true);
     }
 
 
@@ -771,6 +775,879 @@ angular.module('App').controller('C_posting_back', [
     return ctr;
   }
 ]);
+
+angular.module('chromeTools', [])
+  .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
+    var service = {};
+
+    service.pageDataWatch = function() {
+ 
+      window.addEventListener('message', function(e) {
+        S_eventer.sendEvent('loadedDataFromTab', e.data);
+      });
+    }
+
+    service.showExtensionPopup = function(tab, info) {
+      debugger 
+      chrome.tabs.executeScript(tab.id, {
+        file: "pack/pageEnviroment.js"
+      });
+    }
+
+    service.openPreAuthPage = function() {
+      chrome.tabs.create({
+        url: '/pages/afterInstall.html',
+        selected: true
+      }, function(tab) {});
+    }
+
+
+    return service;
+  }]);
+
+angular.module('App')
+  .service('S_eventer', [
+    '$rootScope',
+    '__postMessagePrepend',
+    function($rootScope, __postMessagePrepend) {
+      var service = {};
+
+      service.sendEvent = function(name, arguments) {
+        $rootScope.$broadcast(name, arguments);
+      }
+
+      service.sayToFrame = function(code) {
+        parent.postMessage(__postMessagePrepend + code, "*");
+      }
+
+      service.onPostMessage = function(next) {
+        var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+        var eventer = window[eventMethod];
+        var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+        eventer(messageEvent, function(e) {
+          var key = e.message ? "message" : "data";
+          var data = e[key];
+
+          next(e, data);
+        }, false);
+      }
+
+      return service;
+    }
+  ]);
+
+
+
+angular.module('App')
+  .service('S_google', [
+    '$q',
+    function($q) {
+      var service = {};
+
+      service.init = function() {
+        google.load('search', '1');
+      }
+ 
+      service.loadImages = function(q) {
+        var defer = $q.defer();
+        var imageSearch = new google.search.ImageSearch();
+
+        imageSearch.setRestriction(google.search.ImageSearch.RESTRICT_IMAGESIZE,
+          google.search.ImageSearch.IMAGESIZE_MEDIUM);
+
+        imageSearch.setResultSetSize(8);
+
+        imageSearch.setSearchCompleteCallback(this, function() {
+          defer.resolve(imageSearch);
+        }, null);
+
+        imageSearch.execute(q);
+        return defer.promise;
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('App')
+  .service('S_selfapi', [
+    '$http',
+    '$q',
+    '__api',
+    function($http, $q, __api) {
+      var service = {};
+      var base = __api.baseUrl;
+      service.sendExtensionToken = function(token) {
+        return $http({
+          url: base + __api.paths.saveExtensionVkToken,
+          method: 'POST',
+          data: {
+            token: token
+          }
+        });
+      }
+
+      service.createPost = function(setId, postInfo, socket_channel, time) {
+        return $http({
+          url: base + __api.paths.createPost,
+          method: 'POST',
+          data: {
+            setId: setId,
+            postInfo: postInfo,
+            socket_channel: socket_channel,
+            time: time
+          }
+        });
+      }
+
+      service.getShortUrl = function(url) {
+        return $http({
+          url: base + __api.paths.getShortUrl,
+          method: 'POST',
+          data: {
+            url: url
+          }
+        });
+      }
+
+      service.getUserInfo = function() {
+        return $http({
+          url: base + __api.paths.getUserInfo,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.getAllSets = function() {
+        return $http({
+          url: base + __api.paths.sets,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.getSetInfo = function(setId) {
+        return $http({
+          url: base + __api.paths.getSetChannels,
+          method: 'GET',
+          withCredentials: true,
+          params: {
+            id: setId
+          }
+        });
+      }
+
+      service.signIn = function(email, password) {
+        return $http({
+          withCredentials: true,
+          url: base + __api.paths.signIn,
+          method: 'POST',
+          data: {
+            email: email,
+            password: password
+          }
+        });
+      }
+
+      var _uploadStack = [];
+      service.uploadImage = function(url, c, w, h, id) {
+        var defer = $q.defer();
+
+        var obj = {
+          url: url,
+          id: id
+        };
+
+        if (c) {
+          _.extend(obj, c);
+          obj.originalWidth = w;
+          obj.originalHeight = h;
+        }
+
+        _uploadStack.push({
+          obj: obj,
+          defer: defer
+        });
+
+        if (_uploadStack.length === 1) {
+          uploadImageCall();
+        }
+
+        return defer.promise;
+      }
+
+      function uploadImageCall() {
+        var q = _uploadStack[0];
+        $http({
+          url: base + __api.paths.media,
+          method: 'POST',
+          data: q.obj
+        }).then(function(resp) {
+          _uploadStack.shift();
+          q.defer.resolve({
+            media_id: resp.data.data.media_id,
+            media_url: resp.data.data.media_url,
+            id: q.obj.id
+          });
+
+          if (_uploadStack.length > 0) {
+            uploadImageCall();
+          }
+        });
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('App')
+  .service('S_templater',
+
+    ["localStorageService", "S_eventer", function(localStorageService, S_eventer) {
+      var service = {};
+
+      var templateKeyName = 'template';
+      var defaultTemplate = '{{title}}\n\n{{url}}';
+
+      service.getTemplate = function() {
+
+        var q = localStorageService.get(templateKeyName);
+
+        if (q) {
+          return q.text;
+        } else {
+          return defaultTemplate;
+        }
+      }
+
+      service.setTemplate = function(tpl) {
+
+        localStorageService.set(templateKeyName, {text: tpl});
+        S_eventer.sendEvent('trigger:templateChanged');
+      }
+
+      return service;
+    }]
+  );
+
+angular.module('App')
+  .service('S_tour',
+    ["localStorageService", "$timeout", function(localStorageService, $timeout) {
+      var service = {};
+
+      var tour;
+
+      var tourKeyName = 'tour.base';
+
+      service.init = function(force) {
+
+        var q = localStorageService.get(tourKeyName) || {};
+
+        if (!force && q.complete){
+          return;
+        }
+
+        tour = new Shepherd.Tour({
+          defaults: {
+            classes: 'shepherd-theme-arrows',
+            scrollTo: true
+          }
+        });
+
+        tour.on('complete', function(){
+          localStorageService.set(tourKeyName, {
+            complete: 1
+          });
+        });
+
+        tour.addStep('step1', {
+          text: 'В настойках можно отредактировать шаблон сбора информации со страницы',
+          attachTo: '[data-step="settings"]',
+          buttons: [{
+            text: 'Ясно',
+            action: tour.next
+          }]
+        });
+
+        tour.addStep('step3', {
+          text: 'Можно свернуть окошко расширения и увидеть на заднем плане сайт. Чтобы скопировать что-то, например',
+          attachTo: '[data-step="resizer"] bottom',
+          buttons: [{
+            text: 'Хорошо',
+            action: tour.next
+          }]
+        });
+
+        tour.addStep('step4', {
+          text: 'Закрыть расширение можно этим крестиком',
+          attachTo: '[data-step="remover"]',
+          buttons: [{
+            text: 'Все понятно',
+            action: tour.next
+          }]
+        });
+
+        if ($('body').find('[data-step="shareSetName"]').length) {
+          tour.addStep('step5', {
+            text: 'Всегда можно выбрать нужный для публикации набор',
+            attachTo: '[data-step="shareSetName"] bottom',
+            buttons: [{
+              text: 'Все понятно',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="channel"]').length) {
+          tour.addStep('step5', {
+            text: 'Это канал в социальной сети. Для каждого канала своё окно для публикации',
+            attachTo: '[data-step="channel"] top',
+            buttons: [{
+              text: 'Понятно',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="changeChannelVisibility"]').length) {
+          tour.addStep('changeChannelVisibility', {
+            text: 'Можно не публиковать запись в некоторые каналы',
+            attachTo: '[data-step="changeChannelVisibility"]',
+            buttons: [{
+              text: 'Дальше',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="publicNow"]').length) {
+          tour.addStep('step5', {
+            text: 'Записи можно разместить сейчас',
+            attachTo: '[data-step="publicNow"] top',
+            buttons: [{
+              text: 'Так-так...',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'А можно и запланировать их на будущее',
+            attachTo: '[data-step="publicLater"] top',
+            buttons: [{
+              text: 'Это хорошо',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'Можно закрыть окно расширения сразу после успешной публикации',
+            attachTo: '[data-step="closeAfterPosting"] top',
+            buttons: [{
+              text: 'ОК',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'Послать все записи в социальные сети',
+            attachTo: '[data-step="publicButton"] top',
+            buttons: [{
+              text: 'ОК',
+              action: tour.next
+            }]
+          });
+        }
+
+         tour.start();
+      }
+
+
+
+      return service;
+    }]
+  );
+
+angular.module('utilsTools', [])
+  .service('S_utils', [
+    '$modal',
+    '$q',
+    '$templateCache',
+    '$compile',
+    '$rootScope',
+    '__twitterConstants',
+    function($modal, $q, $templateCache, $compile, $rootScope, __twitterConstants) {
+      var service = {};
+
+      service.getUrlParameterValue = function(url, parameterName) {
+        "use strict";
+ 
+        var urlParameters = url.substr(url.indexOf("#") + 1),
+          parameterValue = "",
+          index,
+          temp;
+
+        urlParameters = urlParameters.split("&");
+
+        for (index = 0; index < urlParameters.length; index += 1) {
+          temp = urlParameters[index].split("=");
+
+          if (temp[0] === parameterName) {
+            return temp[1];
+          }
+        }
+
+        return parameterValue;
+      }
+
+      service.decodeEntities = (function() {
+        var element = document.createElement('div');
+
+        function decodeHTMLEntities(str) {
+          if (str && typeof str === 'string') {
+            // strip script/html tags
+            str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
+            str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
+            element.innerHTML = str;
+            str = element.textContent;
+            element.textContent = '';
+          }
+
+          return str;
+        }
+
+        return decodeHTMLEntities;
+      })();
+
+      service.getRandomString = function(len) {
+        len = len || 10;
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for (var i = 0; i < len; i++)
+          text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        return text;
+      }
+
+      service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachPhoto.html',
+          controller: 'CM_attachPhoto as ctr',
+          resolve: {
+            pageAttachments: function() {
+              return fromPage;
+            },
+            uploadCallbacks: function() {
+              return uploadCallbacks;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callAttachVideoDialog = function(group_id) {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachVideo.html',
+          controller: 'CM_attachVideo as ctr',
+          resolve: {
+            group_id: function() {
+              return group_id;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callVideoPlayerDialog = function(title, videoSrc) {
+        return $modal.open({
+          templateUrl: 'templates/modals/videoPlayer.html',
+          controller: 'CM_videoPlayer as ctr',
+          resolve: {
+            videoSrc: function() {
+              return videoSrc;
+            },
+            title: function() {
+              return title;
+            }
+          }
+        }).result;
+      }
+
+      service.getAttachesByType = function(attaches, type) {
+        return _.filter(attaches, function(q) {
+          return q.type === type;
+        });
+      }
+
+      service.attachToFancy = function(ats) {
+        return _.map(ats, function(image) {
+          return {
+            href: image.src
+          }
+        });
+      }
+
+      service.loadImage = function(src) {
+        var defer = $q.defer();
+
+        var image = new Image();
+        image.src = src;
+        image.onload = function() {
+          defer.resolve(this);
+        }
+        image.onerror = function() {
+          defer.reject(this);
+        }
+
+        return defer.promise;
+      }
+
+      service.convertUploadedPhotoToAttach = function(media_id, media_url, info) {
+        return {
+          media_id: media_id,
+          width: info.width,
+          clientWidth: info.width,
+          height: info.height,
+          clientHeight: info.height,
+          src: media_url,
+          src_big: media_url,
+          type: 'image'
+        }
+      }
+
+      service.wrapVideo = function(video) {
+        return {
+          video: video,
+          id: service.getRandomString(16),
+          duration: video.duration,
+          src: video.photo_320,
+          type: 'video'
+        }
+      }
+
+      service.convertGoogleImageToAttach = function(image) {
+        return {
+          photo: image.photo,
+          id: image.id || service.getRandomString(16),
+          width: image.width,
+          clientWidth: image.width,
+          height: image.height,
+          clientHeight: image.height,
+          src: image.url,
+          src_big: image.url,
+          type: 'image'
+        }
+      }
+
+      service.createEmptyPoll = function() {
+        return {
+          id: service.getRandomString(16),
+          type: 'poll'
+        }
+      }
+
+
+      service.getVideoQuality = function(video) {
+        if (video.files.mp4_1080) {
+          return '1080';
+        }
+        if (video.files.mp4_720) {
+          return '720';
+        }
+        if (video.files.mp4_480) {
+          return '480';
+        }
+        if (video.files.mp4_360) {
+          return '360';
+        }
+        if (video.files.mp4_240) {
+          return '240';
+        }
+      }
+
+      service.getCurrentTime = function() {
+        return Math.floor(new Date().getTime() / 1000);
+      }
+
+      service.sortAttachments = function(attaches) {
+        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
+        return _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0;
+          }
+        });
+      }
+
+      service.findFirstAttach = function(attaches) {
+        if (!attaches || attaches.length === 0) {
+          return;
+        }
+
+        var priority = ['image', 'video', 'poll'];
+        _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0;
+          }
+        });
+
+        return attaches[0];
+      }
+
+      service.getFailDescription = function(data) {
+        var q;
+
+        if (data.network === 'tw' && data.error && data.error.code && data.error.code === 187) {
+          return "Статус повторяется";
+        }
+
+        if (data.network === 'fb') {
+          if (data.data.error && data.data.error.code && data.data.error.code == 506) {
+            return "Сообщение повторяется";
+          }
+        }
+
+        if (data.network === 'ig') {
+          if (data.error && data.error.code === 'notFull') {
+            return "Необходимо прикрепить изображение"
+          }
+          if (data.error && data.error.code === 'notMedia') {
+            return "Изображение не найдено, повторите загрузку"
+          }
+          if (data.error && data.error.code === 'notSquared') {
+            return "Изображение не квадратное"
+          }
+        }
+
+        return ((data.error) ? JSON.stringify(data.error) : 'не удалось определить');
+      }
+
+      service.configurePostInfo = function(channels, channel_ids) {
+        var postInfo = [];
+        _.forEach(channels, function(channel) {
+          if (channel.disabled || channel.complete || channel.inprogress) return;
+
+          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1)) {
+            postInfo.push({
+              channel_id: channel.id,
+              text: channel.text,
+              attachments: channel.attachments
+            });
+          }
+        });
+        return postInfo;
+      }
+
+      service.disableProgress = function(channels) {
+        _.forEach(channels, function(channel) {
+          channel.inprogress = false;
+          channel.complete = false;
+          channel.error = false;
+        });
+      }
+
+      service.trackProgress = function(channels, info) {
+        var q;
+        _.forEach(info, function(_channel) {
+          _.find(channels, function(channel) {
+            return channel.id === _channel.channel_id;
+          }).inprogress = true;
+        });
+      }
+
+      service.getMaxTextLength = function(type, attachments, text) {
+        switch (type) {
+          case 'tw':
+            {
+              var lc = service.getLinksFromText(text);
+              var len = __twitterConstants.maxSymbols;
+
+              _.forEach(lc, function(link) {
+                len += (link.length - __twitterConstants.linkLen);
+              });
+
+              if (attachments.length) {
+                len -= __twitterConstants.mediaLen;
+              }
+
+              return len;
+            }
+          case 'ig':
+            {
+              return 2200;
+            }
+        }
+        return 10000;
+      }
+
+      service.getLinksFromText = function(text) {
+        text = text || '';
+        var links = [];
+        var urlRegex = /(https?:\/\/[^\s]+)/g;
+        text.replace(urlRegex, function(url) {
+          links.push(url);
+        });
+        return links;
+      }
+
+      service.attachmentsLimitReached = function(network, channelsLenth) {
+        switch (network) {
+          case 'ig':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'fb':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'tw':
+            {
+              return channelsLenth >= 4;
+              break;
+            }
+          case 'vk':
+            {
+              return channelsLenth >= 9;
+              break;
+            }
+        }
+      }
+
+      service.unixTo = function(time, format) {
+        return moment(time, 'X').format(format);
+      }
+
+      service.escapeRegex = function(text) {
+        return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('vkTools', [])
+  .service('S_vk', [
+    '$q',
+    '$http',
+    'S_utils',
+    function($q, $http, S_utils ) {
+      var service = {};
+
+      return service;
+    }
+  ]);
+
+angular.module('App').filter('findGroups', function() {
+  return function(items, props) {
+    var out = [];
+
+    if (angular.isArray(items)) {
+      items.forEach(function(item) { 
+        var itemMatches = false;
+
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          var text = props[prop].toLowerCase();
+          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+            itemMatches = true;
+            break;
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  }
+});
+angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
+  return function(date) {
+    if (!date) {
+      return;
+    } 
+
+    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
+
+    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
+  }
+}]);
+
+angular.module('App').filter('parseVkText', [function() {
+  return function(input, removeLink) {
+    if (!input) {
+      return;
+    }
+
+    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
+    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
+
+
+
+    var bytes = [];
+
+    for (var i = 0; i < input.length; ++i) {
+      bytes.push(input.charCodeAt(i));
+    }
+
+    var ranges = [
+      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
+      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
+      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
+    ];
+
+    input = emojiParseInText(input);
+      
+    var text = input;
+
+    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
+    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
+
+    return text;
+  }
+}]);
+
+angular.module('App').filter('substring', [function() {
+  return function(text, len) {
+    len = len || 100;
+    if (!text) {
+      return;
+    } 
+
+    if (text.length > len){
+      return text.substring(0,len);
+    } else {
+      return text;
+    }
+  }
+}]);
+ 
+angular.module('App').filter('toGIS', function() {
+  return function(time) {
+    if (!time) {
+      return '';
+    }
+    var out = '';
+    var s_last = time % 60;
+    var s_minutes = (time - s_last) / 60;
+    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
+    return out;
+  }
+});
 
 angular.module('App').directive('attachPoll', [function() {
   return {
@@ -1446,879 +2323,6 @@ angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_util
   }
 }]);
  
-angular.module('App').filter('findGroups', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) { 
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  }
-});
-angular.module('App').filter('lastfmDateToLocal', ['localization',function(localization) {
-  return function(date) {
-    if (!date) {
-      return;
-    } 
-
-    var parsed = moment(date,'DD MMM YYYY HH:mm'); 
-
-    return parsed.format('DD') + ' ' + localization.months[parsed.month()] + ' ' + parsed.format('YYYY');
-  }
-}]);
-
-angular.module('App').filter('parseVkText', [function() {
-  return function(input, removeLink) {
-    if (!input) {
-      return;
-    }
-
-    var regClub = /\[club([0-9]*)\|([^\]]*)\]/g;
-    var regId = /\[id([0-9]*)\|([^\]]*)\]/g;
-
-
-
-    var bytes = [];
-
-    for (var i = 0; i < input.length; ++i) {
-      bytes.push(input.charCodeAt(i));
-    }
-
-    var ranges = [
-      '\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
-      '\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
-      '\ud83d[\ude80-\udeff]' // U+1F680 to U+1F6FF
-    ];
-
-    input = emojiParseInText(input);
-      
-    var text = input;
-
-    text = (removeLink) ? text.replace(regClub, '<span>$2</span>') : text.replace(regClub, '<a class="link" href="/public/$1/">$2</a>');
-    text = text.replace(regId, '<span>$2</span>').replace(/\n/g, "<br />");
-
-    return text;
-  }
-}]);
-
-angular.module('App').filter('substring', [function() {
-  return function(text, len) {
-    len = len || 100;
-    if (!text) {
-      return;
-    } 
-
-    if (text.length > len){
-      return text.substring(0,len);
-    } else {
-      return text;
-    }
-  }
-}]);
- 
-angular.module('App').filter('toGIS', function() {
-  return function(time) {
-    if (!time) {
-      return '';
-    }
-    var out = '';
-    var s_last = time % 60;
-    var s_minutes = (time - s_last) / 60;
-    out = s_minutes + ':' + ((s_last < 10) ? '0' : '') + s_last;
-    return out;
-  }
-});
-
-angular.module('chromeTools', [])
-  .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
-    var service = {};
-
-    service.pageDataWatch = function() {
- 
-      window.addEventListener('message', function(e) {
-        S_eventer.sendEvent('loadedDataFromTab', e.data);
-      });
-    }
-
-    service.showExtensionPopup = function(tab, info) {
-      debugger 
-      chrome.tabs.executeScript(tab.id, {
-        file: "pack/pageEnviroment.js"
-      });
-    }
-
-    service.openPreAuthPage = function() {
-      chrome.tabs.create({
-        url: '/pages/afterInstall.html',
-        selected: true
-      }, function(tab) {});
-    }
-
-
-    return service;
-  }]);
-
-angular.module('App')
-  .service('S_eventer', [
-    '$rootScope',
-    '__postMessagePrepend',
-    function($rootScope, __postMessagePrepend) {
-      var service = {};
-
-      service.sendEvent = function(name, arguments) {
-        $rootScope.$broadcast(name, arguments);
-      }
-
-      service.sayToFrame = function(code) {
-        parent.postMessage(__postMessagePrepend + code, "*");
-      }
-
-      service.onPostMessage = function(next) {
-        var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
-        var eventer = window[eventMethod];
-        var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
-        eventer(messageEvent, function(e) {
-          var key = e.message ? "message" : "data";
-          var data = e[key];
-
-          next(e, data);
-        }, false);
-      }
-
-      return service;
-    }
-  ]);
-
-
-
-angular.module('App')
-  .service('S_google', [
-    '$q',
-    function($q) {
-      var service = {};
-
-      service.init = function() {
-        google.load('search', '1');
-      }
- 
-      service.loadImages = function(q) {
-        var defer = $q.defer();
-        var imageSearch = new google.search.ImageSearch();
-
-        imageSearch.setRestriction(google.search.ImageSearch.RESTRICT_IMAGESIZE,
-          google.search.ImageSearch.IMAGESIZE_MEDIUM);
-
-        imageSearch.setResultSetSize(8);
-
-        imageSearch.setSearchCompleteCallback(this, function() {
-          defer.resolve(imageSearch);
-        }, null);
-
-        imageSearch.execute(q);
-        return defer.promise;
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('App')
-  .service('S_selfapi', [
-    '$http',
-    '$q',
-    '__api',
-    function($http, $q, __api) {
-      var service = {};
-      var base = __api.baseUrl;
-      service.sendExtensionToken = function(token) {
-        return $http({
-          url: base + __api.paths.saveExtensionVkToken,
-          method: 'POST',
-          data: {
-            token: token
-          }
-        });
-      }
-
-      service.createPost = function(setId, postInfo, socket_channel, time) {
-        return $http({
-          url: base + __api.paths.createPost,
-          method: 'POST',
-          data: {
-            setId: setId,
-            postInfo: postInfo,
-            socket_channel: socket_channel,
-            time: time
-          }
-        });
-      }
-
-      service.getShortUrl = function(url) {
-        return $http({
-          url: base + __api.paths.getShortUrl,
-          method: 'POST',
-          data: {
-            url: url
-          }
-        });
-      }
-
-      service.getUserInfo = function() {
-        return $http({
-          url: base + __api.paths.getUserInfo,
-          method: 'GET',
-          withCredentials: true
-        });
-      }
-
-      service.getAllSets = function() {
-        return $http({
-          url: base + __api.paths.sets,
-          method: 'GET',
-          withCredentials: true
-        });
-      }
-
-      service.getSetInfo = function(setId) {
-        return $http({
-          url: base + __api.paths.getSetChannels,
-          method: 'GET',
-          withCredentials: true,
-          params: {
-            id: setId
-          }
-        });
-      }
-
-      service.signIn = function(email, password) {
-        return $http({
-          withCredentials: true,
-          url: base + __api.paths.signIn,
-          method: 'POST',
-          data: {
-            email: email,
-            password: password
-          }
-        });
-      }
-
-      var _uploadStack = [];
-      service.uploadImage = function(url, c, w, h, id) {
-        var defer = $q.defer();
-
-        var obj = {
-          url: url,
-          id: id
-        };
-
-        if (c) {
-          _.extend(obj, c);
-          obj.originalWidth = w;
-          obj.originalHeight = h;
-        }
-
-        _uploadStack.push({
-          obj: obj,
-          defer: defer
-        });
-
-        if (_uploadStack.length === 1) {
-          uploadImageCall();
-        }
-
-        return defer.promise;
-      }
-
-      function uploadImageCall() {
-        var q = _uploadStack[0];
-        $http({
-          url: base + __api.paths.media,
-          method: 'POST',
-          data: q.obj
-        }).then(function(resp) {
-          _uploadStack.shift();
-          q.defer.resolve({
-            media_id: resp.data.data.media_id,
-            media_url: resp.data.data.media_url,
-            id: q.obj.id
-          });
-
-          if (_uploadStack.length > 0) {
-            uploadImageCall();
-          }
-        });
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('App')
-  .service('S_templater',
-
-    ["localStorageService", "S_eventer", function(localStorageService, S_eventer) {
-      var service = {};
-
-      var templateKeyName = 'template';
-      var defaultTemplate = '{{title}}\n\n{{url}}';
-
-      service.getTemplate = function() {
-
-        var q = localStorageService.get(templateKeyName);
-
-        if (q) {
-          return q.text;
-        } else {
-          return defaultTemplate;
-        }
-      }
-
-      service.setTemplate = function(tpl) {
-
-        localStorageService.set(templateKeyName, {text: tpl});
-        S_eventer.sendEvent('trigger:templateChanged');
-      }
-
-      return service;
-    }]
-  );
-
-angular.module('App')
-  .service('S_tour',
-    ["localStorageService", "$timeout", function(localStorageService, $timeout) {
-      var service = {};
-
-      var tour;
-
-      var tourKeyName = 'tour.base';
-
-      service.init = function() {
-
-        var q = localStorageService.get(tourKeyName) || {};
-
-        if (q.complete){
-          return;
-        }
-
-        tour = new Shepherd.Tour({
-          defaults: {
-            classes: 'shepherd-theme-arrows',
-            scrollTo: true
-          }
-        });
-
-        tour.on('complete', function(){
-          localStorageService.set(tourKeyName, {
-            complete: 1
-          });
-        });
-
-        tour.addStep('step1', {
-          text: 'В настойках можно отредактировать шаблон сбора информации со страницы',
-          attachTo: '[data-step="settings"]',
-          buttons: [{
-            text: 'Ясно',
-            action: tour.next
-          }]
-        });
-
-        tour.addStep('step3', {
-          text: 'Можно свернуть окошко расширения и увидеть на заднем плане сайт. Чтобы скопировать что-то, например',
-          attachTo: '[data-step="resizer"] bottom',
-          buttons: [{
-            text: 'Хорошо',
-            action: tour.next
-          }]
-        });
-
-        tour.addStep('step4', {
-          text: 'Закрыть расширение можно этим крестиком',
-          attachTo: '[data-step="remover"]',
-          buttons: [{
-            text: 'Все понятно',
-            action: tour.next
-          }]
-        });
-
-        if ($('body').find('[data-step="shareSetName"]').length) {
-          tour.addStep('step5', {
-            text: 'Всегда можно выбрать нужный для публикации набор',
-            attachTo: '[data-step="shareSetName"] bottom',
-            buttons: [{
-              text: 'Все понятно',
-              action: tour.next
-            }]
-          });
-        }
-
-        if ($('body').find('[data-step="channel"]').length) {
-          tour.addStep('step5', {
-            text: 'Это канал в социальной сети. Для каждого канала своё окно для публикации',
-            attachTo: '[data-step="channel"] top',
-            buttons: [{
-              text: 'Понятно',
-              action: tour.next
-            }]
-          });
-        }
-
-        if ($('body').find('[data-step="changeChannelVisibility"]').length) {
-          tour.addStep('changeChannelVisibility', {
-            text: 'Можно не публиковать запись в некоторые каналы',
-            attachTo: '[data-step="changeChannelVisibility"]',
-            buttons: [{
-              text: 'Дальше',
-              action: tour.next
-            }]
-          });
-        }
-
-        if ($('body').find('[data-step="publicNow"]').length) {
-          tour.addStep('step5', {
-            text: 'Записи можно разместить сейчас',
-            attachTo: '[data-step="publicNow"] top',
-            buttons: [{
-              text: 'Так-так...',
-              action: tour.next
-            }]
-          });
-          tour.addStep('step5', {
-            text: 'А можно и запланировать их на будущее',
-            attachTo: '[data-step="publicLater"] top',
-            buttons: [{
-              text: 'Это хорошо',
-              action: tour.next
-            }]
-          });
-          tour.addStep('step5', {
-            text: 'Можно закрыть окно расширения сразу после успешной публикации',
-            attachTo: '[data-step="closeAfterPosting"] top',
-            buttons: [{
-              text: 'ОК',
-              action: tour.next
-            }]
-          });
-          tour.addStep('step5', {
-            text: 'Послать все записи в социальные сети',
-            attachTo: '[data-step="publicButton"] top',
-            buttons: [{
-              text: 'ОК',
-              action: tour.next
-            }]
-          });
-        }
-
-         tour.start();
-      }
-
-
-
-      return service;
-    }]
-  );
-
-angular.module('utilsTools', [])
-  .service('S_utils', [
-    '$modal',
-    '$q',
-    '$templateCache',
-    '$compile',
-    '$rootScope',
-    '__twitterConstants',
-    function($modal, $q, $templateCache, $compile, $rootScope, __twitterConstants) {
-      var service = {};
-
-      service.getUrlParameterValue = function(url, parameterName) {
-        "use strict";
- 
-        var urlParameters = url.substr(url.indexOf("#") + 1),
-          parameterValue = "",
-          index,
-          temp;
-
-        urlParameters = urlParameters.split("&");
-
-        for (index = 0; index < urlParameters.length; index += 1) {
-          temp = urlParameters[index].split("=");
-
-          if (temp[0] === parameterName) {
-            return temp[1];
-          }
-        }
-
-        return parameterValue;
-      }
-
-      service.decodeEntities = (function() {
-        var element = document.createElement('div');
-
-        function decodeHTMLEntities(str) {
-          if (str && typeof str === 'string') {
-            // strip script/html tags
-            str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
-            str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
-            element.innerHTML = str;
-            str = element.textContent;
-            element.textContent = '';
-          }
-
-          return str;
-        }
-
-        return decodeHTMLEntities;
-      })();
-
-      service.getRandomString = function(len) {
-        len = len || 10;
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-        for (var i = 0; i < len; i++)
-          text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-        return text;
-      }
-
-      service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
-        return $modal.open({
-          templateUrl: 'templates/modals/attachPhoto.html',
-          controller: 'CM_attachPhoto as ctr',
-          resolve: {
-            pageAttachments: function() {
-              return fromPage;
-            },
-            uploadCallbacks: function() {
-              return uploadCallbacks;
-            }
-          }
-        }).result;
-      }
-
-
-      service.callAttachVideoDialog = function(group_id) {
-        return $modal.open({
-          templateUrl: 'templates/modals/attachVideo.html',
-          controller: 'CM_attachVideo as ctr',
-          resolve: {
-            group_id: function() {
-              return group_id;
-            }
-          }
-        }).result;
-      }
-
-
-      service.callVideoPlayerDialog = function(title, videoSrc) {
-        return $modal.open({
-          templateUrl: 'templates/modals/videoPlayer.html',
-          controller: 'CM_videoPlayer as ctr',
-          resolve: {
-            videoSrc: function() {
-              return videoSrc;
-            },
-            title: function() {
-              return title;
-            }
-          }
-        }).result;
-      }
-
-      service.getAttachesByType = function(attaches, type) {
-        return _.filter(attaches, function(q) {
-          return q.type === type;
-        });
-      }
-
-      service.attachToFancy = function(ats) {
-        return _.map(ats, function(image) {
-          return {
-            href: image.src
-          }
-        });
-      }
-
-      service.loadImage = function(src) {
-        var defer = $q.defer();
-
-        var image = new Image();
-        image.src = src;
-        image.onload = function() {
-          defer.resolve(this);
-        }
-        image.onerror = function() {
-          defer.reject(this);
-        }
-
-        return defer.promise;
-      }
-
-      service.convertUploadedPhotoToAttach = function(media_id, media_url, info) {
-        return {
-          media_id: media_id,
-          width: info.width,
-          clientWidth: info.width,
-          height: info.height,
-          clientHeight: info.height,
-          src: media_url,
-          src_big: media_url,
-          type: 'image'
-        }
-      }
-
-      service.wrapVideo = function(video) {
-        return {
-          video: video,
-          id: service.getRandomString(16),
-          duration: video.duration,
-          src: video.photo_320,
-          type: 'video'
-        }
-      }
-
-      service.convertGoogleImageToAttach = function(image) {
-        return {
-          photo: image.photo,
-          id: image.id || service.getRandomString(16),
-          width: image.width,
-          clientWidth: image.width,
-          height: image.height,
-          clientHeight: image.height,
-          src: image.url,
-          src_big: image.url,
-          type: 'image'
-        }
-      }
-
-      service.createEmptyPoll = function() {
-        return {
-          id: service.getRandomString(16),
-          type: 'poll'
-        }
-      }
-
-
-      service.getVideoQuality = function(video) {
-        if (video.files.mp4_1080) {
-          return '1080';
-        }
-        if (video.files.mp4_720) {
-          return '720';
-        }
-        if (video.files.mp4_480) {
-          return '480';
-        }
-        if (video.files.mp4_360) {
-          return '360';
-        }
-        if (video.files.mp4_240) {
-          return '240';
-        }
-      }
-
-      service.getCurrentTime = function() {
-        return Math.floor(new Date().getTime() / 1000);
-      }
-
-      service.sortAttachments = function(attaches) {
-        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
-        return _.sortBy(attaches, function(attach) {
-          var i = _.findIndex(priority, function(q) {
-            return q === attach.type;
-          });
-          if (i !== -1) {
-            return i;
-          } else {
-            return 0;
-          }
-        });
-      }
-
-      service.findFirstAttach = function(attaches) {
-        if (!attaches || attaches.length === 0) {
-          return;
-        }
-
-        var priority = ['image', 'video', 'poll'];
-        _.sortBy(attaches, function(attach) {
-          var i = _.findIndex(priority, function(q) {
-            return q === attach.type;
-          });
-          if (i !== -1) {
-            return i;
-          } else {
-            return 0;
-          }
-        });
-
-        return attaches[0];
-      }
-
-      service.getFailDescription = function(data) {
-        var q;
-
-        if (data.network === 'tw' && data.error && data.error.code && data.error.code === 187) {
-          return "Статус повторяется";
-        }
-
-        if (data.network === 'fb') {
-          if (data.data.error && data.data.error.code && data.data.error.code == 506) {
-            return "Сообщение повторяется";
-          }
-        }
-
-        if (data.network === 'ig') {
-          if (data.error && data.error.code === 'notFull') {
-            return "Необходимо прикрепить изображение"
-          }
-          if (data.error && data.error.code === 'notMedia') {
-            return "Изображение не найдено, повторите загрузку"
-          }
-          if (data.error && data.error.code === 'notSquared') {
-            return "Изображение не квадратное"
-          }
-        }
-
-        return ((data.error) ? JSON.stringify(data.error) : 'не удалось определить');
-      }
-
-      service.configurePostInfo = function(channels, channel_ids) {
-        var postInfo = [];
-        _.forEach(channels, function(channel) {
-          if (channel.disabled || channel.complete || channel.inprogress) return;
-
-          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1)) {
-            postInfo.push({
-              channel_id: channel.id,
-              text: channel.text,
-              attachments: channel.attachments
-            });
-          }
-        });
-        return postInfo;
-      }
-
-      service.disableProgress = function(channels) {
-        _.forEach(channels, function(channel) {
-          channel.inprogress = false;
-          channel.complete = false;
-          channel.error = false;
-        });
-      }
-
-      service.trackProgress = function(channels, info) {
-        var q;
-        _.forEach(info, function(_channel) {
-          _.find(channels, function(channel) {
-            return channel.id === _channel.channel_id;
-          }).inprogress = true;
-        });
-      }
-
-      service.getMaxTextLength = function(type, attachments, text) {
-        switch (type) {
-          case 'tw':
-            {
-              var lc = service.getLinksFromText(text);
-              var len = __twitterConstants.maxSymbols;
-
-              _.forEach(lc, function(link) {
-                len += (link.length - __twitterConstants.linkLen);
-              });
-
-              if (attachments.length) {
-                len -= __twitterConstants.mediaLen;
-              }
-
-              return len;
-            }
-          case 'ig':
-            {
-              return 2200;
-            }
-        }
-        return 10000;
-      }
-
-      service.getLinksFromText = function(text) {
-        text = text || '';
-        var links = [];
-        var urlRegex = /(https?:\/\/[^\s]+)/g;
-        text.replace(urlRegex, function(url) {
-          links.push(url);
-        });
-        return links;
-      }
-
-      service.attachmentsLimitReached = function(network, channelsLenth) {
-        switch (network) {
-          case 'ig':
-            {
-              return channelsLenth >= 1;
-              break;
-            }
-          case 'fb':
-            {
-              return channelsLenth >= 1;
-              break;
-            }
-          case 'tw':
-            {
-              return channelsLenth >= 4;
-              break;
-            }
-          case 'vk':
-            {
-              return channelsLenth >= 9;
-              break;
-            }
-        }
-      }
-
-      service.unixTo = function(time, format) {
-        return moment(time, 'X').format(format);
-      }
-
-      service.escapeRegex = function(text) {
-        return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('vkTools', [])
-  .service('S_vk', [
-    '$q',
-    '$http',
-    'S_utils',
-    function($q, $http, S_utils ) {
-      var service = {};
-
-      return service;
-    }
-  ]);
-
 (function replaceEmojiWithImages(root) {
 
   var REGIONAL_INDICATOR_A = parseInt("1f1e6", 16),
@@ -3765,150 +3769,6 @@ var VKS = function(_options) {
   };
 };
 
-angular.module('App').controller('CM_attachPhoto', [
-  '$scope',
-  'S_vk',
-  'S_selfapi',
-  'S_chrome',
-  '$modalInstance',
-  'pageAttachments',
-  'uploadCallbacks',
-  function($scope, S_vk, S_selfapi, S_chrome, $modalInstance, pageAttachments, uploadCallbacks) {
-    var ctr = this;
-
-    ctr.selectedAttachments = [];
-
-    ctr.pageAttachments = pageAttachments;
-
-    ctr.imagesPlurals = {
-      0: '{} фотографий',
-      one: '{} фотографию',
-      few: '{} фотографии',
-      many: '{} фотографий',
-      other: '{} фотографий'
-    };
-
-
-    ctr.closeDialog = function() {
-      $modalInstance.close(ctr.selectedAttachments);
-    }
-
-    ctr.sendAttach = function(attach){
-      ctr.selectedAttachments = [attach];
-      ctr.closeDialog();
-    }
-
-    ctr.beforeUploading = function(q,w,e,r){
-      uploadCallbacks.before(q,w,e,r);
-      ctr.closeDialog();
-    }
-
-    ctr.afterUploading = function(q,w,e,r){
-      uploadCallbacks.after(q,w,e,r);
-    }
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('CM_attachVideo', [
-  '$scope',
-  'S_vk',
-  'S_selfapi',
-  'S_utils',
-  '$modalInstance',
-  'group_id',
-  function($scope, S_vk, S_selfapi, S_utils, $modalInstance, group_id) {
-    var ctr = this;
-
-    ctr.hd = true;
-    ctr.adult = true;
-    ctr.sort = 2;
-
-    ctr.selectedAttachments = [];
-
-    ctr.closeDialog = function() {
-      $modalInstance.close(ctr.selectedAttachments);
-    }
-
-    ctr.selectVideo = function(attach) {
-      ctr.selectedAttachments = [attach];
-      ctr.closeDialog();
-    }
-
-
-    ctr.search = function() {
-      if (!ctr.q || ctr.q === '') {
-        return;
-      }
-      ctr.searchInProgress = true;
-      S_vk.request('video.search', {
-        q: ctr.q,
-        adult: (ctr.adult) ? 0 : 1,
-        hd: (ctr.hd) ? 1 : 0,
-        sort: ctr.sort
-      }).then(function(resp) {
-        ctr.searchedVideos = resp.response.items;
-        ctr.searchInProgress = false;
-      });
-    }
-
-
-    ctr.loadUserVideos = function(){
-      ctr.loadUserVideosInProgress = true;
-      S_vk.request('video.get', {
-        width: 320
-      }).then(function(resp) {
-        ctr.userVideos = resp.response.items;
-        ctr.loadUserVideosInProgress = false;
-      });
-    }
-
-    ctr.loadGroupVideos = function(){
-      ctr.groupSearchError = undefined;
-      ctr.loadGroupVideosInProgress = true;
-      S_vk.request('video.get', {
-        width: 320,
-        owner_id: '-'+group_id
-      }).then(function(resp) {
-        ctr.loadGroupVideosInProgress = false;
-        if (resp.error){
-          if (resp.error.error_code === 15){
-            ctr.groupSearchError = 'Видеозаписи группы заблокированы или отсутствуют';
-            return;
-          }
-
-          ctr.groupSearchError = 'Ошибка при получении видозаписей';
-        } else {
-          ctr.groupVideos = resp.response.items;
-        }
-      });
-    }
-
-
-    ctr.getVideoQuality = function(video) {
-      return S_utils.getVideoQuality(video);
-    }
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('CM_videoPlayer', [
-  '$scope',
-  '$sce',
-  'videoSrc',
-  'title',
-  function($scope, $sce, videoSrc, title) {
-    var ctr = this;
-
-    ctr.videoSrc = $sce.trustAsResourceUrl(videoSrc);
-    ctr.title = title;
-
-    return ctr;
-  }
-]);
-
 angular.module('App').controller('CD_attachPoll', [
   '$scope',
   'S_vk',
@@ -4196,6 +4056,150 @@ angular.module('App').controller('CD_sourceLink', [
   function($scope, S_vk, S_selfapi, S_chrome, __maxPollVariants) {
     var ctr = this;
   
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CM_attachPhoto', [
+  '$scope',
+  'S_vk',
+  'S_selfapi',
+  'S_chrome',
+  '$modalInstance',
+  'pageAttachments',
+  'uploadCallbacks',
+  function($scope, S_vk, S_selfapi, S_chrome, $modalInstance, pageAttachments, uploadCallbacks) {
+    var ctr = this;
+
+    ctr.selectedAttachments = [];
+
+    ctr.pageAttachments = pageAttachments;
+
+    ctr.imagesPlurals = {
+      0: '{} фотографий',
+      one: '{} фотографию',
+      few: '{} фотографии',
+      many: '{} фотографий',
+      other: '{} фотографий'
+    };
+
+
+    ctr.closeDialog = function() {
+      $modalInstance.close(ctr.selectedAttachments);
+    }
+
+    ctr.sendAttach = function(attach){
+      ctr.selectedAttachments = [attach];
+      ctr.closeDialog();
+    }
+
+    ctr.beforeUploading = function(q,w,e,r){
+      uploadCallbacks.before(q,w,e,r);
+      ctr.closeDialog();
+    }
+
+    ctr.afterUploading = function(q,w,e,r){
+      uploadCallbacks.after(q,w,e,r);
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CM_attachVideo', [
+  '$scope',
+  'S_vk',
+  'S_selfapi',
+  'S_utils',
+  '$modalInstance',
+  'group_id',
+  function($scope, S_vk, S_selfapi, S_utils, $modalInstance, group_id) {
+    var ctr = this;
+
+    ctr.hd = true;
+    ctr.adult = true;
+    ctr.sort = 2;
+
+    ctr.selectedAttachments = [];
+
+    ctr.closeDialog = function() {
+      $modalInstance.close(ctr.selectedAttachments);
+    }
+
+    ctr.selectVideo = function(attach) {
+      ctr.selectedAttachments = [attach];
+      ctr.closeDialog();
+    }
+
+
+    ctr.search = function() {
+      if (!ctr.q || ctr.q === '') {
+        return;
+      }
+      ctr.searchInProgress = true;
+      S_vk.request('video.search', {
+        q: ctr.q,
+        adult: (ctr.adult) ? 0 : 1,
+        hd: (ctr.hd) ? 1 : 0,
+        sort: ctr.sort
+      }).then(function(resp) {
+        ctr.searchedVideos = resp.response.items;
+        ctr.searchInProgress = false;
+      });
+    }
+
+
+    ctr.loadUserVideos = function(){
+      ctr.loadUserVideosInProgress = true;
+      S_vk.request('video.get', {
+        width: 320
+      }).then(function(resp) {
+        ctr.userVideos = resp.response.items;
+        ctr.loadUserVideosInProgress = false;
+      });
+    }
+
+    ctr.loadGroupVideos = function(){
+      ctr.groupSearchError = undefined;
+      ctr.loadGroupVideosInProgress = true;
+      S_vk.request('video.get', {
+        width: 320,
+        owner_id: '-'+group_id
+      }).then(function(resp) {
+        ctr.loadGroupVideosInProgress = false;
+        if (resp.error){
+          if (resp.error.error_code === 15){
+            ctr.groupSearchError = 'Видеозаписи группы заблокированы или отсутствуют';
+            return;
+          }
+
+          ctr.groupSearchError = 'Ошибка при получении видозаписей';
+        } else {
+          ctr.groupVideos = resp.response.items;
+        }
+      });
+    }
+
+
+    ctr.getVideoQuality = function(video) {
+      return S_utils.getVideoQuality(video);
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('CM_videoPlayer', [
+  '$scope',
+  '$sce',
+  'videoSrc',
+  'title',
+  function($scope, $sce, videoSrc, title) {
+    var ctr = this;
+
+    ctr.videoSrc = $sce.trustAsResourceUrl(videoSrc);
+    ctr.title = title;
 
     return ctr;
   }
