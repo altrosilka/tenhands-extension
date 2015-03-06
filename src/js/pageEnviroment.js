@@ -103,7 +103,7 @@
   function onPostMessage(e) {
     var key = e.message ? "message" : "data";
     var data = e[key];
-    console.log(1);
+
     if (data === isMessage('close')) {
       close();
       setTimeout(function() {

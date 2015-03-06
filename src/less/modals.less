@@ -1,13 +1,15 @@
 .modal {
   background: rgba(0, 0, 0, 0.7);
-  transform: translate3d(0,0,0);
+  transform: translate3d(0, 0, 0);
   .modal-content {
     border-radius: 0px;
+    box-shadow: none;
+    -webkit-box-shadow: none;
   }
   .modal-dialog {
     margin: 15px auto;
   }
-  .nav-tabs>li{
+  .nav-tabs>li {
     margin: 0;
   }
   .nav-tabs>li>a:hover, .uploadImage:hover {
@@ -36,7 +38,7 @@
     border: 0px;
     border-bottom: 2px solid rgba(0, 0, 0, 0);
     border-radius: 0px;
-    margin: 0; 
+    margin: 0;
     font-weight: normal;
   }
   .bodyWithTabs {
@@ -44,11 +46,11 @@
   }
 }
 .modal-header {
- border-bottom: 1px solid #000;
-color: #FFF;
-background: #424242;
-font-weight: bold;
-padding: 17px 20px 18px;
+  border-bottom: 1px solid #000;
+  color: #FFF;
+  background: #424242;
+  font-weight: bold;
+  padding: 17px 20px 18px;
   h3 {
     font-size: 14px;
     margin: 0;
@@ -74,8 +76,8 @@ padding: 17px 20px 18px;
   right: 0;
 }
 .modal.in.fade .modal-dialog {
-
+  transform: translate(0, 0) scale(1);
 }
 .modal.fade .modal-dialog {
-
+  transform: translate(0, 0) scale(0.95);
 }

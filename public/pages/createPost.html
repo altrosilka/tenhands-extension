@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 
 <head>
   <meta charset="UTF-8" />
@@ -63,7 +63,7 @@
           </li>
         </ul>
 
-        <section class="setSelecterArea" ng-show="post_ctr.showSetSelect()">
+        <section class="setSelecterArea" ng-if="post_ctr.showSetSelect()">
 
 
 
@@ -83,8 +83,8 @@
           </span>
         </section>
         <section class="v_channels">
-          <div class="channelsList"> 
-            <span channel="channel" class="tourFader" data-step="channel"  ng-repeat="channel in post_ctr.channels" page-data="post_ctr.data" post-channel-again="post_ctr.postChannelAgain(channel.id)"></span>
+          <div class="channelsList">
+            <span channel="channel" class="tourFader" data-step="channel" ng-repeat="channel in post_ctr.channels" page-data="post_ctr.data" post-channel-again="post_ctr.postChannelAgain(channel.id)"></span>
           </div>
 
           <div class="noChannels" ng-if="post_ctr.channelsIsLoaded && !post_ctr.channels.length">
@@ -101,7 +101,7 @@
         <div class="centered clearfix sendPanel" ng-class="{'active':!post_ctr.showPostProcessingLayer()}">
 
           <div class="final pull-right">
-            <div class="checkboxList controls-list tourFader" data-step="closeAfterPosting" >
+            <div class="checkboxList controls-list tourFader" data-step="closeAfterPosting">
               <label>
                 <input type="checkbox" ng-model="post_ctr.closeAfterSuccess">
                 <span>Закрыть после публикации</span>
@@ -109,7 +109,7 @@
             </div>
 
 
-            <button type="button" data-step="publicButton" class="btn btn-success sendButton tourFader" ng-disabled="post_ctr.paidIsEnd || post_ctr.processingAttachments.length" ng-click="post_ctr.createPost()">
+            <button type="button" data-step="publicButton" class="btn btn-success sendButton tourFader" ng-disabled="post_ctr.paidIsEnd || post_ctr.processingAttachments.length || !post_ctr.canPost()" ng-click="post_ctr.createPost()">
               <span class="publicWord">Опубликовать</span>
               <span class="planWord">Запланировать</span>
               <div class="progress-bars">
@@ -121,7 +121,7 @@
 
           <section class="postingTimerArea pull-left">
             <div class="radioList controls-list">
-              <span class="tourFader">Разместить</span>
+              <div class="tourFader ib">Разместить</div>
 
               <label data-step="publicNow" class="tourFader">
                 <input type="radio" ng-model="post_ctr.postingNow" ng-value="true">
@@ -132,12 +132,16 @@
                 <input type="radio" ng-model="post_ctr.postingNow" ng-value="false">
                 <span>Выбрать время</span>
               </label>
+              <div class="clearfix"></div>
+              <div class="tourFader viewCalendar ib link" ng-click="post_ctr.viewTable()">
+                Посмотреть расписание
+              </div>
             </div>
 
-            <div class="postingTimer tourFader" >
+            <div class="postingTimer tourFader">
               <div class="calendar inline" date-button min-date="post_ctr.minDate" max-date="post_ctr.maxDate" data-model="post_ctr.postingDate" class="picker_inputs"></div>
               <span class="in inline">в</span>
-              <div class="timec inline" time-select time="post_ctr.postingTime" set-new-time="post_ctr.onTimeChange(time)"></div>
+              <div class="timec inline" time-select data-date="post_ctr.postingDate" set-new-time="post_ctr.onTimeChange(time)"></div>
             </div>
           </section>
 
@@ -147,6 +151,15 @@
         </div>
 
       </footer>
+      <!--
+      <section class="bottomPanel">
+        <div class="panelka text-center">
+          <menu>
+            <a>Расписание</a>
+          </menu>
+        </div>
+      </section>
+      -->
     </section>
 
     <section ng-if="ctr._state === 'login'" ng-include="'templates/views/login.html'">
@@ -156,7 +169,6 @@
   </div>
 
   <div half-height class="halfHeight"></div>
-
 
   <script type="text/javascript" src="/pack/vendor.js"></script>
   <script type="text/javascript" src="/pack/templates.js"></script>

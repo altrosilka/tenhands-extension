@@ -2,6 +2,11 @@
 (function() {
   var frame;
 
+  frame = document.getElementById('smm-transport-ekniERgebe39EWee');
+  if (frame !== null) {
+    return
+  }
+
   var imagesColection = document.getElementsByTagName('img');
   var images = [],
     image, res;
@@ -56,12 +61,12 @@
 
     return dom;
   }
- 
+
   function getByQuery(q) {
     var dom;
 
     dom = document.querySelector(q);
-    if (dom !== null) return dom.innerHTML.replace(/(<([^>]+)>)/ig,"").replace(/(\n)+/g, '\n');
+    if (dom !== null) return dom.innerHTML.replace(/(<([^>]+)>)/ig, "").replace(/(\n)+/g, '\n');
 
     return;
   }
@@ -81,12 +86,11 @@
   function sendToIframe() {
     frame = document.getElementById('smm-transport-ekniERgebe39EWee');
     if (frame === null) {
-      console.log('not ');
-      setTimeout(sendToIframe, 300);
+      setTimeout(sendToIframe, 100);
     } else {
       setTimeout(function() {
-        frame.contentWindow.postMessage(data, 'chrome-extension://'+chrome.runtime.id);
-      }, 500);
+        frame.contentWindow.postMessage(data, 'chrome-extension://' + chrome.runtime.id);
+      }, 100)
     }
   }
 
@@ -103,6 +107,6 @@
   }
 
 
-  console.log(JSON.stringify(data));
+  //console.log(JSON.stringify(data));
   sendToIframe();
 })();

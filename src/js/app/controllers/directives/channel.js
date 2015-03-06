@@ -55,6 +55,7 @@ angular.module('App').controller('CD_channel',
       }
 
       $scope.channel.text = $interpolate(S_templater.getTemplate())(ctr.data);
+      console.log('new text')
     }
 
     ctr.isComplete = function() {

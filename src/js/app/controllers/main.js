@@ -3,7 +3,7 @@ angular.module('App').controller('C_main',
     var ctr = this;
     var _pushedMenu = false;
 
-
+    track('main');
     ctr._state = 'post';
 
     ctr.showExtension = function() {
@@ -16,7 +16,7 @@ angular.module('App').controller('C_main',
       S_eventer.sayToFrame('toggle');
     }
 
-    ctr.closeIframe = function() { 
+    ctr.closeIframe = function() {
       S_eventer.sayToFrame('close');
     }
 
@@ -33,14 +33,14 @@ angular.module('App').controller('C_main',
       return _pushedMenu;
     }
 
-    ctr.openTour = function(){
+    ctr.openTour = function() {
       S_tour.init(true);
     }
 
 
     $scope.$on('hideLoader', function() {
       ctr.hideLoader = true;
-
+      track('end');
       S_tour.init();
     });
     $scope.$on('badLogin', function() {

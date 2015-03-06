@@ -157,12 +157,17 @@ select.form-control {
 [data-shepherd-step="changeChannelVisibility"] .tourFader[data-step="channel"]:first-child {
   opacity: 1;
 }
+.ib {
+  display: inline-block;
+}
 .modal {
   background: rgba(0, 0, 0, 0.7);
   transform: translate3d(0, 0, 0);
 }
 .modal .modal-content {
   border-radius: 0px;
+  box-shadow: none;
+  -webkit-box-shadow: none;
 }
 .modal .modal-dialog {
   margin: 15px auto;
@@ -233,6 +238,12 @@ select.form-control {
 .fixRight {
   position: absolute;
   right: 0;
+}
+.modal.in.fade .modal-dialog {
+  transform: translate(0, 0) scale(1);
+}
+.modal.fade .modal-dialog {
+  transform: translate(0, 0) scale(0.95);
 }
 html,
 body {
@@ -1075,6 +1086,11 @@ body.min .halfHeight {
   float: left;
   top: 8px;
   margin-right: 10px;
+}
+.postingTimerArea .viewCalendar {
+  color: #3498db;
+  cursor: pointer;
+  margin-top: 5px;
 }
 .postingTimer {
   opacity: 0;
@@ -1973,6 +1989,112 @@ body.min .halfHeight {
 }
 .calendar .btn.btn-default:focus {
   background: transparent;
+}
+.bottomPanel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+}
+.bottomPanel .panelka {
+  background-color: #2C3E50;
+  height: 50px;
+}
+.bottomPanel .panelka menu {
+  padding: 0;
+  position: relative;
+  z-index: 5;
+  overflow: auto;
+}
+.bottomPanel .panelka menu a {
+  cursor: pointer;
+  line-height: 50px;
+  display: inline-block;
+  float: left;
+  padding: 0 12px 2px;
+  text-decoration: none;
+  color: #FFF;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+  font-size: 13px;
+}
+.bottomPanel .panelka menu a:hover {
+  opacity: 0.85;
+}
+.bottomPanel .panelka menu a.active,
+.bottomPanel .panelka menu a.active:hover {
+  background-color: #1F3349;
+  opacity: 1;
+}
+.vm_table h2 {
+  font-size: 21px!important;
+}
+.vm_table .fc-button {
+  transition: 0.2s;
+  position: relative;
+  top: -1px;
+  font-weight: 300;
+  font-size: 11px;
+  background: #FFF;
+  border-radius: 0px;
+  padding: 0px 11px;
+  color: #FFF;
+  line-height: 25px;
+  box-shadow: none;
+  text-shadow: none;
+  outline: none;
+  height: auto;
+  border: none!important;
+}
+.vm_table .fc-button::-webkit-input-placeholder {
+  color: #aaa;
+}
+.vm_table .fc-button:focus {
+  border-color: #3498db;
+  box-shadow: none;
+}
+.vm_table .fc-button.fc-state-default {
+  background-color: #3498db;
+}
+.vm_table .fc-button.fc-state-default:hover {
+  -webkit-filter: contrast(1.5);
+}
+.vm_table .fc-button:focus,
+.vm_table .fc-button:active {
+  border: 1px solid #5A87B3;
+  outline: none!important;
+}
+.vm_table .fc-button.btn-trans {
+  background-color: transparent;
+  height: 31px;
+}
+.vm_table .fc-button.btn-trans:hover {
+  background-color: #E6E8EC;
+}
+.vm_table .fc-button.fc-state-active {
+  background-color: #424242;
+}
+.vm_table .fc-unthemed .fc-today {
+  background-color: #D8EDFF;
+}
+.vm_table a.fc-more {
+  color: #3498db;
+}
+.vm_table .fc-more-popover .fc-event-container {
+  padding: 0;
+  margin: 0;
+}
+.vm_table .fc-more-popover .fc-event-container .fc-event {
+  line-height: 1.7;
+}
+.vm_table .fc-event {
+  border-radius: 0;
+  border: 0px;
+  background: #2B85B2;
+  line-height: 1.5em;
+  margin: 0;
+  cursor: default;
 }
 .attachPhoto .toAllChannels {
   margin-top: 8px;

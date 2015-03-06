@@ -1,0 +1,70 @@
+.vm_table {
+  h2 {
+    font-size: 21px!important;
+  }
+  .fc-button {
+    transition: 0.2s;
+    position: relative;
+    top: -1px;
+    font-weight: 300;
+    font-size: 11px;
+    background: #FFF;
+    border-radius: 0px;
+    padding: 0px 11px;
+    color: #FFF;
+    line-height: 25px;
+    box-shadow: none;
+    text-shadow: none;
+    outline: none;
+    height: auto;
+    border: none!important;
+    &::-webkit-input-placeholder {
+      color: #aaa;
+    }
+    &:focus {
+      border-color: @colorPrimary;
+      box-shadow: none;
+    }
+    &.fc-state-default {
+      background-color: @colorPrimary;
+      &:hover {
+        -webkit-filter: contrast(1.5);
+      }
+    }
+    &:focus, &:active {
+      border: 1px solid #5A87B3;
+      outline: none!important;
+    }
+    &.btn-trans {
+      background-color: transparent;
+      height: 31px;
+      &:hover {
+        background-color: #E6E8EC;
+      }
+    }
+    &.fc-state-active {
+      background-color: #424242;
+    }
+  }
+  .fc-unthemed .fc-today {
+    background-color: #D8EDFF;
+  }
+  a.fc-more {
+    color: @colorPrimary;
+  }
+  .fc-more-popover .fc-event-container {
+    padding: 0;
+    margin: 0;
+    .fc-event{
+      line-height: 1.7;
+    }
+  }
+  .fc-event {
+    border-radius: 0;
+    border: 0px;
+    background: #2B85B2;
+    line-height: 1.5em;
+    margin: 0;
+    cursor: default;
+  }
+}

@@ -29,6 +29,22 @@ angular.module('App')
         });
       }
 
+      service.getTable = function(from, to, set_ids, user_ids) {
+        return $http({
+          url: base + __api.paths.getTable,
+          method: 'GET',
+          withCredentials: true,
+          params: {
+            from: from,
+            to: to,
+            set_ids: set_ids,
+            user_ids: user_ids
+          }
+        });
+      }
+
+
+
       service.getShortUrl = function(url) {
         return $http({
           url: base + __api.paths.getShortUrl,

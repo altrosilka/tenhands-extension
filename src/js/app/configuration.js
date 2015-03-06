@@ -12,7 +12,8 @@ angular.module('config', [])
       getUserInfo: 'users/getCurrentUser',
       signIn: 'auth/signIn',
       sets: 'sets',
-      getSetChannels: 'sets/getChannels'
+      getSetChannels: 'sets/getChannels',
+      getTable: 'table'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
@@ -21,5 +22,5 @@ angular.module('config', [])
   .constant('__twitterConstants',{
     maxSymbols: 140,
     linkLen: 22,
-    mediaLen: 23
+    mediaLen: 23 
   })

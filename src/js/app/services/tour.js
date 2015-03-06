@@ -18,7 +18,7 @@ angular.module('App')
         tour = new Shepherd.Tour({
           defaults: {
             classes: 'shepherd-theme-arrows',
-            scrollTo: true
+            scrollTo: false
           }
         });
 
@@ -117,7 +117,7 @@ angular.module('App')
             text: 'Послать все записи в социальные сети',
             attachTo: '[data-step="publicButton"] top',
             buttons: [{
-              text: 'ОК',
+              text: 'Пора пользоваться!',
               action: tour.next
             }]
           });

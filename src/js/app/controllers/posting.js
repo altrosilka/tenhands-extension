@@ -2,7 +2,7 @@ angular.module('App').controller('C_posting',
   function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
     var ctr = this;
 
-    var _socketListeningId;
+    var _socketListeningId, skipPostingNowChange = false;
 
     ctr.sets = [];
 
@@ -13,7 +13,7 @@ angular.module('App').controller('C_posting',
     ctr.closeAfterSuccess = false;
 
     S_selfapi.getAllSets().then(function(resp) {
-      if (resp.data.error){
+      if (resp.data.error) {
         S_eventer.sendEvent('badLogin');
         return;
       }
@@ -72,8 +72,9 @@ angular.module('App').controller('C_posting',
       if (ctr.postingNow) {
         S_utils.trackProgress(ctr.channels, postInfo);
       }
-
-      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? ctr.postingUnixTime : undefined)).then(function(resp) {
+      debugger
+      return;
+      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? moment(ctr.postingDate).format('X') : undefined)).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
         _socketListeningId = resp.data.data.hash;
 
@@ -179,51 +180,43 @@ angular.module('App').controller('C_posting',
 
 
     ctr.minDate = new Date();
-    ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
+    ctr.postingDate = moment();
     ctr.postingNow = true;
-    ctr.postingTime = new Date();
 
 
     $scope.$watch(function() {
       return ctr.postingNow;
     }, function(q) {
-      if (typeof q === 'undefined') return;
+      if (typeof q === 'undefined' || skipPostingNowChange) {
+        skipPostingNowChange = false;
+        return;
+      }
 
       if (q === false) {
-        var secondsFromStart = moment().diff(moment().hour(0).minute(0).second(0), 'seconds');
-        var daySeconds = 3600 * 24;
-        var offset = secondsFromStart + 3600 * 3;
-        if (offset > daySeconds) {
-          ctr.postingTime = offset - daySeconds;
-          ctr.postingDate = moment(ctr.postingDate).add(1, 'days').toDate();
-        } else {
-          ctr.postingTime = offset;
-        }
-        ctr.onTimeChange(ctr.postingTime);
+        ctr.postingDate = moment().add(3, 'hours').toDate();
       } else {
-        ctr.postingUnixTime = +moment.utc().format('X');
+        $timeout(function() {
+          ctr.postingDate = moment().toDate();
+        }, 300);
       }
     });
 
     ctr.onTimeChange = function(time) {
-      ctr.pastTime = false;
+      if (!ctr.postingDate) return;
 
-      if (!ctr.postingTime || !ctr.postingDate) return;
+      ctr.postingDate = moment(moment(ctr.postingDate).format('YYYYMMDD'),'YYYYMMDD').add(time, 'seconds').format()
+    }
 
-      if (time) {
-        ctr.postingTime = time;
-      }
+    ctr.canPost = function(){
+      return (ctr.postingNow || (+moment(ctr.postingDate).format('X') > +moment().format('X')));
+    }
 
-      var dateUnix = +moment.utc(ctr.postingDate).format('X');
-      var startDate = ctr.postingTime;
-
-      var res = dateUnix + startDate;
-
-      if (res > moment.utc().format('X')) {
-        ctr.postingUnixTime = dateUnix + startDate;
-      } else {
-        ctr.pastTime = true;
-      }
+    ctr.viewTable = function() {
+      S_utils.showTablePopup(ctr.selectedSet.id).then(function(newDate) {
+        skipPostingNowChange = true;
+        ctr.postingDate = newDate.toDate();
+        ctr.postingNow = false;
+      });
     }
 
     return ctr;

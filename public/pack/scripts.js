@@ -8,6 +8,7 @@ var App = angular.module('App', [
   'utilsTools',
   'ui.bootstrap',
   'ui.select',
+  'ui.calendar',
   'templates'
 ]); 
     
@@ -20,10 +21,10 @@ App.config([
     //$httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf8';
   }
 ]);
-  
+   
 angular.module('config', [])
   .constant('__api', {
-    baseUrl: 'http://api.smm.dev/',
+    baseUrl: 'http://smm.dev/api/',
     paths: { 
       saveExtensionVkToken: 'accounts/vkontakte/add',
       getShortUrl: 'utils/shortUrl',
@@ -35,7 +36,8 @@ angular.module('config', [])
       getUserInfo: 'users/getCurrentUser',
       signIn: 'auth/signIn',
       sets: 'sets',
-      getSetChannels: 'sets/getChannels'
+      getSetChannels: 'sets/getChannels',
+      getTable: 'table'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
@@ -44,14 +46,31 @@ angular.module('config', [])
   .constant('__twitterConstants',{
     maxSymbols: 140,
     linkLen: 22,
-    mediaLen: 23
+    mediaLen: 23 
   })
+
+var oldTrack = 0;
+
+
+function track(name) {
+  var time = new Date().getTime();
+  if (oldTrack) {
+    console.log(name, time - oldTrack);
+  } else {
+    console.log(name);
+  }
+  oldTrack = time;
+}
+
+
+track('start');
 App.run([
   'S_chrome',
   'S_vk',
   'S_google',
   'S_selfapi',
   function(S_chrome, S_vk, S_google, S_selfapi) {
+    track('run');
 
     Highcharts.setOptions({
       global: {
@@ -66,1484 +85,8 @@ App.run([
     S_chrome.pageDataWatch();
 
     S_google.init();
-
   }
 ]);
-angular.module('App').controller('C_afterInstall', [
-  '$scope',
-  '$location',
-  'S_vk',
-  function($scope, $location, S_vk) {
-    var ctr = this;
-
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('C_login', [
-  '$scope',
-  'S_selfapi',
-  function($scope, S_selfapi) {
-    var ctr = this;
-
-
-    
-
-    ctr.email = ctr.password = '';
-
-    ctr.auth = function(email, password) {
-      ctr.authInProgress = true;
-      ctr.error = false;
-      S_selfapi.signIn(email, password).then(function(resp) {
-        ctr.authInProgress = false;
-        if (resp.data.success) {
-          $scope.ctr.checkAuth();
-        }
-
-        if (resp.data.error) {
-          ctr.error = true;
-        }
-      });
-    }
-
-    return ctr;
-  }
-]);
-
-angular.module('App').controller('C_main',
-  ["$scope", "$timeout", "S_utils", "S_selfapi", "S_eventer", "S_tour", function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour) {
-    var ctr = this;
-    var _pushedMenu = false;
-
-
-    ctr._state = 'post';
-
-    ctr.showExtension = function() {
-      return ctr._state;
-    }
-
-    /* enviroment */
-    ctr.resizeIframe = function() {
-      ctr.minState = !ctr.minState;
-      S_eventer.sayToFrame('toggle');
-    }
-
-    ctr.closeIframe = function() { 
-      S_eventer.sayToFrame('close');
-    }
-
-
-    ctr.toggleMenu = function() {
-      _pushedMenu = !_pushedMenu;
-    }
-
-    ctr.emptyChannels = function() {
-      S_eventer.sendEvent('emptyChannels');
-    }
-
-    ctr.isPushed = function() {
-      return _pushedMenu;
-    }
-
-    ctr.openTour = function(){
-      S_tour.init(true);
-    }
-
-
-    $scope.$on('hideLoader', function() {
-      ctr.hideLoader = true;
-
-      S_tour.init();
-    });
-    $scope.$on('badLogin', function() {
-      ctr._state = 'login';
-    });
-
-
-    $scope.$on('showSuccessProgress', function() {
-      ctr.showSing = true;
-      $timeout(function() {
-        ctr.showSing = false;
-      }, 2000);
-    });
-
-
-
-
-
-    return ctr;
-  }]
-);
-
-angular.module('App').controller('C_posting',
-  ["$scope", "$compile", "$timeout", "S_utils", "S_selfapi", "S_eventer", function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
-    var ctr = this;
-
-    var _socketListeningId;
-
-    ctr.sets = [];
-
-    ctr.selectedSet = {};
-    ctr.attachments = [];
-
-
-    ctr.closeAfterSuccess = false;
-
-    S_selfapi.getAllSets().then(function(resp) {
-      if (resp.data.error){
-        S_eventer.sendEvent('badLogin');
-        return;
-      }
-      ctr.sets = resp.data.data.own;
-
-      ctr.sets = ctr.sets.concat(_.map(resp.data.data.guest, function(q) {
-        q.guest = true;
-        return q;
-      }));
-
-      ctr.selectedSet = ctr.sets[0];
-    });
-
-    $scope.$watch(function() {
-      return ctr.selectedSet.id;
-    }, function(setId) {
-      if (!setId) return;
-
-      ctr.channelsIsLoaded = false;
-      ctr.allPostsComplete = false;
-      ctr.postingCount = 0;
-      ctr.channels = [];
-
-      S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = _.filter(resp.data.data, function(channel) {
-          return !channel.disabled;
-        });
-        ctr.channelsIsLoaded = true;
-
-        S_eventer.sendEvent('loadedDataFromArea', ctr.data);
-      });
-    });
-
-    $scope.$on('emptyChannels', function() {
-      ctr.allPostsComplete = false;
-      S_utils.disableProgress(ctr.channels);
-    });
-
-
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      ctr.data = data;
-      S_eventer.sendEvent('loadedDataFromArea', ctr.data);
-      $timeout(function() {
-        S_eventer.sendEvent('hideLoader');
-      });
-    });
-
-    ctr.createPost = function(channel_ids) {
-      var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
-      ctr.postingCount = postInfo.length;
-      ctr.postingInProgress = true;
-      ctr.completePostsCount = 0;
-
-      ctr.errorPostCount = 0;
-
-      if (ctr.postingNow) {
-        S_utils.trackProgress(ctr.channels, postInfo);
-      }
-
-      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? ctr.postingUnixTime : undefined)).then(function(resp) {
-        var socketUrl = resp.data.data.socketUrl;
-        _socketListeningId = resp.data.data.hash;
-
-        var socket = io(socketUrl);
-
-        socket.on('post_success', function(data) {
-          var channel = _.find(ctr.channels, function(c) {
-            return c.id === data.channel_id;
-          });
-
-          if (channel) {
-            $scope.$apply(function() {
-              ctr.completePostsCount++;
-              channel.inprogress = false;
-              channel.complete = true;
-              channel.post_url = data.post_url;
-              onChannelInfoRecieved();
-            });
-          }
-        });
-
-        socket.on('post_fail', function(data) {
-          var channel = _.find(ctr.channels, function(c) {
-            return c.id === data.channel_id;
-          });
-
-          if (channel) {
-            $scope.$apply(function() {
-              ctr.completePostsCount++;
-              ctr.errorPostCount++;
-              channel.inprogress = false;
-              channel.error = true;
-              channel.errorData = data;
-              onChannelInfoRecieved();
-            });
-          }
-        });
-
-        socket.on('post_planned_success', function(data) {
-          $scope.$apply(function() {
-            ctr.postingInProgress = false;
-            ctr.allPostsComplete = true;
-
-            S_eventer.sendEvent('showSuccessProgress');
-          });
-        });
-      });
-
-      function onChannelInfoRecieved() {
-        if (ctr.completePostsCount === ctr.postingCount) {
-          if (ctr.errorPostCount) {
-            ctr.postingInProgress = false;
-            S_eventer.sendEvent('showSuccessProgress');
-          } else {
-            ctr.allPostsComplete = true;
-            ctr.postingInProgress = false;
-            S_eventer.sendEvent('showSuccessProgress');
-            if (ctr.closeAfterSuccess) {
-              $timeout(function() {
-                S_eventer.sayToFrame('close');
-              }, 2000);
-            }
-          }
-        }
-      }
-    }
-
-    ctr.showPostProcessingLayer = function() {
-      return ctr.postingInProgress;
-    }
-
-    ctr.getProgressLineStyles = function() {
-      var d = ctr.completePostsCount / ctr.postingCount;
-      return {
-        width: ((d * 100) + '%'),
-        opacity: d
-      }
-    }
-
-    ctr.showFooter = function() {
-      return ctr.channelsIsLoaded && ctr.channels.length && !ctr.allPostsComplete;
-    }
-
-    ctr.postChannelAgain = function(channel_id) {
-      ctr.createPost([channel_id]);
-    }
-
-    ctr.showSetSelect = function() {
-      return ctr.sets.length > 1;
-    }
-
-    ctr.getChannelsCount = function(q) {
-      return ((q) ? q.length : 0);
-    }
-
-    ctr.channelsPlural = {
-      0: 'нет каналов',
-      one: '{} канал',
-      few: '{} канала',
-      many: '{} каналов',
-      other: '{} каналов'
-    };
-
-
-    ctr.minDate = new Date();
-    ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
-    ctr.postingNow = true;
-    ctr.postingTime = new Date();
-
-
-    $scope.$watch(function() {
-      return ctr.postingNow;
-    }, function(q) {
-      if (typeof q === 'undefined') return;
-
-      if (q === false) {
-        var secondsFromStart = moment().diff(moment().hour(0).minute(0).second(0), 'seconds');
-        var daySeconds = 3600 * 24;
-        var offset = secondsFromStart + 3600 * 3;
-        if (offset > daySeconds) {
-          ctr.postingTime = offset - daySeconds;
-          ctr.postingDate = moment(ctr.postingDate).add(1, 'days').toDate();
-        } else {
-          ctr.postingTime = offset;
-        }
-        ctr.onTimeChange(ctr.postingTime);
-      } else {
-        ctr.postingUnixTime = +moment.utc().format('X');
-      }
-    });
-
-    ctr.onTimeChange = function(time) {
-      ctr.pastTime = false;
-
-      if (!ctr.postingTime || !ctr.postingDate) return;
-
-      if (time) {
-        ctr.postingTime = time;
-      }
-
-      var dateUnix = +moment.utc(ctr.postingDate).format('X');
-      var startDate = ctr.postingTime;
-
-      var res = dateUnix + startDate;
-
-      if (res > moment.utc().format('X')) {
-        ctr.postingUnixTime = dateUnix + startDate;
-      } else {
-        ctr.pastTime = true;
-      }
-    }
-
-    return ctr;
-  }]
-);
-
-angular.module('App').controller('C_posting_back', [
-  '$scope',
-  '$compile',
-  '$timeout',
-  'S_utils',
-  'S_selfapi',
-  'S_eventer',
-  'S_vk',
-  '__maxAttachments',
-  function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer, S_vk, __maxAttachments) {
-    var ctr = this;
-
-    return;
-
-    ctr.minDate = new Date();
-    ctr.postingDate = moment().hour(0).minute(0).second(0).toDate();
-    ctr.postingNow = true;
-    ctr.postingTime = new Date();
-    ctr.stepsPlural = {
-      0: '',
-      one: 'еще {} шаг',
-      few: 'еще {} шага',
-      many: 'еще {} шагов',
-      other: 'еще {} шагов'
-    };
-
-    ctr.maxDate = moment(ctr.minDate).add(45, 'days').toDate();
-    ctr.postingUnixTime = S_utils.getCurrentTime();
-
-    ctr.attachments = [];
-    ctr.selectedGroup = {};
-
-    ctr.processingAttachments = [];
-    ctr.uploadingAttaches = [];
-
-
-
-    S_vk.request('groups.get', {
-      extended: 1,
-      filter: 'admin,editor',
-      fields: 'members_count'
-    }).then(function(resp) {
-      ctr.groups = resp.response.items;
-      ctr.selectedGroup = ctr.groups[0];
-    });
-
-    $scope.$watch(function() {
-      return ctr.postingNow;
-    }, function(q) {
-      if (typeof q === 'undefined') return;
-
-      if (q === false) {
-        var secondsFromStart = moment().diff(moment().hour(0).minute(0).second(0), 'seconds');
-        var daySeconds = 3600 * 24;
-        var offset = secondsFromStart + 3600 * 3;
-        if (offset > daySeconds) {
-          ctr.postingTime = offset - daySeconds;
-          ctr.postingDate = moment(ctr.postingDate).add(1, 'days').toDate();
-        } else {
-          ctr.postingTime = offset;
-        }
-        ctr.onTimeChange(ctr.postingTime);
-      } else {
-        ctr.postingUnixTime = S_utils.getCurrentTime();
-      }
-    });
-
-    $scope.$watch(function() {
-      return ctr.selectedGroup.id;
-    }, function(groupId) {
-      if (!groupId) return;
-      ctr.postingApp = undefined;
-      ctr.postingToken = undefined;
-
-      S_selfapi.getOverrideKey(groupId).then(function(resp) {
-        if (resp.data.settings !== null) {
-          ctr.postingToken = resp.data.settings.token;
-          S_vk.request('apps.get', {
-            app_id: resp.data.settings.appId
-          }).then(function(resp) {
-            ctr.postingApp = resp.response;
-          });
-        }
-      });
-    });
-
-    $scope.$on('loadedDataFromTab', function(event, data) {
-      $scope.$apply(function() {
-        ctr.data = data;
-
-        if (data.imageSrc && data.imageSrc !== '') {
-          data.images.unshift({
-            src: data.imageSrc,
-            big_src: data.imageSrc
-          });
-        }
-
-        var images = _.map(data.images, function(q) {
-          q.type = 'photo';
-          q.id = S_utils.getRandomString(16);
-          return q;
-        });
-        ctr.pageAttachments = ctr.attachments.concat(images);
-        if (images.length) {
-          ctr.attachments.push(images[0]);
-        }
-
-        if (!ctr.text || ctr.text === '') {
-          ctr.text = S_utils.decodeEntities(data.selection || data.title) + '\n\n' + data.url;
-        }
-      });
-    });
-
-    $timeout(function() {
-      ctr.dataIsLoaded = true;
-    }, 100);
-
-    ctr.getRemainingAttachesCount = function() {
-      return __maxAttachments - ctr.attachments.length;
-    }
-
-    ctr.canAddAttach = function() {
-      return ctr.getRemainingAttachesCount() > 0;
-    }
-
-    ctr.pushUploadingAttach = function() {
-      var obj = {
-        src: '/images/nophoto.jpg',
-        type: 'image',
-        processing: true,
-        id: S_utils.getRandomString(16)
-      };
-      $scope.$apply(function() {
-        ctr.attachments.push(obj);
-        ctr.uploadingAttaches.push(obj);
-        ctr.processingAttachments.push(obj);
-      });
-      return obj;
-    }
-
-    ctr.afterImageUploaded = function(resp, id) {
-      var attach = ctr.uploadingAttaches.shift();
-      var image = S_utils.convertUploadedPhotoToAttach(resp.response[0]);
-      $scope.$apply(function() {
-        _.extend(attach, image);
-        ctr.processingAttachments.shift();
-      });
-    }
-
-    S_selfapi.getAssignKey().then(function(resp) {
-      if (resp.data.keyInfo === null) {
-        ctr.paidIsEnd = true;
-      } else {
-        ctr.paidIsEnd = false;
-      }
-    });
-
-
-    $scope.$watch(function() {
-      return ctr.postingDate;
-    }, function(q) {
-      if (!q) return;
-      ctr.onTimeChange();
-    });
-
-    ctr.onTimeChange = function(time) {
-      ctr.pastTime = false;
-
-      if (!ctr.postingTime || !ctr.postingDate) return;
-
-      if (time) {
-        ctr.postingTime = time;
-      }
-
-      var dateUnix = +moment(ctr.postingDate).format('X');
-      var startDate = ctr.postingTime;
-
-      var res = dateUnix + startDate;
-
-      if (res > S_utils.getCurrentTime()) {
-        ctr.postingUnixTime = dateUnix + startDate;
-      } else {
-        ctr.pastTime = true;
-      }
-    }
-
-    ctr.publicPost = function() {
-
-      if (ctr.processingAttachments.length > 0) {
-        return;
-      }
-
-      var postInfo = _.map(ctr.attachments, function() {
-        return '';
-      });
-
-      ctr.postingProcess = true;
-
-      _.forEach(ctr.attachments, function(q, i) {
-        switch (q.type) {
-          case "photo":
-            {
-              if (q.photo) {
-                postInfo[i] = {
-                  type: 'photo',
-                  photo: q.photo
-                };
-              } else {
-                ctr.processingAttachments.push(q);
-                S_selfapi.uploadImageToVk(q.src_big).then(function(resp) {
-                  var photo = resp.photo;
-                  _.remove(ctr.processingAttachments, function(qz) {
-                    return qz.id === q.id;
-                  })[0];
-
-                  postInfo[i] = {
-                    type: 'photo',
-                    photo: photo
-                  };
-
-                  if (ctr.processingAttachments.length === 0) {
-                    out(postInfo);
-                  }
-                });
-              }
-              break;
-            }
-          case "video":
-            {
-              postInfo[i] = {
-                type: 'video',
-                video: q.video
-              };
-              break;
-            }
-          case "poll":
-            {
-              if (q.poll) {
-                postInfo[i] = q.poll;
-              } else {
-                ctr.processingAttachments.push(q);
-                S_vk.createPoll(q, ctr.selectedGroup.id).then(function(resp) {
-                  var poll = resp.response;
-                  _.remove(ctr.processingAttachments, function(qz) {
-                    return qz.type === 'poll';
-                  })[0];
-
-                  postInfo[i] = {
-                    type: 'poll',
-                    poll: poll
-                  };
-
-                  if (ctr.processingAttachments.length === 0) {
-                    out(postInfo);
-                  }
-                });
-              }
-              break;
-            }
-        }
-      });
-
-      if (ctr.processingAttachments.length === 0) {
-        out([]);
-      }
-
-      function out(attachments) {
-        console.log(attachments);
-
-        var owner_id = '-' + ctr.selectedGroup.id;
-        var text = ctr.text;
-        var postingTime = ctr.postingUnixTime;
-        var assigned = (ctr.assigned) ? 1 : 0;
-
-        if (ctr.postingNow) {
-          var attas = S_utils.getAttachmentsString(attachments);
-
-          var oldToken;
-          if (ctr.postingApp) {
-            S_vk.getToken().then(function(token) {
-              oldToken = token;
-
-              if (ctr.postingApp) {
-                S_vk.setToken(ctr.postingToken);
-              }
-
-              S_vk.request('wall.post', {
-                owner_id: owner_id,
-                from_group: 1,
-                signed: assigned,
-                message: text,
-                attachments: attas
-              }).then(function(resp) {
-                S_vk.setToken(oldToken);
-                if (ctr.notClose) {
-                  ctr.postingProcess = false;
-                } else {
-                  S_eventer.sayToFrame('close');
-                }
-              });
-            });
-          }
-        } else {
-          S_selfapi.sendPost(owner_id, text, attachments, postingTime, assigned).then(function(resp) {
-            if (ctr.notClose) {
-              ctr.postingProcess = false;
-            } else {
-              S_eventer.sayToFrame('close');
-            }
-          });
-        }
-      }
-    }
-
-    ctr.addTimer = function() {
-      ctr.timerIsEnabled = true;
-      ctr.postingNow = false;
-    }
-    ctr.removeTimer = function() {
-      ctr.timerIsEnabled = false;
-      ctr.postingNow = true;
-    }
-
-    ctr.attachItem = function(type) {
-      switch (type) {
-        case 'photo':
-          {
-            S_utils.callAttachPhotoDialog(ctr.pageAttachments, {
-              before: ctr.pushUploadingAttach,
-              after: ctr.afterImageUploaded
-            }).then(function(resp) {
-              ctr.attachments = S_utils.sortAttachments(_.uniq(ctr.attachments.concat(resp), 'id'));
-            });
-            break;
-          }
-        case 'video':
-          {
-            S_utils.callAttachVideoDialog(ctr.selectedGroup.id).then(function(resp) {
-              var video = S_utils.wrapVideo(resp[0]);
-              ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(video));
-            });
-            break;
-          }
-        case 'poll':
-          {
-            var poll = S_utils.createEmptyPoll();
-            ctr.attachments = S_utils.sortAttachments(ctr.attachments.concat(poll));
-            break;
-          }
-      }
-
-    }
-
-
-    /* enviroment */
-    ctr.resizeIframe = function() {
-      ctr.minState = !ctr.minState;
-      S_eventer.sayToFrame('toggle');
-    }
-
-    ctr.closeIframe = function() {
-      S_eventer.sayToFrame('close');
-    }
-
-    return ctr;
-  }
-]);
-
-angular.module('chromeTools', [])
-  .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
-    var service = {};
-
-    service.pageDataWatch = function() {
- 
-      window.addEventListener('message', function(e) {
-        S_eventer.sendEvent('loadedDataFromTab', e.data);
-      });
-    }
-
-    service.showExtensionPopup = function(tab, info) {
-      debugger 
-      chrome.tabs.executeScript(tab.id, {
-        file: "pack/pageEnviroment.js"
-      });
-    }
-
-    service.openPreAuthPage = function() {
-      chrome.tabs.create({
-        url: '/pages/afterInstall.html',
-        selected: true
-      }, function(tab) {});
-    }
-
-
-    return service;
-  }]);
-
-angular.module('App')
-  .service('S_eventer', [
-    '$rootScope',
-    '__postMessagePrepend',
-    function($rootScope, __postMessagePrepend) {
-      var service = {};
-
-      service.sendEvent = function(name, arguments) {
-        $rootScope.$broadcast(name, arguments);
-      }
-
-      service.sayToFrame = function(code) {
-        parent.postMessage(__postMessagePrepend + code, "*");
-      }
-
-      service.onPostMessage = function(next) {
-        var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
-        var eventer = window[eventMethod];
-        var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
-        eventer(messageEvent, function(e) {
-          var key = e.message ? "message" : "data";
-          var data = e[key];
-
-          next(e, data);
-        }, false);
-      }
-
-      return service;
-    }
-  ]);
-
-
-
-angular.module('App')
-  .service('S_google', [
-    '$q',
-    function($q) {
-      var service = {};
-
-      service.init = function() {
-        google.load('search', '1');
-      }
- 
-      service.loadImages = function(q) {
-        var defer = $q.defer();
-        var imageSearch = new google.search.ImageSearch();
-
-        imageSearch.setRestriction(google.search.ImageSearch.RESTRICT_IMAGESIZE,
-          google.search.ImageSearch.IMAGESIZE_MEDIUM);
-
-        imageSearch.setResultSetSize(8);
-
-        imageSearch.setSearchCompleteCallback(this, function() {
-          defer.resolve(imageSearch);
-        }, null);
-
-        imageSearch.execute(q);
-        return defer.promise;
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('App')
-  .service('S_selfapi', [
-    '$http',
-    '$q',
-    '__api',
-    function($http, $q, __api) {
-      var service = {};
-      var base = __api.baseUrl;
-      service.sendExtensionToken = function(token) {
-        return $http({
-          url: base + __api.paths.saveExtensionVkToken,
-          method: 'POST',
-          data: {
-            token: token
-          }
-        });
-      }
-
-      service.createPost = function(setId, postInfo, socket_channel, time) {
-        return $http({
-          url: base + __api.paths.createPost,
-          method: 'POST',
-          data: {
-            setId: setId,
-            postInfo: postInfo,
-            socket_channel: socket_channel,
-            time: time
-          }
-        });
-      }
-
-      service.getShortUrl = function(url) {
-        return $http({
-          url: base + __api.paths.getShortUrl,
-          method: 'POST',
-          data: {
-            url: url
-          }
-        });
-      }
-
-      service.getUserInfo = function() {
-        return $http({
-          url: base + __api.paths.getUserInfo,
-          method: 'GET',
-          withCredentials: true
-        });
-      }
-
-      service.getAllSets = function() {
-        return $http({
-          url: base + __api.paths.sets,
-          method: 'GET',
-          withCredentials: true
-        });
-      }
-
-      service.getSetInfo = function(setId) {
-        return $http({
-          url: base + __api.paths.getSetChannels,
-          method: 'GET',
-          withCredentials: true,
-          params: {
-            id: setId
-          }
-        });
-      }
-
-      service.signIn = function(email, password) {
-        return $http({
-          withCredentials: true,
-          url: base + __api.paths.signIn,
-          method: 'POST',
-          data: {
-            email: email,
-            password: password
-          }
-        });
-      }
-
-      var _uploadStack = [];
-      service.uploadImage = function(url, c, w, h, id) {
-        var defer = $q.defer();
-
-        var obj = {
-          url: url,
-          id: id
-        };
-
-        if (c) {
-          _.extend(obj, c);
-          obj.originalWidth = w;
-          obj.originalHeight = h;
-        }
-
-        _uploadStack.push({
-          obj: obj,
-          defer: defer
-        });
-
-        if (_uploadStack.length === 1) {
-          uploadImageCall();
-        }
-
-        return defer.promise;
-      }
-
-      function uploadImageCall() {
-        var q = _uploadStack[0];
-        $http({
-          url: base + __api.paths.media,
-          method: 'POST',
-          data: q.obj
-        }).then(function(resp) {
-          _uploadStack.shift();
-          q.defer.resolve({
-            media_id: resp.data.data.media_id,
-            media_url: resp.data.data.media_url,
-            id: q.obj.id
-          });
-
-          if (_uploadStack.length > 0) {
-            uploadImageCall();
-          }
-        });
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('App')
-  .service('S_templater',
-
-    ["localStorageService", "S_eventer", function(localStorageService, S_eventer) {
-      var service = {};
-
-      var templateKeyName = 'template';
-      var defaultTemplate = '{{title}}\n\n{{url}}';
-
-      service.getTemplate = function() {
-
-        var q = localStorageService.get(templateKeyName);
-
-        if (q) {
-          return q.text;
-        } else {
-          return defaultTemplate;
-        }
-      }
-
-      service.setTemplate = function(tpl) {
-
-        localStorageService.set(templateKeyName, {text: tpl});
-        S_eventer.sendEvent('trigger:templateChanged');
-      }
-
-      return service;
-    }]
-  );
-
-angular.module('App')
-  .service('S_tour',
-    ["localStorageService", "$timeout", function(localStorageService, $timeout) {
-      var service = {};
-
-      var tour;
-
-      var tourKeyName = 'tour.base';
-
-      service.init = function(force) {
-
-        var q = localStorageService.get(tourKeyName) || {};
-
-        if (!force && q.complete){
-          return;
-        }
-
-        tour = new Shepherd.Tour({
-          defaults: {
-            classes: 'shepherd-theme-arrows',
-            scrollTo: true
-          }
-        });
-
-        tour.on('complete', function(){
-          localStorageService.set(tourKeyName, {
-            complete: 1
-          });
-        });
-
-        tour.addStep('step1', {
-          text: 'В настойках можно отредактировать шаблон сбора информации со страницы',
-          attachTo: '[data-step="settings"]',
-          buttons: [{
-            text: 'Ясно',
-            action: tour.next
-          }]
-        });
-
-        tour.addStep('step3', {
-          text: 'Можно свернуть окошко расширения и увидеть на заднем плане сайт. Чтобы скопировать что-то, например',
-          attachTo: '[data-step="resizer"] bottom',
-          buttons: [{
-            text: 'Хорошо',
-            action: tour.next
-          }]
-        });
-
-        tour.addStep('step4', {
-          text: 'Закрыть расширение можно этим крестиком',
-          attachTo: '[data-step="remover"]',
-          buttons: [{
-            text: 'Все понятно',
-            action: tour.next
-          }]
-        });
-
-        if ($('body').find('[data-step="shareSetName"]').length) {
-          tour.addStep('step5', {
-            text: 'Всегда можно выбрать нужный для публикации набор',
-            attachTo: '[data-step="shareSetName"] bottom',
-            buttons: [{
-              text: 'Все понятно',
-              action: tour.next
-            }]
-          });
-        }
-
-        if ($('body').find('[data-step="channel"]').length) {
-          tour.addStep('step5', {
-            text: 'Это канал в социальной сети. Для каждого канала своё окно для публикации',
-            attachTo: '[data-step="channel"] top',
-            buttons: [{
-              text: 'Понятно',
-              action: tour.next
-            }]
-          });
-        }
-
-        if ($('body').find('[data-step="changeChannelVisibility"]').length) {
-          tour.addStep('changeChannelVisibility', {
-            text: 'Можно не публиковать запись в некоторые каналы',
-            attachTo: '[data-step="changeChannelVisibility"]',
-            buttons: [{
-              text: 'Дальше',
-              action: tour.next
-            }]
-          });
-        }
-
-        if ($('body').find('[data-step="publicNow"]').length) {
-          tour.addStep('step5', {
-            text: 'Записи можно разместить сейчас',
-            attachTo: '[data-step="publicNow"] top',
-            buttons: [{
-              text: 'Так-так...',
-              action: tour.next
-            }]
-          });
-          tour.addStep('step5', {
-            text: 'А можно и запланировать их на будущее',
-            attachTo: '[data-step="publicLater"] top',
-            buttons: [{
-              text: 'Это хорошо',
-              action: tour.next
-            }]
-          });
-          tour.addStep('step5', {
-            text: 'Можно закрыть окно расширения сразу после успешной публикации',
-            attachTo: '[data-step="closeAfterPosting"] top',
-            buttons: [{
-              text: 'ОК',
-              action: tour.next
-            }]
-          });
-          tour.addStep('step5', {
-            text: 'Послать все записи в социальные сети',
-            attachTo: '[data-step="publicButton"] top',
-            buttons: [{
-              text: 'ОК',
-              action: tour.next
-            }]
-          });
-        }
-
-         tour.start();
-      }
-
-
-
-      return service;
-    }]
-  );
-
-angular.module('utilsTools', [])
-  .service('S_utils', [
-    '$modal',
-    '$q',
-    '$templateCache',
-    '$compile',
-    '$rootScope',
-    '__twitterConstants',
-    function($modal, $q, $templateCache, $compile, $rootScope, __twitterConstants) {
-      var service = {};
-
-      service.getUrlParameterValue = function(url, parameterName) {
-        "use strict";
- 
-        var urlParameters = url.substr(url.indexOf("#") + 1),
-          parameterValue = "",
-          index,
-          temp;
-
-        urlParameters = urlParameters.split("&");
-
-        for (index = 0; index < urlParameters.length; index += 1) {
-          temp = urlParameters[index].split("=");
-
-          if (temp[0] === parameterName) {
-            return temp[1];
-          }
-        }
-
-        return parameterValue;
-      }
-
-      service.decodeEntities = (function() {
-        var element = document.createElement('div');
-
-        function decodeHTMLEntities(str) {
-          if (str && typeof str === 'string') {
-            // strip script/html tags
-            str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
-            str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
-            element.innerHTML = str;
-            str = element.textContent;
-            element.textContent = '';
-          }
-
-          return str;
-        }
-
-        return decodeHTMLEntities;
-      })();
-
-      service.getRandomString = function(len) {
-        len = len || 10;
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-        for (var i = 0; i < len; i++)
-          text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-        return text;
-      }
-
-      service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
-        return $modal.open({
-          templateUrl: 'templates/modals/attachPhoto.html',
-          controller: 'CM_attachPhoto as ctr',
-          resolve: {
-            pageAttachments: function() {
-              return fromPage;
-            },
-            uploadCallbacks: function() {
-              return uploadCallbacks;
-            }
-          }
-        }).result;
-      }
-
-
-      service.callAttachVideoDialog = function(group_id) {
-        return $modal.open({
-          templateUrl: 'templates/modals/attachVideo.html',
-          controller: 'CM_attachVideo as ctr',
-          resolve: {
-            group_id: function() {
-              return group_id;
-            }
-          }
-        }).result;
-      }
-
-
-      service.callVideoPlayerDialog = function(title, videoSrc) {
-        return $modal.open({
-          templateUrl: 'templates/modals/videoPlayer.html',
-          controller: 'CM_videoPlayer as ctr',
-          resolve: {
-            videoSrc: function() {
-              return videoSrc;
-            },
-            title: function() {
-              return title;
-            }
-          }
-        }).result;
-      }
-
-      service.getAttachesByType = function(attaches, type) {
-        return _.filter(attaches, function(q) {
-          return q.type === type;
-        });
-      }
-
-      service.attachToFancy = function(ats) {
-        return _.map(ats, function(image) {
-          return {
-            href: image.src
-          }
-        });
-      }
-
-      service.loadImage = function(src) {
-        var defer = $q.defer();
-
-        var image = new Image();
-        image.src = src;
-        image.onload = function() {
-          defer.resolve(this);
-        }
-        image.onerror = function() {
-          defer.reject(this);
-        }
-
-        return defer.promise;
-      }
-
-      service.convertUploadedPhotoToAttach = function(media_id, media_url, info) {
-        return {
-          media_id: media_id,
-          width: info.width,
-          clientWidth: info.width,
-          height: info.height,
-          clientHeight: info.height,
-          src: media_url,
-          src_big: media_url,
-          type: 'image'
-        }
-      }
-
-      service.wrapVideo = function(video) {
-        return {
-          video: video,
-          id: service.getRandomString(16),
-          duration: video.duration,
-          src: video.photo_320,
-          type: 'video'
-        }
-      }
-
-      service.convertGoogleImageToAttach = function(image) {
-        return {
-          photo: image.photo,
-          id: image.id || service.getRandomString(16),
-          width: image.width,
-          clientWidth: image.width,
-          height: image.height,
-          clientHeight: image.height,
-          src: image.url,
-          src_big: image.url,
-          type: 'image'
-        }
-      }
-
-      service.createEmptyPoll = function() {
-        return {
-          id: service.getRandomString(16),
-          type: 'poll'
-        }
-      }
-
-
-      service.getVideoQuality = function(video) {
-        if (video.files.mp4_1080) {
-          return '1080';
-        }
-        if (video.files.mp4_720) {
-          return '720';
-        }
-        if (video.files.mp4_480) {
-          return '480';
-        }
-        if (video.files.mp4_360) {
-          return '360';
-        }
-        if (video.files.mp4_240) {
-          return '240';
-        }
-      }
-
-      service.getCurrentTime = function() {
-        return Math.floor(new Date().getTime() / 1000);
-      }
-
-      service.sortAttachments = function(attaches) {
-        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
-        return _.sortBy(attaches, function(attach) {
-          var i = _.findIndex(priority, function(q) {
-            return q === attach.type;
-          });
-          if (i !== -1) {
-            return i;
-          } else {
-            return 0;
-          }
-        });
-      }
-
-      service.findFirstAttach = function(attaches) {
-        if (!attaches || attaches.length === 0) {
-          return;
-        }
-
-        var priority = ['image', 'video', 'poll'];
-        _.sortBy(attaches, function(attach) {
-          var i = _.findIndex(priority, function(q) {
-            return q === attach.type;
-          });
-          if (i !== -1) {
-            return i;
-          } else {
-            return 0;
-          }
-        });
-
-        return attaches[0];
-      }
-
-      service.getFailDescription = function(data) {
-        var q;
-
-        if (data.network === 'tw' && data.error && data.error.code && data.error.code === 187) {
-          return "Статус повторяется";
-        }
-
-        if (data.network === 'fb') {
-          if (data.data.error && data.data.error.code && data.data.error.code == 506) {
-            return "Сообщение повторяется";
-          }
-        }
-
-        if (data.network === 'ig') {
-          if (data.error && data.error.code === 'notFull') {
-            return "Необходимо прикрепить изображение"
-          }
-          if (data.error && data.error.code === 'notMedia') {
-            return "Изображение не найдено, повторите загрузку"
-          }
-          if (data.error && data.error.code === 'notSquared') {
-            return "Изображение не квадратное"
-          }
-        }
-
-        return ((data.error) ? JSON.stringify(data.error) : 'не удалось определить');
-      }
-
-      service.configurePostInfo = function(channels, channel_ids) {
-        var postInfo = [];
-        _.forEach(channels, function(channel) {
-          if (channel.disabled || channel.complete || channel.inprogress) return;
-
-          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1)) {
-            postInfo.push({
-              channel_id: channel.id,
-              text: channel.text,
-              attachments: channel.attachments
-            });
-          }
-        });
-        return postInfo;
-      }
-
-      service.disableProgress = function(channels) {
-        _.forEach(channels, function(channel) {
-          channel.inprogress = false;
-          channel.complete = false;
-          channel.error = false;
-        });
-      }
-
-      service.trackProgress = function(channels, info) {
-        var q;
-        _.forEach(info, function(_channel) {
-          _.find(channels, function(channel) {
-            return channel.id === _channel.channel_id;
-          }).inprogress = true;
-        });
-      }
-
-      service.getMaxTextLength = function(type, attachments, text) {
-        switch (type) {
-          case 'tw':
-            {
-              var lc = service.getLinksFromText(text);
-              var len = __twitterConstants.maxSymbols;
-
-              _.forEach(lc, function(link) {
-                len += (link.length - __twitterConstants.linkLen);
-              });
-
-              if (attachments.length) {
-                len -= __twitterConstants.mediaLen;
-              }
-
-              return len;
-            }
-          case 'ig':
-            {
-              return 2200;
-            }
-        }
-        return 10000;
-      }
-
-      service.getLinksFromText = function(text) {
-        text = text || '';
-        var links = [];
-        var urlRegex = /(https?:\/\/[^\s]+)/g;
-        text.replace(urlRegex, function(url) {
-          links.push(url);
-        });
-        return links;
-      }
-
-      service.attachmentsLimitReached = function(network, channelsLenth) {
-        switch (network) {
-          case 'ig':
-            {
-              return channelsLenth >= 1;
-              break;
-            }
-          case 'fb':
-            {
-              return channelsLenth >= 1;
-              break;
-            }
-          case 'tw':
-            {
-              return channelsLenth >= 4;
-              break;
-            }
-          case 'vk':
-            {
-              return channelsLenth >= 9;
-              break;
-            }
-        }
-      }
-
-      service.unixTo = function(time, format) {
-        return moment(time, 'X').format(format);
-      }
-
-      service.escapeRegex = function(text) {
-        return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-      }
-
-      return service;
-    }
-  ]);
-
-angular.module('vkTools', [])
-  .service('S_vk', [
-    '$q',
-    '$http',
-    'S_utils',
-    function($q, $http, S_utils ) {
-      var service = {};
-
-      return service;
-    }
-  ]);
 
 angular.module('App').filter('findGroups', function() {
   return function(items, props) {
@@ -2189,7 +732,8 @@ angular.module('App').directive('textareaValidator',
 
         $scope.$watch('channel.text', function(q, old) {
           if (!q) return;
-          console.log(q);
+
+          maxLength = S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
 
           track(q);
         });
@@ -2204,6 +748,7 @@ angular.module('App').directive('textareaValidator',
           return S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
         }, function(q, z) {
           if (!q || q === z) return;
+
           maxLength = q;
           track();
         });
@@ -2252,7 +797,7 @@ angular.module('App').directive('textareaValidator',
 angular.module('App').directive('timeSelect', [function() {
   return {
     scope: {
-      time: '=',
+      date: '=',
       setNewTime: '&'
     },
     controller: ['$scope', function($scope) {
@@ -2285,14 +830,15 @@ angular.module('App').directive('timeSelect', [function() {
       }
 
       $scope.$watch(function() {
-        return $scope.time;
-      }, function(time) {
-        if (!time) return;
-        var z = time % 3600;
-        ctr.hour = Math.floor((time - z) / 3600);
-        ctr.minute = Math.floor(z / 60);
+        return $scope.date;
+      }, function(date) {
+        if (!date) return;
+        date = moment(date);
+        var timeFromDayStart = date.diff(moment(date.format('YYYYMMDD'),'YYYYMMDD').hour(0).minute(0).second(0), 'seconds');
 
-        
+        var z = timeFromDayStart % 3600;
+        ctr.hour = Math.floor((timeFromDayStart - z) / 3600);
+        ctr.minute = Math.floor(z / 60);
       });
 
       return ctr;
@@ -2323,6 +869,1410 @@ angular.module('App').directive('vkPostAttachments', ['S_utils', function(S_util
   }
 }]);
  
+angular.module('chromeTools', [])
+  .service('S_chrome', ['$q', 'S_eventer', function($q, S_eventer) {
+    var service = {};
+
+    service.pageDataWatch = function() {
+ 
+      window.addEventListener('message', function(e) {
+        S_eventer.sendEvent('loadedDataFromTab', e.data);
+      });
+    }
+
+    service.showExtensionPopup = function(tab, info) {
+      debugger 
+      chrome.tabs.executeScript(tab.id, {
+        file: "pack/pageEnviroment.js"
+      });
+    }
+
+    service.openPreAuthPage = function() {
+      chrome.tabs.create({
+        url: '/pages/afterInstall.html',
+        selected: true
+      }, function(tab) {});
+    }
+
+
+    return service;
+  }]);
+
+angular.module('App')
+  .service('S_eventer', [
+    '$rootScope',
+    '__postMessagePrepend',
+    function($rootScope, __postMessagePrepend) {
+      var service = {};
+
+      service.sendEvent = function(name, arguments) {
+        $rootScope.$broadcast(name, arguments);
+      }
+
+      service.sayToFrame = function(code) {
+        parent.postMessage(__postMessagePrepend + code, "*");
+      }
+
+      service.onPostMessage = function(next) {
+        var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+        var eventer = window[eventMethod];
+        var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+        eventer(messageEvent, function(e) {
+          var key = e.message ? "message" : "data";
+          var data = e[key];
+
+          next(e, data);
+        }, false);
+      }
+
+      return service;
+    }
+  ]);
+
+
+
+angular.module('App')
+  .service('S_google', [
+    '$q',
+    function($q) {
+      var service = {};
+
+      service.init = function() {
+        google.load('search', '1');
+      }
+ 
+      service.loadImages = function(q) {
+        var defer = $q.defer();
+        var imageSearch = new google.search.ImageSearch();
+
+        imageSearch.setRestriction(google.search.ImageSearch.RESTRICT_IMAGESIZE,
+          google.search.ImageSearch.IMAGESIZE_MEDIUM);
+
+        imageSearch.setResultSetSize(8);
+
+        imageSearch.setSearchCompleteCallback(this, function() {
+          defer.resolve(imageSearch);
+        }, null);
+
+        imageSearch.execute(q);
+        return defer.promise;
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('App')
+  .service('S_selfapi', [
+    '$http',
+    '$q',
+    '__api',
+    function($http, $q, __api) {
+      var service = {};
+      var base = __api.baseUrl;
+      service.sendExtensionToken = function(token) {
+        return $http({
+          url: base + __api.paths.saveExtensionVkToken,
+          method: 'POST',
+          data: {
+            token: token
+          }
+        });
+      }
+
+      service.createPost = function(setId, postInfo, socket_channel, time) {
+        return $http({
+          url: base + __api.paths.createPost,
+          method: 'POST',
+          data: {
+            setId: setId,
+            postInfo: postInfo,
+            socket_channel: socket_channel,
+            time: time
+          }
+        });
+      }
+
+      service.getTable = function(from, to, set_ids, user_ids) {
+        return $http({
+          url: base + __api.paths.getTable,
+          method: 'GET',
+          withCredentials: true,
+          params: {
+            from: from,
+            to: to,
+            set_ids: set_ids,
+            user_ids: user_ids
+          }
+        });
+      }
+
+
+
+      service.getShortUrl = function(url) {
+        return $http({
+          url: base + __api.paths.getShortUrl,
+          method: 'POST',
+          data: {
+            url: url
+          }
+        });
+      }
+
+      service.getUserInfo = function() {
+        return $http({
+          url: base + __api.paths.getUserInfo,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.getAllSets = function() {
+        return $http({
+          url: base + __api.paths.sets,
+          method: 'GET',
+          withCredentials: true
+        });
+      }
+
+      service.getSetInfo = function(setId) {
+        return $http({
+          url: base + __api.paths.getSetChannels,
+          method: 'GET',
+          withCredentials: true,
+          params: {
+            id: setId
+          }
+        });
+      }
+
+      service.signIn = function(email, password) {
+        return $http({
+          withCredentials: true,
+          url: base + __api.paths.signIn,
+          method: 'POST',
+          data: {
+            email: email,
+            password: password
+          }
+        });
+      }
+
+      var _uploadStack = [];
+      service.uploadImage = function(url, c, w, h, id) {
+        var defer = $q.defer();
+
+        var obj = {
+          url: url,
+          id: id
+        };
+
+        if (c) {
+          _.extend(obj, c);
+          obj.originalWidth = w;
+          obj.originalHeight = h;
+        }
+
+        _uploadStack.push({
+          obj: obj,
+          defer: defer
+        });
+
+        if (_uploadStack.length === 1) {
+          uploadImageCall();
+        }
+
+        return defer.promise;
+      }
+
+      function uploadImageCall() {
+        var q = _uploadStack[0];
+        $http({
+          url: base + __api.paths.media,
+          method: 'POST',
+          data: q.obj
+        }).then(function(resp) {
+          _uploadStack.shift();
+          q.defer.resolve({
+            media_id: resp.data.data.media_id,
+            media_url: resp.data.data.media_url,
+            id: q.obj.id
+          });
+
+          if (_uploadStack.length > 0) {
+            uploadImageCall();
+          }
+        });
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('App')
+  .service('S_templater',
+
+    ["localStorageService", "S_eventer", function(localStorageService, S_eventer) {
+      var service = {};
+
+      var templateKeyName = 'template';
+      var defaultTemplate = '{{title}}\n\n{{url}}';
+
+      service.getTemplate = function() {
+
+        var q = localStorageService.get(templateKeyName);
+
+        if (q) {
+          return q.text;
+        } else {
+          return defaultTemplate;
+        }
+      }
+
+      service.setTemplate = function(tpl) {
+
+        localStorageService.set(templateKeyName, {text: tpl});
+        S_eventer.sendEvent('trigger:templateChanged');
+      }
+
+      return service;
+    }]
+  );
+
+angular.module('App')
+  .service('S_tour',
+    ["localStorageService", "$timeout", function(localStorageService, $timeout) {
+      var service = {};
+
+      var tour;
+
+      var tourKeyName = 'tour.base';
+
+      service.init = function(force) {
+
+        var q = localStorageService.get(tourKeyName) || {};
+
+        if (!force && q.complete){
+          return;
+        }
+
+        tour = new Shepherd.Tour({
+          defaults: {
+            classes: 'shepherd-theme-arrows',
+            scrollTo: false
+          }
+        });
+
+        tour.on('complete', function(){
+          localStorageService.set(tourKeyName, {
+            complete: 1
+          });
+        });
+
+        tour.addStep('step1', {
+          text: 'В настойках можно отредактировать шаблон сбора информации со страницы',
+          attachTo: '[data-step="settings"]',
+          buttons: [{
+            text: 'Ясно',
+            action: tour.next
+          }]
+        });
+
+        tour.addStep('step3', {
+          text: 'Можно свернуть окошко расширения и увидеть на заднем плане сайт. Чтобы скопировать что-то, например',
+          attachTo: '[data-step="resizer"] bottom',
+          buttons: [{
+            text: 'Хорошо',
+            action: tour.next
+          }]
+        });
+
+        tour.addStep('step4', {
+          text: 'Закрыть расширение можно этим крестиком',
+          attachTo: '[data-step="remover"]',
+          buttons: [{
+            text: 'Все понятно',
+            action: tour.next
+          }]
+        });
+
+        if ($('body').find('[data-step="shareSetName"]').length) {
+          tour.addStep('step5', {
+            text: 'Всегда можно выбрать нужный для публикации набор',
+            attachTo: '[data-step="shareSetName"] bottom',
+            buttons: [{
+              text: 'Все понятно',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="channel"]').length) {
+          tour.addStep('step5', {
+            text: 'Это канал в социальной сети. Для каждого канала своё окно для публикации',
+            attachTo: '[data-step="channel"] top',
+            buttons: [{
+              text: 'Понятно',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="changeChannelVisibility"]').length) {
+          tour.addStep('changeChannelVisibility', {
+            text: 'Можно не публиковать запись в некоторые каналы',
+            attachTo: '[data-step="changeChannelVisibility"]',
+            buttons: [{
+              text: 'Дальше',
+              action: tour.next
+            }]
+          });
+        }
+
+        if ($('body').find('[data-step="publicNow"]').length) {
+          tour.addStep('step5', {
+            text: 'Записи можно разместить сейчас',
+            attachTo: '[data-step="publicNow"] top',
+            buttons: [{
+              text: 'Так-так...',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'А можно и запланировать их на будущее',
+            attachTo: '[data-step="publicLater"] top',
+            buttons: [{
+              text: 'Это хорошо',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'Можно закрыть окно расширения сразу после успешной публикации',
+            attachTo: '[data-step="closeAfterPosting"] top',
+            buttons: [{
+              text: 'ОК',
+              action: tour.next
+            }]
+          });
+          tour.addStep('step5', {
+            text: 'Послать все записи в социальные сети',
+            attachTo: '[data-step="publicButton"] top',
+            buttons: [{
+              text: 'Пора пользоваться!',
+              action: tour.next
+            }]
+          });
+        }
+
+         tour.start();
+      }
+
+
+
+      return service;
+    }]
+  );
+
+angular.module('utilsTools', [])
+  .service('S_utils', [
+    '$modal',
+    '$q',
+    '$templateCache',
+    '$compile',
+    '$rootScope',
+    '__twitterConstants',
+    function($modal, $q, $templateCache, $compile, $rootScope, __twitterConstants) {
+      var service = {};
+
+      service.getUrlParameterValue = function(url, parameterName) {
+        "use strict";
+ 
+        var urlParameters = url.substr(url.indexOf("#") + 1),
+          parameterValue = "",
+          index,
+          temp;
+
+        urlParameters = urlParameters.split("&");
+
+        for (index = 0; index < urlParameters.length; index += 1) {
+          temp = urlParameters[index].split("=");
+
+          if (temp[0] === parameterName) {
+            return temp[1];
+          }
+        }
+
+        return parameterValue;
+      }
+
+      service.decodeEntities = (function() {
+        var element = document.createElement('div');
+
+        function decodeHTMLEntities(str) {
+          if (str && typeof str === 'string') {
+            // strip script/html tags
+            str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
+            str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
+            element.innerHTML = str;
+            str = element.textContent;
+            element.textContent = '';
+          }
+
+          return str;
+        }
+
+        return decodeHTMLEntities;
+      })();
+
+      service.getRandomString = function(len) {
+        len = len || 10;
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for (var i = 0; i < len; i++)
+          text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        return text;
+      }
+
+      service.showTablePopup = function(setId) {
+        return $modal.open({
+          templateUrl: 'templates/modals/table.html',
+          controller: 'CM_table as ctr',
+          size: 'lg',
+          resolve: {
+            setId: function() {
+              return setId;
+            }
+          }
+        }).result;
+      }
+
+      service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachPhoto.html',
+          controller: 'CM_attachPhoto as ctr',
+          resolve: {
+            pageAttachments: function() {
+              return fromPage;
+            },
+            uploadCallbacks: function() {
+              return uploadCallbacks;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callAttachVideoDialog = function(group_id) {
+        return $modal.open({
+          templateUrl: 'templates/modals/attachVideo.html',
+          controller: 'CM_attachVideo as ctr',
+          resolve: {
+            group_id: function() {
+              return group_id;
+            }
+          }
+        }).result;
+      }
+
+
+      service.callVideoPlayerDialog = function(title, videoSrc) {
+        return $modal.open({
+          templateUrl: 'templates/modals/videoPlayer.html',
+          controller: 'CM_videoPlayer as ctr',
+          resolve: {
+            videoSrc: function() {
+              return videoSrc;
+            },
+            title: function() {
+              return title;
+            }
+          }
+        }).result;
+      }
+
+      service.getAttachesByType = function(attaches, type) {
+        return _.filter(attaches, function(q) {
+          return q.type === type;
+        });
+      }
+
+      service.attachToFancy = function(ats) {
+        return _.map(ats, function(image) {
+          return {
+            href: image.src
+          }
+        });
+      }
+
+      service.loadImage = function(src) {
+        var defer = $q.defer();
+
+        var image = new Image();
+        image.src = src;
+        image.onload = function() {
+          defer.resolve(this);
+        }
+        image.onerror = function() {
+          defer.reject(this);
+        }
+
+        return defer.promise;
+      }
+
+      service.convertUploadedPhotoToAttach = function(media_id, media_url, info) {
+        return {
+          media_id: media_id,
+          width: info.width,
+          clientWidth: info.width,
+          height: info.height,
+          clientHeight: info.height,
+          src: media_url,
+          src_big: media_url,
+          type: 'image'
+        }
+      }
+
+      service.wrapVideo = function(video) {
+        return {
+          video: video,
+          id: service.getRandomString(16),
+          duration: video.duration,
+          src: video.photo_320,
+          type: 'video'
+        }
+      }
+
+      service.convertGoogleImageToAttach = function(image) {
+        return {
+          photo: image.photo,
+          id: image.id || service.getRandomString(16),
+          width: image.width,
+          clientWidth: image.width,
+          height: image.height,
+          clientHeight: image.height,
+          src: image.url,
+          src_big: image.url,
+          type: 'image'
+        }
+      }
+
+      service.createEmptyPoll = function() {
+        return {
+          id: service.getRandomString(16),
+          type: 'poll'
+        }
+      }
+
+      service.getCurrentTime = function() {
+        return Math.floor(new Date().getTime() / 1000);
+      }
+
+      service.sortAttachments = function(attaches) {
+        var priority = ['image', 'video', 'doc', 'audio', 'poll'];
+        return _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0;
+          }
+        });
+      }
+
+      service.findFirstAttach = function(attaches) {
+        if (!attaches || attaches.length === 0) {
+          return;
+        }
+
+        var priority = ['image', 'video', 'poll'];
+        _.sortBy(attaches, function(attach) {
+          var i = _.findIndex(priority, function(q) {
+            return q === attach.type;
+          });
+          if (i !== -1) {
+            return i;
+          } else {
+            return 0;
+          }
+        });
+
+        return attaches[0];
+      }
+
+      service.getFailDescription = function(data) {
+        var q;
+
+        if (data.network === 'tw' && data.error && data.error.code && data.error.code === 187) {
+          return "Статус повторяется";
+        }
+
+        if (data.network === 'fb') {
+          if (data.data.error && data.data.error.code && data.data.error.code == 506) {
+            return "Сообщение повторяется";
+          }
+
+           if (data.data.error && data.data.error.code && data.data.error.code == 1) {
+            return "Нужно перепривязать аккаунт";
+          }
+        }
+
+        if (data.network === 'ig') {
+          if (data.error && data.error.code === 'notFull') {
+            return "Необходимо прикрепить изображение"
+          }
+          if (data.error && data.error.code === 'notMedia') {
+            return "Изображение не найдено, повторите загрузку"
+          }
+          if (data.error && data.error.code === 'notSquared') {
+            return "Изображение не квадратное"
+          }
+        }
+
+        return ((data.error) ? JSON.stringify(data.error) : 'не удалось определить');
+      }
+
+      service.configurePostInfo = function(channels, channel_ids) {
+        var postInfo = [];
+        _.forEach(channels, function(channel) {
+          if (channel.disabled || channel.complete || channel.inprogress) return;
+
+          if (!channel_ids || (channel_ids && _.indexOf(channel_ids, channel.id) !== -1)) {
+            postInfo.push({
+              channel_id: channel.id,
+              text: channel.text,
+              attachments: channel.attachments
+            });
+          }
+        });
+        return postInfo;
+      }
+
+      service.disableProgress = function(channels) {
+        _.forEach(channels, function(channel) {
+          channel.inprogress = false;
+          channel.complete = false;
+          channel.error = false;
+        });
+      }
+
+      service.trackProgress = function(channels, info) {
+        var q;
+        _.forEach(info, function(_channel) {
+          _.find(channels, function(channel) {
+            return channel.id === _channel.channel_id;
+          }).inprogress = true;
+        });
+      }
+
+      service.getMaxTextLength = function(type, attachments, text) {
+        switch (type) {
+          case 'tw':
+            {
+              var lc = service.getLinksFromText(text);
+              var len = __twitterConstants.maxSymbols;
+
+              _.forEach(lc, function(link) {
+                len += (link.length - __twitterConstants.linkLen);
+              });
+
+              if (attachments.length) {
+                len -= __twitterConstants.mediaLen;
+              }
+
+              return len;
+            }
+          case 'ig':
+            {
+              return 2200;
+            }
+        }
+        return 10000;
+      }
+
+      service.getLinksFromText = function(text) {
+        text = text || '';
+        var links = [];
+        var urlRegex = /(https?:\/\/[^\s]+)/g;
+        text.replace(urlRegex, function(url) {
+          links.push(url);
+        });
+        return links;
+      }
+
+      service.attachmentsLimitReached = function(network, channelsLenth) {
+        switch (network) {
+          case 'ig':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'fb':
+            {
+              return channelsLenth >= 1;
+              break;
+            }
+          case 'tw':
+            {
+              return channelsLenth >= 4;
+              break;
+            }
+          case 'vk':
+            {
+              return channelsLenth >= 9;
+              break;
+            }
+        }
+      }
+
+      service.unixTo = function(time, format) {
+        return moment(time, 'X').format(format);
+      }
+
+      service.escapeRegex = function(text) {
+        return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+      }
+
+      return service;
+    }
+  ]);
+
+angular.module('vkTools', [])
+  .service('S_vk', [
+    '$q',
+    '$http',
+    'S_utils',
+    function($q, $http, S_utils ) {
+      var service = {};
+
+      return service;
+    }
+  ]);
+
+angular.module('App').controller('C_afterInstall', [
+  '$scope',
+  '$location',
+  'S_vk',
+  function($scope, $location, S_vk) {
+    var ctr = this;
+
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_login', [
+  '$scope',
+  'S_selfapi',
+  function($scope, S_selfapi) {
+    var ctr = this;
+
+
+    
+
+    ctr.email = ctr.password = '';
+
+    ctr.auth = function(email, password) {
+      ctr.authInProgress = true;
+      ctr.error = false;
+      S_selfapi.signIn(email, password).then(function(resp) {
+        ctr.authInProgress = false;
+        if (resp.data.success) {
+          $scope.ctr.checkAuth();
+        }
+
+        if (resp.data.error) {
+          ctr.error = true;
+        }
+      });
+    }
+
+    return ctr;
+  }
+]);
+
+angular.module('App').controller('C_main',
+  ["$scope", "$timeout", "S_utils", "S_selfapi", "S_eventer", "S_tour", function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour) {
+    var ctr = this;
+    var _pushedMenu = false;
+
+    track('main');
+    ctr._state = 'post';
+
+    ctr.showExtension = function() {
+      return ctr._state;
+    }
+
+    /* enviroment */
+    ctr.resizeIframe = function() {
+      ctr.minState = !ctr.minState;
+      S_eventer.sayToFrame('toggle');
+    }
+
+    ctr.closeIframe = function() {
+      S_eventer.sayToFrame('close');
+    }
+
+
+    ctr.toggleMenu = function() {
+      _pushedMenu = !_pushedMenu;
+    }
+
+    ctr.emptyChannels = function() {
+      S_eventer.sendEvent('emptyChannels');
+    }
+
+    ctr.isPushed = function() {
+      return _pushedMenu;
+    }
+
+    ctr.openTour = function() {
+      S_tour.init(true);
+    }
+
+
+    $scope.$on('hideLoader', function() {
+      ctr.hideLoader = true;
+      track('end');
+      S_tour.init();
+    });
+    $scope.$on('badLogin', function() {
+      ctr._state = 'login';
+    });
+
+
+    $scope.$on('showSuccessProgress', function() {
+      ctr.showSing = true;
+      $timeout(function() {
+        ctr.showSing = false;
+      }, 2000);
+    });
+
+
+
+
+
+    return ctr;
+  }]
+);
+
+angular.module('App').controller('C_posting',
+  ["$scope", "$compile", "$timeout", "S_utils", "S_selfapi", "S_eventer", function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
+    var ctr = this;
+
+    var _socketListeningId, skipPostingNowChange = false;
+
+    ctr.sets = [];
+
+    ctr.selectedSet = {};
+    ctr.attachments = [];
+
+
+    ctr.closeAfterSuccess = false;
+
+    S_selfapi.getAllSets().then(function(resp) {
+      if (resp.data.error) {
+        S_eventer.sendEvent('badLogin');
+        return;
+      }
+      ctr.sets = resp.data.data.own;
+
+      ctr.sets = ctr.sets.concat(_.map(resp.data.data.guest, function(q) {
+        q.guest = true;
+        return q;
+      }));
+
+      ctr.selectedSet = ctr.sets[0];
+    });
+
+    $scope.$watch(function() {
+      return ctr.selectedSet.id;
+    }, function(setId) {
+      if (!setId) return;
+
+      ctr.channelsIsLoaded = false;
+      ctr.allPostsComplete = false;
+      ctr.postingCount = 0;
+      ctr.channels = [];
+
+      S_selfapi.getSetInfo(setId).then(function(resp) {
+        ctr.channels = _.filter(resp.data.data, function(channel) {
+          return !channel.disabled;
+        });
+        ctr.channelsIsLoaded = true;
+
+        S_eventer.sendEvent('loadedDataFromArea', ctr.data);
+      });
+    });
+
+    $scope.$on('emptyChannels', function() {
+      ctr.allPostsComplete = false;
+      S_utils.disableProgress(ctr.channels);
+    });
+
+
+    $scope.$on('loadedDataFromTab', function(event, data) {
+      ctr.data = data;
+      S_eventer.sendEvent('loadedDataFromArea', ctr.data);
+      $timeout(function() {
+        S_eventer.sendEvent('hideLoader');
+      });
+    });
+
+    ctr.createPost = function(channel_ids) {
+      var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
+      ctr.postingCount = postInfo.length;
+      ctr.postingInProgress = true;
+      ctr.completePostsCount = 0;
+
+      ctr.errorPostCount = 0;
+
+      if (ctr.postingNow) {
+        S_utils.trackProgress(ctr.channels, postInfo);
+      }
+      debugger
+      return;
+      S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? moment(ctr.postingDate).format('X') : undefined)).then(function(resp) {
+        var socketUrl = resp.data.data.socketUrl;
+        _socketListeningId = resp.data.data.hash;
+
+        var socket = io(socketUrl);
+
+        socket.on('post_success', function(data) {
+          var channel = _.find(ctr.channels, function(c) {
+            return c.id === data.channel_id;
+          });
+
+          if (channel) {
+            $scope.$apply(function() {
+              ctr.completePostsCount++;
+              channel.inprogress = false;
+              channel.complete = true;
+              channel.post_url = data.post_url;
+              onChannelInfoRecieved();
+            });
+          }
+        });
+
+        socket.on('post_fail', function(data) {
+          var channel = _.find(ctr.channels, function(c) {
+            return c.id === data.channel_id;
+          });
+
+          if (channel) {
+            $scope.$apply(function() {
+              ctr.completePostsCount++;
+              ctr.errorPostCount++;
+              channel.inprogress = false;
+              channel.error = true;
+              channel.errorData = data;
+              onChannelInfoRecieved();
+            });
+          }
+        });
+
+        socket.on('post_planned_success', function(data) {
+          $scope.$apply(function() {
+            ctr.postingInProgress = false;
+            ctr.allPostsComplete = true;
+
+            S_eventer.sendEvent('showSuccessProgress');
+          });
+        });
+      });
+
+      function onChannelInfoRecieved() {
+        if (ctr.completePostsCount === ctr.postingCount) {
+          if (ctr.errorPostCount) {
+            ctr.postingInProgress = false;
+            S_eventer.sendEvent('showSuccessProgress');
+          } else {
+            ctr.allPostsComplete = true;
+            ctr.postingInProgress = false;
+            S_eventer.sendEvent('showSuccessProgress');
+            if (ctr.closeAfterSuccess) {
+              $timeout(function() {
+                S_eventer.sayToFrame('close');
+              }, 2000);
+            }
+          }
+        }
+      }
+    }
+
+    ctr.showPostProcessingLayer = function() {
+      return ctr.postingInProgress;
+    }
+
+    ctr.getProgressLineStyles = function() {
+      var d = ctr.completePostsCount / ctr.postingCount;
+      return {
+        width: ((d * 100) + '%'),
+        opacity: d
+      }
+    }
+
+    ctr.showFooter = function() {
+      return ctr.channelsIsLoaded && ctr.channels.length && !ctr.allPostsComplete;
+    }
+
+    ctr.postChannelAgain = function(channel_id) {
+      ctr.createPost([channel_id]);
+    }
+
+    ctr.showSetSelect = function() {
+      return ctr.sets.length > 1;
+    }
+
+    ctr.getChannelsCount = function(q) {
+      return ((q) ? q.length : 0);
+    }
+
+    ctr.channelsPlural = {
+      0: 'нет каналов',
+      one: '{} канал',
+      few: '{} канала',
+      many: '{} каналов',
+      other: '{} каналов'
+    };
+
+
+    ctr.minDate = new Date();
+    ctr.postingDate = moment();
+    ctr.postingNow = true;
+
+
+    $scope.$watch(function() {
+      return ctr.postingNow;
+    }, function(q) {
+      if (typeof q === 'undefined' || skipPostingNowChange) {
+        skipPostingNowChange = false;
+        return;
+      }
+
+      if (q === false) {
+        ctr.postingDate = moment().add(3, 'hours').toDate();
+      } else {
+        $timeout(function() {
+          ctr.postingDate = moment().toDate();
+        }, 300);
+      }
+    });
+
+    ctr.onTimeChange = function(time) {
+      if (!ctr.postingDate) return;
+
+      ctr.postingDate = moment(moment(ctr.postingDate).format('YYYYMMDD'),'YYYYMMDD').add(time, 'seconds').format()
+    }
+
+    ctr.canPost = function(){
+      return (ctr.postingNow || (+moment(ctr.postingDate).format('X') > +moment().format('X')));
+    }
+
+    ctr.viewTable = function() {
+      S_utils.showTablePopup(ctr.selectedSet.id).then(function(newDate) {
+        skipPostingNowChange = true;
+        ctr.postingDate = newDate.toDate();
+        ctr.postingNow = false;
+      });
+    }
+
+    return ctr;
+  }]
+);
+
+/*
+*  AngularJs Fullcalendar Wrapper for the JQuery FullCalendar
+*  API @ http://arshaw.com/fullcalendar/
+*
+*  Angular Calendar Directive that takes in the [eventSources] nested array object as the ng-model and watches it deeply changes.
+*       Can also take in multiple event urls as a source object(s) and feed the events per view.
+*       The calendar will watch any eventSource array and update itself when a change is made.
+*
+*/ 
+ 
+angular.module('ui.calendar', [])
+  .constant('uiCalendarConfig', {calendars: {}})
+  .controller('uiCalendarCtrl', ['$scope', 
+                                 '$timeout', 
+                                 '$locale', function(
+                                  $scope, 
+                                  $timeout, 
+                                  $locale){
+
+      var sourceSerialId = 1,
+          eventSerialId = 1,
+          sources = $scope.eventSources,
+          extraEventSignature = $scope.calendarWatchEvent ? $scope.calendarWatchEvent : angular.noop,
+
+          wrapFunctionWithScopeApply = function(functionToWrap){
+              var wrapper;
+
+              if (functionToWrap){
+                  wrapper = function(){
+                      // This happens outside of angular context so we need to wrap it in a timeout which has an implied apply.
+                      // In this way the function will be safely executed on the next digest.
+
+                      var args = arguments;
+                      var _this = this;
+                      $timeout(function(){
+                        functionToWrap.apply(_this, args);
+                      });
+                  };
+              }
+
+              return wrapper;
+          };
+
+      this.eventsFingerprint = function(e) {
+        if (!e._id) {
+          e._id = eventSerialId++;
+        }
+        // This extracts all the information we need from the event. http://jsperf.com/angular-calendar-events-fingerprint/3
+        return "" + e._id + (e.id || '') + (e.title || '') + (e.url || '') + (+e.start || '') + (+e.end || '') +
+          (e.allDay || '') + (e.className || '') + extraEventSignature(e) || '';
+      };
+
+      this.sourcesFingerprint = function(source) {
+          return source.__id || (source.__id = sourceSerialId++);
+      };
+
+      this.allEvents = function() {
+        // return sources.flatten(); but we don't have flatten
+        var arraySources = [];
+        for (var i = 0, srcLen = sources.length; i < srcLen; i++) {
+          var source = sources[i];
+          if (angular.isArray(source)) {
+            // event source as array
+            arraySources.push(source);
+          } else if(angular.isObject(source) && angular.isArray(source.events)){
+            // event source as object, ie extended form
+            var extEvent = {};
+            for(var key in source){
+              if(key !== '_uiCalId' && key !== 'events'){
+                 extEvent[key] = source[key];
+              }
+            }
+            for(var eI = 0;eI < source.events.length;eI++){
+              angular.extend(source.events[eI],extEvent);
+            }
+            arraySources.push(source.events);
+          }
+        }
+
+        return Array.prototype.concat.apply([], arraySources);
+      };
+
+      // Track changes in array by assigning id tokens to each element and watching the scope for changes in those tokens
+      // arguments:
+      //  arraySource array of function that returns array of objects to watch
+      //  tokenFn function(object) that returns the token for a given object
+      this.changeWatcher = function(arraySource, tokenFn) {
+        var self;
+        var getTokens = function() {
+          var array = angular.isFunction(arraySource) ? arraySource() : arraySource;
+          var result = [], token, el;
+          for (var i = 0, n = array.length; i < n; i++) {
+            el = array[i];
+            token = tokenFn(el);
+            map[token] = el;
+            result.push(token);
+          }
+          return result;
+        };
+        // returns elements in that are in a but not in b
+        // subtractAsSets([4, 5, 6], [4, 5, 7]) => [6]
+        var subtractAsSets = function(a, b) {
+          var result = [], inB = {}, i, n;
+          for (i = 0, n = b.length; i < n; i++) {
+            inB[b[i]] = true;
+          }
+          for (i = 0, n = a.length; i < n; i++) {
+            if (!inB[a[i]]) {
+              result.push(a[i]);
+            }
+          }
+          return result;
+        };
+
+        // Map objects to tokens and vice-versa
+        var map = {};
+
+        var applyChanges = function(newTokens, oldTokens) {
+          var i, n, el, token;
+          var replacedTokens = {};
+          var removedTokens = subtractAsSets(oldTokens, newTokens);
+          for (i = 0, n = removedTokens.length; i < n; i++) {
+            var removedToken = removedTokens[i];
+            el = map[removedToken];
+            delete map[removedToken];
+            var newToken = tokenFn(el);
+            // if the element wasn't removed but simply got a new token, its old token will be different from the current one
+            if (newToken === removedToken) {
+              self.onRemoved(el);
+            } else {
+              replacedTokens[newToken] = removedToken;
+              self.onChanged(el);
+            }
+          }
+
+          var addedTokens = subtractAsSets(newTokens, oldTokens);
+          for (i = 0, n = addedTokens.length; i < n; i++) {
+            token = addedTokens[i];
+            el = map[token];
+            if (!replacedTokens[token]) {
+              self.onAdded(el);
+            }
+          }
+        };
+        return self = {
+          subscribe: function(scope, onChanged) {
+            scope.$watch(getTokens, function(newTokens, oldTokens) {
+              if (!onChanged || onChanged(newTokens, oldTokens) !== false) {
+                applyChanges(newTokens, oldTokens);
+              }
+            }, true);
+          },
+          onAdded: angular.noop,
+          onChanged: angular.noop,
+          onRemoved: angular.noop
+        };
+      };
+
+      this.getFullCalendarConfig = function(calendarSettings, uiCalendarConfig){
+          var config = {};
+
+          angular.extend(config, uiCalendarConfig);
+          angular.extend(config, calendarSettings);
+         
+          angular.forEach(config, function(value,key){
+            if (typeof value === 'function'){
+              config[key] = wrapFunctionWithScopeApply(config[key]);
+            }
+          });
+
+          return config;
+      };
+
+    this.getLocaleConfig = function(fullCalendarConfig) {
+      if (!fullCalendarConfig.lang || fullCalendarConfig.useNgLocale) {
+        // Configure to use locale names by default
+        var tValues = function(data) {
+          // convert {0: "Jan", 1: "Feb", ...} to ["Jan", "Feb", ...]
+          var r, k;
+          r = [];
+          for (k in data) {
+            r[k] = data[k];
+          }
+          return r;
+        };
+        var dtf = $locale.DATETIME_FORMATS;
+        return {
+          monthNames: tValues(dtf.MONTH),
+          monthNamesShort: tValues(dtf.SHORTMONTH),
+          dayNames: tValues(dtf.DAY),
+          dayNamesShort: tValues(dtf.SHORTDAY)
+        };
+      }
+      return {};
+    };
+  }])
+  .directive('uiCalendar', ['uiCalendarConfig', function(uiCalendarConfig) {
+    return {
+      restrict: 'A',
+      scope: {eventSources:'=ngModel',calendarWatchEvent: '&'},
+      controller: 'uiCalendarCtrl',
+      link: function(scope, elm, attrs, controller) {
+  
+        var sources = scope.eventSources,
+            sourcesChanged = false,
+            calendar,
+            eventSourcesWatcher = controller.changeWatcher(sources, controller.sourcesFingerprint),
+            eventsWatcher = controller.changeWatcher(controller.allEvents, controller.eventsFingerprint),
+            options = null;
+
+        function getOptions(){
+          var calendarSettings = attrs.uiCalendar ? scope.$parent.$eval(attrs.uiCalendar) : {},
+              fullCalendarConfig;
+
+          fullCalendarConfig = controller.getFullCalendarConfig(calendarSettings, uiCalendarConfig);
+
+          var localeFullCalendarConfig = controller.getLocaleConfig(fullCalendarConfig);
+          angular.extend(localeFullCalendarConfig, fullCalendarConfig);
+          options = { eventSources: sources };
+          angular.extend(options, localeFullCalendarConfig);
+          //remove calendars from options
+          options.calendars = null;
+
+          var options2 = {};
+          for(var o in options){
+            if(o !== 'eventSources'){
+              options2[o] = options[o];
+            }
+          }
+          return JSON.stringify(options2);
+        }
+
+        scope.destroy = function(){
+          if(calendar && calendar.fullCalendar){
+            calendar.fullCalendar('destroy');
+          }
+          if(attrs.calendar) {
+            calendar = uiCalendarConfig.calendars[attrs.calendar] = $(elm).html('');
+          } else {
+            calendar = $(elm).html('');
+          }
+        };
+
+        scope.init = function(){
+          calendar.fullCalendar(options);
+        };
+
+        eventSourcesWatcher.onAdded = function(source) {
+            calendar.fullCalendar('addEventSource', source);
+            sourcesChanged = true;
+        };
+
+        eventSourcesWatcher.onRemoved = function(source) {
+          calendar.fullCalendar('removeEventSource', source);
+          sourcesChanged = true;
+        };
+
+        eventsWatcher.onAdded = function(event) {
+          calendar.fullCalendar('renderEvent', event);
+        };
+
+        eventsWatcher.onRemoved = function(event) {
+          calendar.fullCalendar('removeEvents', function(e) { 
+            return e._id === event._id;
+          });
+        };
+ 
+        eventsWatcher.onChanged = function(event) {
+          event._start = $.fullCalendar.moment(event.start);
+          event._end = $.fullCalendar.moment(event.end);
+          calendar.fullCalendar('updateEvent', event);
+        };
+
+        eventSourcesWatcher.subscribe(scope);
+        eventsWatcher.subscribe(scope, function(newTokens, oldTokens) {
+          if (sourcesChanged === true) {
+            sourcesChanged = false;
+            // prevent incremental updates in this case
+            return false;
+          }
+        });
+
+        scope.$watch(getOptions, function(newO,oldO){
+            scope.destroy();
+            scope.init();
+        });
+      }
+    };
+}]);
 (function replaceEmojiWithImages(root) {
 
   var REGIONAL_INDICATOR_A = parseInt("1f1e6", 16),
@@ -3872,6 +3822,7 @@ angular.module('App').controller('CD_channel',
       }
 
       $scope.channel.text = $interpolate(S_templater.getTemplate())(ctr.data);
+      console.log('new text')
     }
 
     ctr.isComplete = function() {
@@ -4189,6 +4140,113 @@ angular.module('App').controller('CM_attachVideo', [
     return ctr;
   }
 ]);
+
+angular.module('App').controller('CM_table',
+  ["$scope", "$compile", "$timeout", "$modalInstance", "S_selfapi", "setId", function($scope, $compile, $timeout, $modalInstance, S_selfapi, setId) {
+    var ctr = this;
+
+
+    $scope.eventSources = [];
+
+    $scope.eventMouseover = function(date, jsEvent, view) {
+      console.log(date);
+    };
+
+    $scope.eventRender = function(event, element, view) {
+      console.log(event.start.format());
+      element.attr({
+        'tooltip': event.title.replace('\n', ' '),
+        'tooltip-append-to-body': true,
+        'tooltip-placement': 'left',
+        'tooltip-trigger': 'mouseenter',
+        'tooltip-animation': false
+      });
+      $compile(element.parent())($scope.$new());
+    };
+
+
+
+    $scope.uiConfig = {
+      calendar: {
+
+        height: 550,
+        editable: false,
+        header: {
+          left: 'today prev,next',
+          center: 'title',
+          right: 'month,agenda10Days,agendaWeek,agenda3Days'
+        },
+        dayNames: ['Воскресение', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+        dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+        eventMouseover: $scope.eventMouseover,
+        eventDrop: $scope.alertOnDrop,
+        eventResize: $scope.alertOnResize,
+        eventRender: $scope.eventRender,
+        viewRender: function(view) {
+
+        },
+        slotEventOverlap: false,
+        timeFormat: 'h:mm',
+        columnFormat: {
+          day: 'dddd',
+          week: 'ddd, D MMMM',
+          month: 'ddd'
+        },
+        allDaySlot: false,
+        slotDuration: '00:30:00',
+        timeFormat: 'H(:mm)',
+        defaultTimedEventDuration: '00:30:00',
+        eventLimit: true, // for all non-agenda views
+        scrollTime: '09:00:00',
+        views: {
+          month: {
+
+          },
+          agenda10Days: {
+            type: 'agenda',
+            duration: {
+              days: 10
+            },
+            buttonText: '10 дней',
+            columnFormat: 'ddd, DD MMM'
+          },
+          agenda3Days: {
+            type: 'agenda',
+            duration: {
+              days: 3
+            },
+            buttonText: '3 дня',
+            columnFormat: 'ddd, D MMMM'
+          }
+        },
+        timezone: 'local',
+        dayClick: function(date, jsEvent, view) {
+          if (view.name === 'month') {
+            view.calendar.changeView('agenda3Days');
+            view.calendar.gotoDate(date.add(-1, 'days'));
+          } else {
+            $modalInstance.close(date);
+          }
+        }
+      }
+    };
+
+
+    $timeout(function() {
+      $scope.eventSources.push(function(start, end, timezone, callback) {
+        var from = start.utc().format('X');
+        var to = end.utc().format('X');
+
+        S_selfapi.getTable(from, to, setId).then(function(resp) {
+          callback(resp.data.data.table);
+        });
+      })
+
+    })
+
+    return ctr;
+  }]
+);
 
 angular.module('App').controller('CM_videoPlayer', [
   '$scope',

@@ -1,0 +1,36 @@
+.bottomPanel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  .panelka {
+    background-color: #2C3E50;
+    height: 50px;
+    menu {
+      padding: 0;
+      position: relative;
+      z-index: 5;
+      overflow: auto;
+      a {
+      	cursor: pointer;
+        line-height: 50px;
+        display: inline-block;
+        float: left;
+        padding: 0 12px 2px;
+        text-decoration: none;
+        color: #FFF;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+        font-size: 13px;
+        &:hover {
+          opacity: 0.85;
+        }
+        &.active, &.active:hover {
+          background-color: #1F3349;
+          opacity: 1;
+        }
+      }
+    }
+  }
+}

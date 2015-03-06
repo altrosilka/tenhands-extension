@@ -1,7 +1,7 @@
 angular.module('App').directive('timeSelect', [function() {
   return {
     scope: {
-      time: '=',
+      date: '=',
       setNewTime: '&'
     },
     controller: ['$scope', function($scope) {
@@ -34,14 +34,15 @@ angular.module('App').directive('timeSelect', [function() {
       }
 
       $scope.$watch(function() {
-        return $scope.time;
-      }, function(time) {
-        if (!time) return;
-        var z = time % 3600;
-        ctr.hour = Math.floor((time - z) / 3600);
-        ctr.minute = Math.floor(z / 60);
+        return $scope.date;
+      }, function(date) {
+        if (!date) return;
+        date = moment(date);
+        var timeFromDayStart = date.diff(moment(date.format('YYYYMMDD'),'YYYYMMDD').hour(0).minute(0).second(0), 'seconds');
 
-        
+        var z = timeFromDayStart % 3600;
+        ctr.hour = Math.floor((timeFromDayStart - z) / 3600);
+        ctr.minute = Math.floor(z / 60);
       });
 
       return ctr;

@@ -8,6 +8,7 @@ var App = angular.module('App', [
   'utilsTools',
   'ui.bootstrap',
   'ui.select',
+  'ui.calendar',
   'templates'
 ]); 
     

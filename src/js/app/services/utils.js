@@ -60,6 +60,19 @@ angular.module('utilsTools', [])
         return text;
       }
 
+      service.showTablePopup = function(setId) {
+        return $modal.open({
+          templateUrl: 'templates/modals/table.html',
+          controller: 'CM_table as ctr',
+          size: 'lg',
+          resolve: {
+            setId: function() {
+              return setId;
+            }
+          }
+        }).result;
+      }
+
       service.callAttachPhotoDialog = function(fromPage, uploadCallbacks) {
         return $modal.open({
           templateUrl: 'templates/modals/attachPhoto.html',
@@ -177,25 +190,6 @@ angular.module('utilsTools', [])
         }
       }
 
-
-      service.getVideoQuality = function(video) {
-        if (video.files.mp4_1080) {
-          return '1080';
-        }
-        if (video.files.mp4_720) {
-          return '720';
-        }
-        if (video.files.mp4_480) {
-          return '480';
-        }
-        if (video.files.mp4_360) {
-          return '360';
-        }
-        if (video.files.mp4_240) {
-          return '240';
-        }
-      }
-
       service.getCurrentTime = function() {
         return Math.floor(new Date().getTime() / 1000);
       }
@@ -244,6 +238,10 @@ angular.module('utilsTools', [])
         if (data.network === 'fb') {
           if (data.data.error && data.data.error.code && data.data.error.code == 506) {
             return "Сообщение повторяется";
+          }
+
+           if (data.data.error && data.data.error.code && data.data.error.code == 1) {
+            return "Нужно перепривязать аккаунт";
           }
         }
 
