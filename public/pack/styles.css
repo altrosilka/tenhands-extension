@@ -2371,7 +2371,7 @@ body.min .halfHeight {
   resize: none;
 }
 .vm_editImage .editWindow .opt {
-  margin-top: 4px;
+  margin-top: 9px;
 }
 .vm_editImage .editWindow .opt h3 {
   margin: 0 0 7px;
@@ -2391,6 +2391,18 @@ body.min .halfHeight {
 }
 .vm_editImage .editWindow .font .family .custom_select {
   width: 100%;
+}
+.vm_editImage .editWindow .font .family .custom_select > section {
+  padding: 0px 32px 0 10px;
+  position: relative;
+  z-index: 3;
+  background: #fff;
+}
+.vm_editImage .editWindow .font .family .custom_select > section > span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: inherit;
 }
 .vm_editImage .editWindow .font .color {
   display: inline-block;
@@ -2433,6 +2445,19 @@ body.min .halfHeight {
 .vm_editImage .image {
   width: 600px;
   min-height: 1px;
+}
+.vm_editImage .buttons {
+  margin-top: 15px;
+}
+.vm_editImage .borders .qk {
+  display: inline-block;
+}
+.vm_editImage .borders .qk.asd {
+  color: #999;
+  font-size: 10px;
+  position: relative;
+  top: -13px;
+  margin: 0 3px 0 16px;
 }
 .highcharts-container {
   overflow: visible !important;

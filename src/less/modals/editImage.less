@@ -7,8 +7,8 @@
     }
     .textOpt {
       margin-bottom: 10px;
-      .valign{
-      	margin-top: 5px;
+      .valign {
+        margin-top: 5px;
       }
     }
     .text {
@@ -18,13 +18,13 @@
       resize: none;
     }
     .opt {
-      margin-top: 4px;
+      margin-top: 9px;
       h3 {
         margin: 0 0 7px;
         font-size: 11px;
         color: #777;
       }
-    }
+    } 
     .font {
       .size {
         width: 57px;
@@ -38,6 +38,18 @@
         margin-right: 5px;
         .custom_select {
           width: 100%;
+          > section {
+            padding: 0px 32px 0 10px;
+            position: relative;
+            z-index: 3;
+            background: #fff;
+            > span {
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              display: inherit;
+            }
+          }
         }
       }
       .color {
@@ -82,5 +94,20 @@
     width: 600px;
     min-height: 1px;
     canvas {}
+  }
+  .buttons {
+    margin-top: 15px;
+  }
+  .borders {
+    .qk {
+      display: inline-block;
+      &.asd {
+        color: #999;
+        font-size: 10px;
+        position: relative;
+        top: -13px;
+        margin: 0 3px 0 16px;
+      }
+    }
   }
 }

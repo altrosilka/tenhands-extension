@@ -9,6 +9,41 @@ angular.module('utilsTools', [])
     function($modal, $q, $templateCache, $compile, $rootScope, __twitterConstants) {
       var service = {};
 
+
+
+
+      service.getFilters = function() {
+        return [{
+          name: "none",
+          title: "Без фильтра"
+        }, {
+          name: "darkAround",
+          title: "Dark Around",
+          info: {
+            brightnessContrast: [-0.2,-0.3],
+            vignette: [0.01, 0.6]
+          }
+        },{
+          name: "dark",
+          title: "Dark",
+          info: {
+            brightnessContrast: [-0.8, -0.9]
+          }
+        }, {
+          name: "light",
+          title: "Light",
+          info: {
+            brightnessContrast: [0.35, -0.3]
+          }
+        }];
+      }
+
+      service.getFilterByName = function(name) {
+        return _.find(service.getFilters(), function(q) {
+          return q.name === name;
+        });
+      }
+
       service.getUrlParameterValue = function(url, parameterName) {
         "use strict";
 
@@ -309,11 +344,12 @@ angular.module('utilsTools', [])
         });
       }
 
-      service.getMaxTextLengthInChannels = function(channels, attachments, text){
-        var min = Infinity, q;
-        _.forEach(channels, function(channel){
+      service.getMaxTextLengthInChannels = function(channels, attachments, text) {
+        var min = Infinity,
+          q;
+        _.forEach(channels, function(channel) {
           q = service.getMaxTextLength(channel.network, attachments, text);
-          if (q < min){
+          if (q < min) {
             min = q;
           }
         })

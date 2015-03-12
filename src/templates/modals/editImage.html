@@ -4,7 +4,7 @@
   <div class="modal-header">
     <h3 class="modal-title">Редактирование изображения</h3>
   </div>
-  <div class="modal-body">
+  <div class="modal-body"> 
     <div class="clearfix">
       <div class="image pull-left" style="width:600px">
         <div editing-canvas image="ctr.image" text="ctr.text" options="ctr.options" style="-webkit-transform-origin: 0 0;"></div>
@@ -31,12 +31,21 @@
           <div edit-image-text-shadow-option model="ctr.options.textShadow" set-value="ctr.setValue"></div>
         </div>
 
+        <div class="opt textShadow borders">
+          <h3>Рамки вокруг изображения</h3>
+          <div class="qk" edit-image-border-option model="ctr.options.canvas.border" set-value="ctr.setValue"></div>
+          <span class="qk asd">внутренняя</span>
+          <div class="qk" edit-image-border-option model="ctr.options.canvas.borderInner" set-value="ctr.setValue"></div>
+        </div>
 
-        <!--<div class="opt image">
-          <h3>Изображение</h3>
+
+        <div class="opt image">
+          <h3>Фотофильтр</h3>
           <div edit-image-filter-option model="ctr.options.filter" set-value="ctr.setValue"></div>
-        </div>-->
-        <div class="">
+        </div>
+
+
+        <div class="buttons">
           <button class="btn btn-primary" ng-click="ctr.saveImage()">сохранить</button>
           <button class="btn btn-default" ng-click="$dismiss()">отмена</button>
         </div>

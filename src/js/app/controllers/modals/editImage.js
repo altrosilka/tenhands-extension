@@ -6,7 +6,6 @@ angular.module('App').controller('CM_editImage',
 
 
     ctr.options = image.options || {
-      padding: 20,
       textShadow: {
         width: 3,
         color: 'rgba(0,0,0,0.8)',
@@ -17,16 +16,25 @@ angular.module('App').controller('CM_editImage',
       fontFamily: "Ubuntu",
       fontWeight: 300,
       fontSize: 32,
-      valign: 'middle',
-      filter: 'none'
+      valign: 'middle', 
+      filter: 'none',
+      canvas: {
+        padding: 20,
+        border: {
+          color: 'rgba(111,111,111,0.5)',
+          width: 10
+        },
+        borderInner: {
+          color: 'rgba(0,0,0,0.5)',
+          width: 2
+        }
+      } 
     };
 
-    
-    ctr.text = 'Десять причин завести себе своего орла';
+    ctr.text = 'Ваш текст здесь';
 
 
     ctr.setValue = function(key, value) {
-
       ctr.options[key] = value;
     }
 
@@ -36,11 +44,14 @@ angular.module('App').controller('CM_editImage',
     }
 
     $scope.$on('imageDataRecieved', function(e, url) {
+      console.log(url);
       $modalInstance.close({
         url: url,
         options: ctr.options
       });
     });
+
+
 
     return ctr;
   }

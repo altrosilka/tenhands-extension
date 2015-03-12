@@ -1,54 +1,84 @@
-angular.module('App').directive('editingCanvas', function($timeout, S_eventer, __maxImageWidth) {
+angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S_utils, __maxImageWidth) {
   return {
     scope: {
       image: '=',
       text: '=',
       options: '='
     },
-    template: '<canvas id="exportImage" style="position: absolute;left:-500px"></canvas>',
+    template: '<div id="photoFilter" style="display:none;position: absolute;  width: 100%;height: 100%;"></div><canvas id="exportImage" style="position: absolute;left:-500px"></canvas>',
     link: function($scope, $element) {
-      var _image, _areaWidth, _scale;
+      var _image, _areaWidth, _scale, _imgScale;
       var paperCollection = {};
 
-      var _paper, _camanImage;
+      var _paper, _filteredImage = {};
 
       var options = $scope.options;
 
       var IDS = {
-        canvas: "exportImage"
+        canvas: "exportImage",
+        img: "photoFilter"
       }
 
       var DOM = {
-        svgWrapper: $element.find('#' + IDS.svgWrapper),
-        canvas: $element.find('#' + IDS.canvas)
+        canvas: $element.find('#' + IDS.canvas),
+        img: $element.find('#' + IDS.img)
       }
 
       $scope.$on('saveImageRequest', function(text) {
         var q = _paper;
 
-
-        var url = _paper.toDataURL({
-          format: 'jpeg',
-          quality: 0.8
+        var context = _filteredImage.canvas.getContext("webgl", {
+          preserveDrawingBuffer: true
         });
 
         var img = new Image();
-        img.src = url;
+
+
         img.onload = function() {
+          fabric.Image.fromURL(this.src, function(img) {
+            paperCollection.image = img;
+            fullLock(img);
+            img.scaleX = _imgScale;
+            img.scaleY = _imgScale;
 
-          var canvas = document.createElement('canvas');
+            _paper.add(img);
+            img.bringForward();
+            paperCollection.text.bringToFront(111);
+            paperCollection.canvasBorder.bringToFront(3111);
+            paperCollection.canvasBorderInner.bringToFront(2111);
 
-          canvas.width = this.width / multiple(1);
-          canvas.height = this.height / multiple(1);
-          if (canvas.width > __maxImageWidth) {
-            canvas.height = canvas.height / canvas.width * __maxImageWidth;
-            canvas.width = __maxImageWidth;
-          }
-          var ctx = canvas.getContext('2d');
 
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          S_eventer.sendEvent('imageDataRecieved', canvas.toDataURL('image/jpeg'));
+            _paper.renderAll();
+
+            var url = _paper.toDataURL({
+              format: 'jpeg',
+              quality: 0.8
+            });
+
+            var img = new Image();
+            img.src = url;
+            img.onload = function() {
+
+              var canvas = document.createElement('canvas');
+
+              canvas.width = this.width / multiple(1);
+              canvas.height = this.height / multiple(1);
+              if (canvas.width > __maxImageWidth) {
+                canvas.height = canvas.height / canvas.width * __maxImageWidth;
+                canvas.width = __maxImageWidth;
+              }
+              var ctx = canvas.getContext('2d');
+
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              S_eventer.sendEvent('imageDataRecieved', canvas.toDataURL('image/jpeg',1));
+            }
+          });
+
+
+
         }
+        img.src = _filteredImage.canvas.toDataURL('image/png');
+
       });
 
       $scope.$watch('text', function(text) {
@@ -69,6 +99,16 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, _
           }, 300);
         }
 
+
+        if (opt.canvas.border.color !== oldOpt.canvas.border.color || opt.canvas.border.width !== oldOpt.canvas.border.width || opt.canvas.borderInner.color !== oldOpt.canvas.borderInner.color || opt.canvas.borderInner.width !== oldOpt.canvas.borderInner.width) {
+          drawBorder(opt);
+        }
+
+
+        if (opt.filter !== oldOpt.filter) {
+          drawImage(opt);
+        }
+
         $timeout(function() {
           placeText(opt);
         });
@@ -82,20 +122,47 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, _
         _areaWidth = $element[0].clientWidth;
 
         var img = new Image();
-        img.src = $scope.image.src_original || $scope.image.src_big;
         img.onload = function() {
+          DOM.img.attr('src', this.src).show();
+          options.originalImage = this.src;
           _image = this;
           draw();
           $timeout(function() {
             placeText(options);
+            drawBorder(options);
           });
 
+          var canvas = fx.canvas();
+
+          _filteredImage.canvas = canvas;
+          _filteredImage.texture = canvas.texture(this)
+
+          window.q = _filteredImage;
+
+          DOM.img.html($(canvas)).find('canvas').css({
+            '-webkit-transform': 'scale(' + (1 / _scale / multiple(1)) + ')',
+            '-webkit-transform-origin': '0 0'
+          });
+
+          drawImage(options);
         }
+        img.src = $scope.image.src_original || $scope.image.src_big;
+
+
+
+
       });
 
       function draw() {
-        var imageWidth = options.width = multiple(_image.width);
-        var imageHeight = options.height = multiple(_image.height);
+        var imageWidth = originalImageWidth = options.width = multiple(_image.width);
+        var imageHeight = originalImageHeight = options.height = multiple(_image.height);
+
+
+        if (imageWidth > multiple(__maxImageWidth)) {
+          imageHeight = options.height = imageHeight / imageWidth * multiple(__maxImageWidth);
+          imageWidth = options.width = multiple(__maxImageWidth);
+        }
+
 
         _scale = _areaWidth / imageWidth;
         _paper = new fabric.Canvas(IDS.canvas, {
@@ -113,15 +180,75 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, _
         _paper.setWidth(imageWidth);
         _paper.setHeight(imageHeight);
 
-        fabric.Image.fromURL(_image.src, function(img) {
+        _imgScale = multiple(1) / (originalImageWidth / options.width);
+        /*fabric.Image.fromURL(_image.src, function(img) {
           paperCollection.image = img;
+
           fullLock(img);
-          img.scaleX = multiple(1);
-          img.scaleY = multiple(1);
+          img.scaleX = multiple(1) / (originalImageWidth / imageWidth);
+          img.scaleY = multiple(1) / (originalImageHeight / imageHeight);
           _paper.add(img);
         });
-
+*/
         setElementScale(_scale);
+
+
+
+      }
+
+      function drawImage(options) {
+        if (!options.filter || options.filter === 'none') {
+          _filteredImage.canvas.draw(_filteredImage.texture).update();
+          return;
+        }
+
+        var filter = S_utils.getFilterByName(options.filter);
+
+        var can = _filteredImage.canvas.draw(_filteredImage.texture);
+        _.forEach(filter.info, function(val, key) {
+          if (typeof can[key] === 'function') {
+            if (_.isArray(!val)) {
+              val = [val];
+            }
+            can[key].apply(can, val);
+          }
+        });
+        can.update();
+      }
+
+      function drawBorder(options) {
+        if (paperCollection.canvasBorder) {
+          paperCollection.canvasBorder.remove();
+        }
+        var bopt = options.canvas.border;
+        paperCollection.canvasBorder = new fabric.Rect({
+          fill: 'transparent',
+          stroke: bopt.color,
+          strokeWidth: multiple(bopt.width),
+          width: options.width - multiple(bopt.width),
+          height: options.height - multiple(bopt.width)
+        });
+        fullLock(paperCollection.canvasBorder);
+        _paper.add(paperCollection.canvasBorder);
+
+        if (paperCollection.canvasBorderInner) {
+          paperCollection.canvasBorderInner.remove();
+        }
+        var bopt = options.canvas.borderInner;
+        var bMainoptWidth = multiple(options.canvas.border.width);
+        var mWidth = multiple(bopt.width);
+        paperCollection.canvasBorderInner = new fabric.Rect({
+          fill: 'transparent',
+          stroke: bopt.color,
+          strokeWidth: mWidth,
+          left: bMainoptWidth,
+          top: bMainoptWidth,
+          width: options.width - mWidth - bMainoptWidth * 2,
+          height: options.height - mWidth - bMainoptWidth * 2
+        });
+        fullLock(paperCollection.canvasBorderInner);
+        _paper.add(paperCollection.canvasBorderInner);
+
       }
 
       function placeText(options) {
@@ -129,7 +256,7 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, _
           paperCollection.text.remove();
         }
 
-        var tunePadding = multiple(options.padding);
+        var tunePadding = multiple(options.canvas.padding);
 
         paperCollection.text = new fabric.Text($scope.text, {
           fontSize: multiple(options.fontSize),
@@ -167,7 +294,7 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, _
         switch (options.valign) {
           case 'top':
             {
-              y = options.padding * window.devicePixelRatio;
+              y = multiple(options.canvas.padding);
               break;
             }
           case 'middle':
@@ -177,7 +304,7 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, _
             }
           case 'bottom':
             {
-              y = options.height - textHeight - options.padding * window.devicePixelRatio;
+              y = options.height - textHeight - multiple(options.canvas.padding);
               break
             }
         }
@@ -199,8 +326,9 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, _
           '-webkit-transform': 'scale(' + scale + ')',
           'position': 'absolute'
         });
-      }
 
+        ;
+      }
 
 
 
