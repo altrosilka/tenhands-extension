@@ -38,7 +38,7 @@ var vendorLibs = [
   './bower_components/angular-sanitize/angular-sanitize.js',
   './bower_components/angular-animate/angular-animate.js',
   './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
-  './bower_components/fancybox/source/jquery.fancybox.js',
+  /*'./bower_components/fancybox/source/jquery.fancybox.js',*/
   './bower_components/Jcrop/js/jquery.Jcrop.js',
   './bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js',
   './bower_components/blueimp-file-upload/js/jquery.iframe-transport.js',
@@ -46,26 +46,27 @@ var vendorLibs = [
   './bower_components/momentjs/moment.js',
   './bower_components/angular-i18n/angular-locale_ru.js',
   './bower_components/angular-ui-select/dist/select.js',
-  './bower_components/highcharts/highcharts.src.js',
+  /*'./bower_components/highcharts/highcharts.src.js',*/
   './bower_components/jquery-autosize/jquery.autosize.js',
-  './bower_components/jquery-mousewheel/jquery.mousewheel.js',
   './bower_components/angular-local-storage/dist/angular-local-storage.js',
   './bower_components/shepherd.js/shepherd.js',
   './bower_components/fullcalendar/dist/fullcalendar.js',
-  './bower_components/fullcalendar/dist/lang/ru.js'
+  './bower_components/fullcalendar/dist/lang/ru.js',
+  './bower_components/angular-bootstrap-colorpicker/js/bootstrap-colorpicker-module.js'
 ];
 
 var vendorLibsCss = [
   './bower_components/bootstrap/dist/css/bootstrap.min.css',
   './bower_components/font-awesome/css/font-awesome.css',
-  './bower_components/fancybox/source/jquery.fancybox.css',
+  /*'./bower_components/fancybox/source/jquery.fancybox.css',*/
   './bower_components/Jcrop/css/jquery.Jcrop.css',
   './bower_components/select2/select2.css',
   './bower_components/select2/select2-bootstrap.css',
   './bower_components/angular-ui-select/dist/select.css',
   './bower_components/ionicons/css/ionicons.css',
   './bower_components/shepherd.js/css/shepherd-theme-arrows.css',
-  './bower_components/fullcalendar/dist/fullcalendar.css'
+  './bower_components/fullcalendar/dist/fullcalendar.css',
+  './bower_components/angular-bootstrap-colorpicker/css/colorpicker.css'
 ];
 
 
@@ -180,12 +181,33 @@ gulp.task('dist-manifest', function() {
   var pkg = getPackageJson();
 
   return gulp.src(['./src/manifest.json'])
-    .pipe(bump({
-      version: pkg.version
+    .pipe(replace({
+      patterns: [{
+        match: 'version',
+        replacement: pkg.version
+      }, {
+        match: 'extesionIcon',
+        replacement: extensionConfig.extesionIcon
+      }]
     }))
     .pipe(gulp.dest('./public'));
 });
 
+gulp.task('dist-manifest-dev', function() {
+  var pkg = getPackageJson();
+
+  return gulp.src(['./src/manifest.json'])
+    .pipe(replace({
+      patterns: [{
+        match: 'version',
+        replacement: pkg.version
+      }, {
+        match: 'extesionIcon',
+        replacement: extensionConfig.extesionIcon_dev
+      }]
+    }))
+    .pipe(gulp.dest('./public'));
+});
 
 gulp.task('dist-background', function() {
   return gulp.src(['./src/background.html'])
@@ -261,7 +283,7 @@ gulp.task("watch", function() {
   gulp.watch('./src/less/**', ["less"]);
   gulp.watch('./src/less/page.less', ["less-page"]);
   gulp.watch('./tmp/css/**', ["styles"]);
-  gulp.watch('./src/manifest.json', ["dist-manifest"]);
+  gulp.watch('./src/manifest.json', ["dist-manifest-dev"]);
   gulp.watch('./src/background.html', ["dist-background"]);
   gulp.watch('./src/pages/**', ["dist-pages"]);
   gulp.watch('./src/templates/**', ["templates"]);

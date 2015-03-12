@@ -1,0 +1,47 @@
+<link href='http://fonts.googleapis.com/css?family=PT+Sans|Ubuntu|Lobster|Open+Sans|Roboto:300|Open+Sans+Condensed:300|Ledger|Cuprum&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+<script src="/js/fabric.min.js"></script>
+<section class="vm_editImage"> 
+  <div class="modal-header">
+    <h3 class="modal-title">Редактирование изображения</h3>
+  </div>
+  <div class="modal-body">
+    <div class="clearfix">
+      <div class="image pull-left" style="width:600px">
+        <div editing-canvas image="ctr.image" text="ctr.text" options="ctr.options" style="-webkit-transform-origin: 0 0;"></div>
+      </div>
+      <div class="editWindow pull-left">
+        <div class="textOpt">
+          <textarea class="text form-control" ng-model="ctr.text"></textarea>
+
+
+          <div edit-image-valign-option model="ctr.options.valign" set-value="ctr.setValue" class="valign"></div>
+
+        </div>
+        <div class="opt font clearfix">
+          <h3>Шрифт</h3>
+
+          <div edit-image-font-family-option model="ctr.options.fontFamily" set-value="ctr.setValue" class="family pull-left"></div>
+          <div edit-image-font-size-option model="ctr.options.fontSize" set-value="ctr.setValue" class="size pull-left"></div>
+          <div edit-image-color-option model="ctr.options.color" set-value="ctr.setValue" class="pull-left colorwrap"></div>
+
+        </div>
+
+        <div class="opt textShadow">
+          <h3>Тень шрифта</h3>
+          <div edit-image-text-shadow-option model="ctr.options.textShadow" set-value="ctr.setValue"></div>
+        </div>
+
+
+        <!--<div class="opt image">
+          <h3>Изображение</h3>
+          <div edit-image-filter-option model="ctr.options.filter" set-value="ctr.setValue"></div>
+        </div>-->
+        <div class="">
+          <button class="btn btn-primary" ng-click="ctr.saveImage()">сохранить</button>
+          <button class="btn btn-default" ng-click="$dismiss()">отмена</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

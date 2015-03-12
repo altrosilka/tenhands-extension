@@ -4,41 +4,28 @@
   },
   "description": "Размещайте контент в социальные сети за пару кликов",
   "icons": {
+    "128": "icons/128.png",
     "16": "icons/16.png",
-    "48": "icons/48.png",
-    "128": "icons/128.png"
+    "48": "icons/48.png"
   },
   "browser_action": {
-    "default_title": "Print this page",
+    "default_title": "Поделиться материалами с данной страницы",
     "default_icon": "icons/48.png"
-  },
-  "manifest_version": 2,
+  },  
+  "manifest_version": 2,  
   "homepage_url": "http://10hands.io",
   "name": "Десять Рук",
-  "permissions": [
-    "contextMenus",
-    "tabs",
-    "activeTab",
-    "storage",
-    "http://*/*",
-    "https://*/*"
-  ],
+  "permissions": ["contextMenus", "tabs", "activeTab", "storage","pageCapture", "http://*/*", "https://*/*"],
   "web_accessible_resources": [
-    "pages/createPost.html",
+    "pages/createPost.html", 
     "pages/afterInstall.html",
     "pages/authVk.html",
     "pack/page.css"
   ],
-  "content_scripts": [
-    {
-      "matches": [
-        "http://*/*"
-      ],
-      "css": [
-        "pack/page.css"
-      ]
-    }
-  ],
+  "content_scripts": [{
+    "matches": ["http://*/*"],
+    "css": ["pack/page.css"]
+  }],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://*.vk.com https://*.google.com; object-src 'self'",
-  "version": "0.1.4"
+  "version": "0.2.0"
 }

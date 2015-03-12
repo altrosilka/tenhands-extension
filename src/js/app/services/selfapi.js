@@ -94,6 +94,17 @@ angular.module('App')
         });
       }
 
+      service.saveBase64Image = function(base64) {
+        return $http({
+          withCredentials: true,
+          url: base + __api.paths.media,
+          method: 'POST',
+          data: {
+            base64: base64
+          }
+        });
+      }
+
       var _uploadStack = [];
       service.uploadImage = function(url, c, w, h, id) {
         var defer = $q.defer();

@@ -13,6 +13,15 @@
   line-height: 29px;
   cursor: pointer;
 }
+.btn.btn-default {
+  color: #222;
+  border-color: #FFF;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+.btn.btn-default:hover {
+  border-color: #eee;
+  background-color: #eee;
+}
 .btn.btn-primary {
   color: #eee;
   background-color: #3498db;
@@ -119,7 +128,7 @@ select.form-control {
   background-color: #F2952A;
 }
 .shepherd-element.shepherd-theme-arrows {
-  z-index: 2;
+  z-index: 6;
 }
 .shepherd-element.shepherd-theme-arrows .shepherd-content {
   filter: none;
@@ -321,6 +330,14 @@ a:hover {
   border: none!important;
   text-decoration: none!important;
   cursor: default!important;
+}
+.blocking {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
 }
 .successSing {
   position: fixed;
@@ -554,6 +571,10 @@ body.min .halfHeight {
 .window h3 {
   margin: 20px 0 5px;
   font-size: 12px;
+}
+.window.publishing .oneChannel .removeImage,
+.window.publishing .oneChannel .edit.ib {
+  display: none;
 }
 .topMenu {
   position: absolute;
@@ -1006,15 +1027,6 @@ body.min .halfHeight {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.v_channels {
-  overflow: hidden;
-}
-.v_channels .channelsList {
-  overflow: auto;
-  padding: 0 13px;
-  flex-wrap: wrap;
-  display: flex;
-}
 .v_channels .noChannels {
   text-align: center;
   font-size: 15px;
@@ -1026,6 +1038,35 @@ body.min .halfHeight {
   z-index: 10;
   color: #999;
   position: relative;
+  transition: 0.3s;
+}
+.slidingFooter .finally {
+  color: #000;
+  padding: 40px 0;
+  font-size: 14px;
+  text-align: center;
+}
+.slidingFooter a {
+  color: #3498db;
+  cursor: pointer;
+}
+.slidingFooter .centered {
+  position: absolute;
+  left: 50%;
+  margin-left: -480px;
+}
+.slidingFooter .centered.ng-enter,
+.slidingFooter .centered.ng-leave {
+  -webkit-transition: all cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
+  transition: all cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
+}
+.slidingFooter .centered.ng-enter,
+.slidingFooter .centered.ng-leave.ng-leave-active {
+  opacity: 0;
+}
+.slidingFooter .centered.ng-leave,
+.slidingFooter .centered.ng-enter.ng-enter-active {
+  opacity: 1;
 }
 .slidingFooter.planned .publicWord {
   display: none!important;
@@ -1037,19 +1078,19 @@ body.min .halfHeight {
   opacity: 1;
   visibility: visible;
 }
+.slidingFooter.publishing {
+  opacity: 0.5;
+}
 .slidingFooter.publishing .sendPanel .progress-bar {
   opacity: 1;
 }
 .slidingFooter.publishing .disableLayer {
-  opacity: 0.7;
   visibility: visible;
 }
 .slidingFooter.publishing .progress-bars {
   opacity: 1;
 }
 .slidingFooter .disableLayer {
-  opacity: 0.8;
-  background: #F4F4F4;
   position: absolute;
   left: 0;
   right: 0;
@@ -1088,8 +1129,6 @@ body.min .halfHeight {
   margin-right: 10px;
 }
 .postingTimerArea .viewCalendar {
-  color: #3498db;
-  cursor: pointer;
   margin-top: 5px;
 }
 .postingTimer {
@@ -1379,21 +1418,6 @@ body.min .halfHeight {
 .socialTemplateEditor .vars .val {
   font-size: 10px;
 }
-.instagramArea {
-  overflow: auto;
-}
-.instagramArea .photo {
-  width: 325px;
-  height: 325px;
-  background: rgba(0, 0, 0, 0);
-  margin: 15px;
-  box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
-  float: left;
-}
-.instagramArea .controls {
-  width: 50px;
-  float: right;
-}
 .textareaValidator {
   position: relative;
 }
@@ -1416,6 +1440,7 @@ body.min .halfHeight {
   bottom: 0;
   pointer-events: none;
   padding: 8px 14px;
+  font-size: 13px;
   color: rgba(0, 0, 0, 0);
   overflow: hidden;
   -webkit-rtl-ordering: logical;
@@ -1449,92 +1474,96 @@ body.min .halfHeight {
 }
 .channel {
   display: block;
-  width: 383px;
-  margin: 15px;
-  float: left;
+  width: 400px;
+  margin: 0 0 30px;
   position: relative;
-  overflow: hidden;
-  transition: 0.5s;
   max-height: 1000px;
 }
-.channel header {
-  padding: 10px 15px;
-  position: relative;
-  border-radius: 1px;
-}
-.channel header .screen_name {
-  z-index: 3;
-  position: relative;
-  margin-left: 20px;
-  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
-}
-.channel header .socialSign {
-  display: inline-block;
-  font-size: 16px;
-  position: absolute;
-  left: 12px;
-  top: 8px;
-  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
-  z-index: 2;
-}
-.channel header .socialSign span {
-  position: relative;
-}
-.channel header .socialSign .vk {
-  top: -1px;
-}
-.channel header .actions {
-  z-index: 1;
-  position: absolute;
-  right: 0;
-  top: 0;
-}
-.channel header .actions .visibility {
-  cursor: pointer;
-  position: relative;
-  width: 24px;
-  height: 24px;
-  display: inline-block;
-  top: 7px;
-  right: 7px;
-}
-.channel header .actions .visibility .fa {
-  opacity: 0;
-  position: absolute;
-  transition: 0.3s;
-  font-size: 17px;
-  left: 3px;
-  top: 4px;
-  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.4);
-}
-.channel header .actions .visibility .fa.active {
-  opacity: 1;
-}
 .channel .fakeOverlay {
-  display: none;
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
   z-index: 2;
   position: absolute;
+  text-align: center;
+  background: rgba(244, 244, 226, 0.52);
+}
+.channel .fakeOverlay.ng-enter,
+.channel .fakeOverlay.ng-leave {
+  -webkit-transition: all cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
+  transition: all cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
+}
+.channel .fakeOverlay.ng-enter,
+.channel .fakeOverlay.ng-leave.ng-leave-active {
+  opacity: 0;
+}
+.channel .fakeOverlay.ng-leave,
+.channel .fakeOverlay.ng-enter.ng-enter-active {
+  opacity: 1;
+}
+.channel .fakeOverlay i {
+  position: absolute;
+  top: 5px;
+  right: -21px;
+  font-size: 17px;
+  text-shadow: 0px 3px 1px #FFF;
+  color: #4A5F8C;
 }
 .channel .fakeOverlay.active {
   display: block;
 }
+.channel .avatar {
+  position: absolute;
+  left: -105px;
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+}
+.channel .avatar .title {
+  margin-top: 60px;
+  font-size: 10px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #999;
+}
+.channel .avatar .bulka {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  line-height: 18px;
+  left: 59px;
+  top: 33px;
+  text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+}
+.channel .avatar .photoavatar {
+  position: absolute;
+  left: 26px;
+  right: 0;
+  height: 48px;
+  width: 48px;
+  box-shadow: 0px 0px 0px 1px #EEE!important;
+}
+.channel .avatar.not .photoavatar {
+  background: url(../images/noavatar.jpg) center no-repeat;
+  background-size: 48px;
+}
 .channel .inner {
   transition: 0.2s;
   position: relative;
-  margin-top: 5px;
 }
 .channel .inner textarea {
-  min-height: 120px;
+  min-height: 100px;
   max-height: 300px;
   padding: 8px 14px;
   border: none;
   resize: none;
   border-radius: 1px;
-  box-shadow: inset 0px 0px 1px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0px 0px 0px 1px #EEE!important;
 }
 .channel .inner textarea.short {
   min-height: 90px;
@@ -1593,12 +1622,12 @@ body.min .halfHeight {
   transition: 0.3s;
   position: absolute;
   left: 0;
-  top: 37px;
+  top: 0px;
   bottom: 0;
   right: 0;
-  padding: 25px;
+  padding: 15px;
   color: #555;
-  font-size: 13px;
+  font-size: 12px;
   z-index: 10;
 }
 .channel .failArea a,
@@ -1615,10 +1644,10 @@ body.min .halfHeight {
   top: 2px;
 }
 .channel .completeArea {
-  background-color: #FFF;
+  background-color: #E0FFE4;
 }
 .channel .failArea {
-  background-color: #ffcccc;
+  background-color: #FDD;
 }
 .channel.complete .completeArea {
   opacity: 1;
@@ -1632,21 +1661,49 @@ body.min .halfHeight {
   transform: scale(1);
   text-decoration: none!important;
 }
-.channel .attaches {
-  padding: 13px;
+.channel .buttons {
+  margin-top: 11px;
 }
-.channel .attaches .attach {
+.channel .buttons .btn {
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 20px;
+}
+.channelLogo {
   float: left;
-  width: 85px;
-  height: 85px;
-  margin: 3px;
+  width: 48px;
+  height: 48px;
+  margin: 0 20px 20px 0;
   position: relative;
-  transition: 0.2s;
-  background: #000;
-  cursor: default;
+  transition: 0.4s;
+  cursor: pointer;
 }
-.channel .attaches .attach .info {
-  display: none;
+.channelLogo.disabled {
+  opacity: 0.3;
+}
+.channelLogo .bulka {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  line-height: 18px;
+  right: -4px;
+  bottom: -4px;
+  text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+  z-index: 2;
+}
+.channelLogo .photoavatar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 48px;
+  width: 48px;
+  box-shadow: 0px 0px 0px 1px #EEE!important;
+}
+.channelLogo.not .photoavatar {
+  background: url(../images/noavatar.jpg) center no-repeat;
+  background-size: 48px;
 }
 .timeSelect .sep {
   position: relative;
@@ -1654,64 +1711,98 @@ body.min .halfHeight {
   display: inline-block;
   margin: 0 -3px;
 }
-.videoCover {
-  width: 274px;
-  float: left;
-  margin-right: 10px;
-  margin-bottom: 10px;
-  height: 155px;
+.custom_select {
+  border: 1px solid #AAA;
+  line-height: 25px;
+  font-size: 12px;
+  display: inline-block;
   position: relative;
   cursor: pointer;
-  overflow: hidden;
 }
-.videoCover.odd {
-  margin-right: 0px;
+.custom_select > section {
+  padding: 0px 32px 0 10px;
+  position: relative;
+  z-index: 3;
+  background: #fff;
 }
-.videoCover .image {
+.custom_select menu {
   position: absolute;
+  top: 0%;
+  background: #fff;
   left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  z-index: 1;
+  padding: 0;
+  z-index: 6;
+  box-shadow: 0px 1px 3px #ccc;
+  margin: 4px 0 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s;
+  max-height: 211px;
+  overflow: auto;
+  min-width: 100%;
+  -webkit-transform: translateY(22px) scale(0.9);
 }
-.videoCover .info {
-  position: absolute;
-  bottom: 0;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  color: #fff;
+.custom_select.opened menu {
+  opacity: 1;
+  -webkit-transform: translateY(22px) scale(1);
+  visibility: visible;
 }
-.videoCover .info .duration {
-  position: absolute;
-  right: 4px;
-  z-index: 2;
-  bottom: 4px;
-  font-size: 11px;
-}
-.videoCover .info .title {
-  position: absolute;
-  font-size: 11px;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  padding: 4px 60px 4px 4px;
+.custom_select menu .option {
+  padding: 0px 10px;
+  margin-top: -1px;
+  line-height: 27px;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  background: -moz-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.65) 100%);
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0, 0, 0, 0)), color-stop(100%, rgba(0, 0, 0, 0.65)));
-  background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.65) 100%);
-  background: -o-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.65) 100%);
-  background: -ms-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.65) 100%);
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.65) 100%);
+  background: transparent;
+  border: none;
+  outline: none;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  display: block;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  z-index: 1;
+  color: #555;
+  transition: 0.3s;
 }
-.videoCover:hover .info .title {
-  white-space: normal;
+.custom_select menu .option.active {
+  color: #009ee0;
+}
+.custom_select menu .option.active:hover {
+  color: #014d6d;
+}
+.custom_select menu .option[disabled],
+.custom_select menu .option[disabled]:hover {
+  color: #ccc;
+  background: #f9f9f9 url(../images/stripe.png) center repeat;
+  border-color: #eee;
+  cursor: default;
+}
+.custom_select menu .option:hover {
+  z-index: 2;
+  border-color: #ccc;
+  color: #000;
+  cursor: pointer;
+}
+.custom_select > section:after {
+  content: "\f107";
+  font-family: FontAwesome;
+  position: absolute;
+  right: 6px;
+  top: 1px;
+  font-size: 22px;
+  color: #999;
+  transition: 0.4s;
+}
+.custom_select.opened {
+  color: #333;
+}
+.custom_select.opened > section:after {
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  transform: rotate(180deg);
+  color: #333;
 }
 .dateButton {
   position: relative;
@@ -1767,6 +1858,142 @@ body.min .halfHeight {
 .jcropArea .jcrop-hline,
 .jcropArea .jcrop-vline {
   background: #fff!important;
+}
+.oneChannel {
+  width: 720px;
+  margin: auto;
+}
+.oneChannel .area {
+  width: 400px;
+  min-height: 2px;
+}
+.oneChannel .notOneChannel {
+  display: block;
+  font-size: 12px;
+  margin: 56px 0 -8px 12px;
+  font-weight: bold;
+}
+.oneChannel textarea {
+  min-height: 150px;
+  max-height: 300px;
+  padding: 8px 14px;
+  border: none;
+  resize: none;
+  font-size: 13px;
+  background: #fff;
+  box-shadow: 0px 0px 0px 1px #EEE!important;
+}
+.oneChannel .image {
+  width: 250px;
+  margin-left: 70px;
+  position: relative;
+}
+.oneChannel .image .removeImage {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  color: #000;
+  font-size: 20px;
+  width: 30px;
+  height: 30px;
+  transition: 0.2s;
+  text-align: center;
+  cursor: pointer;
+  line-height: 30px;
+  background: rgba(255, 255, 255, 0.5);
+}
+.oneChannel .image .addImage {
+  height: 150px;
+  background: #F2F2F2;
+  text-align: center;
+  transition: 0.2s;
+  color: #ABABAB;
+}
+.oneChannel .image .addImage:hover {
+  color: #777;
+  background: #eee;
+  cursor: pointer;
+}
+.oneChannel .image .addImage i {
+  font-size: 44px;
+  display: block;
+  margin: 0px 0 -8px;
+  padding-top: 36px;
+}
+.oneChannel .image .addImage span {
+  font-size: 9px;
+  text-transform: uppercase;
+}
+.oneChannel .image .addWrap {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  right: 0;
+  left: 0;
+}
+.oneChannel .image .addWrap.ng-enter,
+.oneChannel .image .realImage.ng-enter,
+.oneChannel .image .addWrap.ng-leave,
+.oneChannel .image .realImage.ng-leave {
+  -webkit-transition: all cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
+  transition: all cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
+}
+.oneChannel .image .addWrap.ng-enter,
+.oneChannel .image .realImage.ng-enter,
+.oneChannel .image .addWrap.ng-leave.ng-leave-active,
+.oneChannel .image .realImage.ng-leave.ng-leave-active {
+  opacity: 0;
+  -webkit-transform: scale(0.9);
+}
+.oneChannel .image .addWrap.ng-leave,
+.oneChannel .image .realImage.ng-leave,
+.oneChannel .image .addWrap.ng-enter.ng-enter-active,
+.oneChannel .image .realImage.ng-enter.ng-enter-active {
+  opacity: 1;
+  -webkit-transform: scale(1);
+}
+.oneChannel .image .realImage {
+  position: relative;
+  z-index: 1;
+  top: 0;
+}
+.oneChannel .image .realImage .imageArea img {
+  width: 100%;
+}
+.oneChannel .image .realImage .imageArea:hover .removeImage {
+  opacity: 0.5;
+  visibility: visible;
+}
+.oneChannel .image .realImage .imageArea:hover .removeImage:hover {
+  opacity: 1;
+}
+.oneChannel .image .realImage .imgWrap {
+  cursor: pointer;
+}
+.oneChannel .image .realImage .edit {
+  display: inline-block;
+  text-align: center;
+  opacity: 0.4;
+  transition: 0.2s;
+  margin-top: 4px;
+}
+.oneChannel .image .realImage .edit:hover {
+  opacity: 1;
+  cursor: pointer;
+}
+.oneChannel .image .realImage .edit i {
+  font-size: 20px;
+}
+.oneChannel .image .realImage .edit span {
+  font-size: 11px;
+  line-height: 20px;
+  position: relative;
+  top: -3px;
+}
+.oneChannel .affe {
+  transition: none!important;
 }
 .date-selector {
   width: 100%;
@@ -2089,6 +2316,7 @@ body.min .halfHeight {
   line-height: 1.7;
 }
 .vm_table .fc-event {
+  max-height: 15px!important;
   border-radius: 0;
   border: 0px;
   background: #2B85B2;
@@ -2102,6 +2330,9 @@ body.min .halfHeight {
 }
 .attachPhoto .dismiss {
   margin-left: -20px;
+}
+.attachPhoto .actions {
+  display: none!important;
 }
 .attachVideo .filters {
   position: absolute;
@@ -2119,6 +2350,89 @@ body.min .halfHeight {
 .attachVideo .checkboxList label {
   display: inline-block;
   margin-right: 7px;
+}
+.vm_editImage .editWindow {
+  width: 238px;
+  margin-left: 20px;
+}
+.vm_editImage .editWindow .custom_select {
+  border-color: #ddd;
+}
+.vm_editImage .editWindow .textOpt {
+  margin-bottom: 10px;
+}
+.vm_editImage .editWindow .textOpt .valign {
+  margin-top: 5px;
+}
+.vm_editImage .editWindow .text {
+  width: 100%;
+  height: 80px;
+  font-size: 14px;
+  resize: none;
+}
+.vm_editImage .editWindow .opt {
+  margin-top: 4px;
+}
+.vm_editImage .editWindow .opt h3 {
+  margin: 0 0 7px;
+  font-size: 11px;
+  color: #777;
+}
+.vm_editImage .editWindow .font .size {
+  width: 57px;
+  margin-right: 5px;
+}
+.vm_editImage .editWindow .font .size .custom_select {
+  width: 100%;
+}
+.vm_editImage .editWindow .font .family {
+  width: 144px;
+  margin-right: 5px;
+}
+.vm_editImage .editWindow .font .family .custom_select {
+  width: 100%;
+}
+.vm_editImage .editWindow .font .color {
+  display: inline-block;
+  width: 27px;
+  height: 27px;
+  border: 1px solid #DDD;
+}
+.vm_editImage .editWindow .font .color input {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  float: left;
+}
+.vm_editImage .editWindow .textShadow .dx,
+.vm_editImage .editWindow .textShadow .dy,
+.vm_editImage .editWindow .textShadow .width {
+  width: 50px;
+  margin-right: 4px;
+  float: left;
+  display: inline-block;
+}
+.vm_editImage .editWindow .textShadow .dx input,
+.vm_editImage .editWindow .textShadow .dy input,
+.vm_editImage .editWindow .textShadow .width input {
+  width: 100%;
+  text-align: center;
+}
+.vm_editImage .editWindow .textShadow .color {
+  display: inline-block;
+  width: 23px;
+  height: 23px;
+  border: 1px solid #eee;
+}
+.vm_editImage .editWindow .textShadow .color input {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  float: left;
+}
+.vm_editImage .image {
+  width: 600px;
+  min-height: 1px;
 }
 .highcharts-container {
   overflow: visible !important;

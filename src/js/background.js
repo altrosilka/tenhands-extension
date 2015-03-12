@@ -16,7 +16,7 @@ chrome.contextMenus.create({
   "title": "ОФормить пост из изображения",
   "onclick": openPostCreationFromContext
 });*/
-
+ 
 chrome.browserAction.onClicked.addListener(function(tab) {
   if (tab) {
     showExtensionPopup(tab);

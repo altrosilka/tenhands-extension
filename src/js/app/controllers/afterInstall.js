@@ -1,11 +1,8 @@
-angular.module('App').controller('C_afterInstall', [
-  '$scope',
-  '$location',
-  'S_vk',
-  function($scope, $location, S_vk) {
+angular.module('App').controller('C_afterInstall',
+  function($scope, $location) {
     var ctr = this;
 
 
     return ctr;
   }
-]);
+);

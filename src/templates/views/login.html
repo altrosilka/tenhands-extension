@@ -1,7 +1,7 @@
 <section class="v_login"  ng-controller="C_login as login_ctr">
   <form class="text-center" ng-class="{'error':login_ctr.error}" ng-submit="login_ctr.auth(login_ctr.email, login_ctr.password)">
     <div>
-      <div class="wrapInput">
+      <div class="wrapInput"> 
         <span class="input input--juro" ng-class="{'input--filled': login_ctr.email != ''}">
 	    <input class="input__field input__field--juro" type="text" id="input-1" ng-model="login_ctr.email" />
 	    <label class="input__label input__label--juro" for="input-1">
@@ -20,7 +20,7 @@
     </div>
     <div>
       <button class="btn btn-primary introButton">
-      	<span>Тук-тук, откройте!</span>
+      	<span>Войти</span>
       </button>
     </div>
     <input type="submit" class="gogoleft">

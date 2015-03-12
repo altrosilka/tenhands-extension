@@ -11,7 +11,7 @@ angular.module('utilsTools', [])
 
       service.getUrlParameterValue = function(url, parameterName) {
         "use strict";
- 
+
         var urlParameters = url.substr(url.indexOf("#") + 1),
           parameterValue = "",
           index,
@@ -58,6 +58,20 @@ angular.module('utilsTools', [])
           text += possible.charAt(Math.floor(Math.random() * possible.length));
 
         return text;
+      }
+
+
+      service.showEditImagePopup = function(image) {
+        return $modal.open({
+          templateUrl: 'templates/modals/editImage.html',
+          controller: 'CM_editImage as ctr',
+          size: 'lg',
+          resolve: {
+            image: function() {
+              return image;
+            }
+          }
+        }).result;
       }
 
       service.showTablePopup = function(setId) {
@@ -240,7 +254,7 @@ angular.module('utilsTools', [])
             return "Сообщение повторяется";
           }
 
-           if (data.data.error && data.data.error.code && data.data.error.code == 1) {
+          if (data.data.error && data.data.error.code && data.data.error.code == 1) {
             return "Нужно перепривязать аккаунт";
           }
         }
@@ -260,7 +274,7 @@ angular.module('utilsTools', [])
         return ((data.error) ? JSON.stringify(data.error) : 'не удалось определить');
       }
 
-      service.configurePostInfo = function(channels, channel_ids) {
+      service.configurePostInfo = function(channels, channel_ids, image) {
         var postInfo = [];
         _.forEach(channels, function(channel) {
           if (channel.disabled || channel.complete || channel.inprogress) return;
@@ -269,7 +283,7 @@ angular.module('utilsTools', [])
             postInfo.push({
               channel_id: channel.id,
               text: channel.text,
-              attachments: channel.attachments
+              attachments: [image]
             });
           }
         });
@@ -287,10 +301,23 @@ angular.module('utilsTools', [])
       service.trackProgress = function(channels, info) {
         var q;
         _.forEach(info, function(_channel) {
-          _.find(channels, function(channel) {
+          q = _.find(channels, function(channel) {
             return channel.id === _channel.channel_id;
-          }).inprogress = true;
+          });
+          q.inprogress = true;
+          q.error = false;
         });
+      }
+
+      service.getMaxTextLengthInChannels = function(channels, attachments, text){
+        var min = Infinity, q;
+        _.forEach(channels, function(channel){
+          q = service.getMaxTextLength(channel.network, attachments, text);
+          if (q < min){
+            min = q;
+          }
+        })
+        return min;
       }
 
       service.getMaxTextLength = function(type, attachments, text) {
@@ -304,7 +331,7 @@ angular.module('utilsTools', [])
                 len += (link.length - __twitterConstants.linkLen);
               });
 
-              if (attachments.length) {
+              if (attachments || (attachments && attachments.length)) {
                 len -= __twitterConstants.mediaLen;
               }
 
@@ -328,29 +355,8 @@ angular.module('utilsTools', [])
         return links;
       }
 
-      service.attachmentsLimitReached = function(network, channelsLenth) {
-        switch (network) {
-          case 'ig':
-            {
-              return channelsLenth >= 1;
-              break;
-            }
-          case 'fb':
-            {
-              return channelsLenth >= 1;
-              break;
-            }
-          case 'tw':
-            {
-              return channelsLenth >= 4;
-              break;
-            }
-          case 'vk':
-            {
-              return channelsLenth >= 9;
-              break;
-            }
-        }
+      service.attachmentsLimitReached = function(channelsLenth) {
+        return channelsLenth >= 1;
       }
 
       service.unixTo = function(time, format) {

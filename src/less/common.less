@@ -74,6 +74,14 @@ a {
   text-decoration: none!important;
   cursor: default!important;
 }
+.blocking {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+}
 .successSing {
   position: fixed;
   z-index: 15;
@@ -303,6 +311,13 @@ body.min {
   h3 {
     margin: 20px 0 5px;
     font-size: 12px;
+  }
+  &.publishing {
+    .oneChannel {
+      .removeImage, .edit.ib {
+        display: none;
+      }
+    }
   }
 }
 .topMenu {
@@ -772,14 +787,7 @@ body.min {
   text-overflow: ellipsis;
 }
 .v_channels {
-  overflow: hidden;
-  .channelsList {
-    overflow: auto;
-    padding: 0 13px;
-    flex-wrap: wrap;
-    display: flex;
-  }
-  .noChannels {
+  .channelsList {} .noChannels {
     text-align: center;
     font-size: 15px;
     color: #777;
@@ -791,6 +799,32 @@ body.min {
   z-index: 10;
   color: #999;
   position: relative;
+  transition: 0.3s;
+  .finally {
+    color: #000;
+    padding: 40px 0;
+    font-size: 14px;
+    text-align: center;
+  }
+  a {
+    color: @colorPrimary;
+    cursor: pointer;
+  }
+  .centered {
+    position: absolute;
+    left: 50%;
+    margin-left: -480px;
+    &.ng-enter, &.ng-leave {
+      -webkit-transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.3s;
+      transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.3s;
+    }
+    &.ng-enter, &.ng-leave.ng-leave-active {
+      opacity: 0;
+    }
+    &.ng-leave, &.ng-enter.ng-enter-active {
+      opacity: 1;
+    }
+  }
   &.planned {
     .publicWord {
       display: none!important;
@@ -805,13 +839,13 @@ body.min {
     .postingTimerArea {}
   }
   &.publishing {
+    opacity: 0.5;
     .sendPanel {
       .progress-bar {
         opacity: 1;
       }
     }
     .disableLayer {
-      opacity: 0.7;
       visibility: visible;
     }
     .progress-bars {
@@ -819,8 +853,6 @@ body.min {
     }
   }
   .disableLayer {
-    opacity: 0.8;
-    background: #F4F4F4;
     position: absolute;
     left: 0;
     right: 0;
@@ -853,15 +885,13 @@ body.min {
 }
 .postingTimerArea {
   position: relative;
-  .radioList { 
+  .radioList {
     float: left;
     top: 8px;
     margin-right: 10px;
   }
   .viewCalendar {
-    color: @colorPrimary;
-    cursor: pointer;
-    margin-top:5px;
+    margin-top: 5px;
   }
 }
 .postingTimer {

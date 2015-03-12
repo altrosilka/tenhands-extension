@@ -2,7 +2,7 @@ angular.module('App').directive('textareaValidator',
   function($timeout, S_utils) {
     return {
       scope: {
-        model: '=',
+        image: '=',
         channel: '=channelInfo',
         showCounter: '='
       },
@@ -29,7 +29,7 @@ angular.module('App').directive('textareaValidator',
         $scope.$watch('channel.text', function(q, old) {
           if (!q) return;
 
-          maxLength = S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
+          maxLength = S_utils.getMaxTextLength($scope.channel.network, $scope.image, $scope.channel.text);
 
           track(q);
         });
@@ -41,7 +41,7 @@ angular.module('App').directive('textareaValidator',
         });
 
         $scope.$watch(function() {
-          return S_utils.getMaxTextLength($scope.channel.network, $scope.channel.attachments, $scope.channel.text);
+          return S_utils.getMaxTextLength($scope.channel.network, $scope.image, $scope.channel.text);
         }, function(q, z) {
           if (!q || q === z) return;
 

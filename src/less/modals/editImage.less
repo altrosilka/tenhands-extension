@@ -1,0 +1,86 @@
+.vm_editImage {
+  .editWindow {
+    width: 238px;
+    margin-left: 20px;
+    .custom_select {
+      border-color: #ddd;
+    }
+    .textOpt {
+      margin-bottom: 10px;
+      .valign{
+      	margin-top: 5px;
+      }
+    }
+    .text {
+      width: 100%;
+      height: 80px;
+      font-size: 14px;
+      resize: none;
+    }
+    .opt {
+      margin-top: 4px;
+      h3 {
+        margin: 0 0 7px;
+        font-size: 11px;
+        color: #777;
+      }
+    }
+    .font {
+      .size {
+        width: 57px;
+        margin-right: 5px;
+        .custom_select {
+          width: 100%;
+        }
+      }
+      .family {
+        width: 144px;
+        margin-right: 5px;
+        .custom_select {
+          width: 100%;
+        }
+      }
+      .color {
+        display: inline-block;
+        width: 27px;
+        height: 27px;
+        border: 1px solid #DDD;
+        input {
+          opacity: 0;
+          width: 1px;
+          height: 1px;
+          float: left;
+        }
+      }
+    }
+    .textShadow {
+      .dx, .dy, .width {
+        width: 50px;
+        margin-right: 4px;
+        float: left;
+        display: inline-block;
+        input {
+          width: 100%;
+          text-align: center;
+        }
+      }
+      .color {
+        display: inline-block;
+        width: 23px;
+        height: 23px;
+        border: 1px solid #eee;
+        input {
+          opacity: 0;
+          width: 1px;
+          height: 1px;
+          float: left;
+        }
+      }
+    }
+  }
+  .image {
+    width: 600px;
+    min-height: 1px;
+    canvas {}
+  }
+}

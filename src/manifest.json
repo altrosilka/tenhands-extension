@@ -6,16 +6,16 @@
   "icons": {
     "128": "icons/128.png",
     "16": "icons/16.png",
-    "48": "icons/48.png"
+    "48": "@@extesionIcon"
   },
   "browser_action": {
-    "default_title": "Print this page",
-    "default_icon": "icons/48.png"
-  },
-  "manifest_version": 2,
+    "default_title": "Поделиться материалами с данной страницы",
+    "default_icon": "@@extesionIcon"
+  },  
+  "manifest_version": 2,  
   "homepage_url": "http://10hands.io",
   "name": "Десять Рук",
-  "permissions": ["contextMenus", "tabs", "activeTab", "storage", "http://*/*", "https://*/*"],
+  "permissions": ["contextMenus", "tabs", "activeTab", "storage","pageCapture", "http://*/*", "https://*/*"],
   "web_accessible_resources": [
     "pages/createPost.html", 
     "pages/afterInstall.html",

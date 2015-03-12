@@ -4,7 +4,11 @@ angular.module('App').controller('C_posting',
 
     var _socketListeningId, skipPostingNowChange = false;
 
+
+
+    ctr.image = {};
     ctr.sets = [];
+
 
     ctr.selectedSet = {};
     ctr.attachments = [];
@@ -35,7 +39,7 @@ angular.module('App').controller('C_posting',
       ctr.channelsIsLoaded = false;
       ctr.allPostsComplete = false;
       ctr.postingCount = 0;
-      ctr.channels = [];
+      //ctr.channels = [];
 
       S_selfapi.getSetInfo(setId).then(function(resp) {
         ctr.channels = _.filter(resp.data.data, function(channel) {
@@ -53,17 +57,27 @@ angular.module('App').controller('C_posting',
     });
 
 
-    $scope.$on('loadedDataFromTab', function(event, data) {
+    $scope.$on('loadedDataFromArea', function(event, data) {
       ctr.data = data;
-      S_eventer.sendEvent('loadedDataFromArea', ctr.data);
       $timeout(function() {
         S_eventer.sendEvent('hideLoader');
       });
     });
 
     ctr.createPost = function(channel_ids) {
-      var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids);
+      if (typeof channel_ids !== 'undefined') {
+        if (!_.isArray(channel_ids)) {
+          channel_ids = [channel_ids];
+        }
+      }
+
+      var postInfo = S_utils.configurePostInfo(ctr.channels, channel_ids, ctr.image);
+      if (!postInfo.length) {
+        return;
+      }
       ctr.postingCount = postInfo.length;
+
+
       ctr.postingInProgress = true;
       ctr.completePostsCount = 0;
 
@@ -72,8 +86,8 @@ angular.module('App').controller('C_posting',
       if (ctr.postingNow) {
         S_utils.trackProgress(ctr.channels, postInfo);
       }
-      debugger
-      return;
+
+
       S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? moment(ctr.postingDate).format('X') : undefined)).then(function(resp) {
         var socketUrl = resp.data.data.socketUrl;
         _socketListeningId = resp.data.data.hash;
@@ -118,7 +132,7 @@ angular.module('App').controller('C_posting',
             ctr.postingInProgress = false;
             ctr.allPostsComplete = true;
 
-            S_eventer.sendEvent('showSuccessProgress');
+            //S_eventer.sendEvent('showSuccessProgress');
           });
         });
       });
@@ -127,11 +141,11 @@ angular.module('App').controller('C_posting',
         if (ctr.completePostsCount === ctr.postingCount) {
           if (ctr.errorPostCount) {
             ctr.postingInProgress = false;
-            S_eventer.sendEvent('showSuccessProgress');
+            //S_eventer.sendEvent('showSuccessProgress');
           } else {
             ctr.allPostsComplete = true;
             ctr.postingInProgress = false;
-            S_eventer.sendEvent('showSuccessProgress');
+            //S_eventer.sendEvent('showSuccessProgress');
             if (ctr.closeAfterSuccess) {
               $timeout(function() {
                 S_eventer.sayToFrame('close');
@@ -155,7 +169,7 @@ angular.module('App').controller('C_posting',
     }
 
     ctr.showFooter = function() {
-      return ctr.channelsIsLoaded && ctr.channels.length && !ctr.allPostsComplete;
+      return ctr.channelsIsLoaded && ctr.channels.length;
     }
 
     ctr.postChannelAgain = function(channel_id) {
@@ -204,10 +218,16 @@ angular.module('App').controller('C_posting',
     ctr.onTimeChange = function(time) {
       if (!ctr.postingDate) return;
 
-      ctr.postingDate = moment(moment(ctr.postingDate).format('YYYYMMDD'),'YYYYMMDD').add(time, 'seconds').format()
+      ctr.postingDate = moment(moment(ctr.postingDate).format('YYYYMMDD'), 'YYYYMMDD').add(time, 'seconds').format()
     }
 
-    ctr.canPost = function(){
+    ctr.canPost = function() {
+      var q = _.find(ctr.channels, function(q) {
+        return q.disabled !== true;
+      });
+      if (!q) {
+        return false;
+      }
       return (ctr.postingNow || (+moment(ctr.postingDate).format('X') > +moment().format('X')));
     }
 
@@ -217,6 +237,11 @@ angular.module('App').controller('C_posting',
         ctr.postingDate = newDate.toDate();
         ctr.postingNow = false;
       });
+    }
+
+    ctr.return = function() {
+      ctr.allPostsComplete = false;
+      S_utils.disableProgress(ctr.channels);
     }
 
     return ctr;

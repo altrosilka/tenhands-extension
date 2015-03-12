@@ -9,6 +9,15 @@
   font-size: 13px;
   line-height: 29px;
   cursor: pointer;
+  &.btn-default {
+    color: #222;
+    border-color: #FFF;
+    -webkit-font-smoothing: subpixel-antialiased;
+    &:hover {
+      border-color: #eee;
+      background-color: #eee;
+    }
+  }
   &.btn-primary {
     color: #eee;
     background-color: @colorPrimary;
@@ -118,7 +127,7 @@ select.form-control {
   }
 }
 .shepherd-element.shepherd-theme-arrows {
-  z-index: 2;
+  z-index: 6; 
   .shepherd-content {
     filter: none;
     -webkit-filter: none;
@@ -157,10 +166,9 @@ select.form-control {
 }
 [data-shepherd-step="changeChannelVisibility"] {
   .tourFader[data-step="channel"]:first-child {
-    opacity: 1; 
+    opacity: 1;
   }
 }
-
-.ib{
-  display:inline-block;
+.ib {
+  display: inline-block;
 }

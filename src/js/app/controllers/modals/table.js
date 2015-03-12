@@ -6,13 +6,13 @@ angular.module('App').controller('CM_table',
     $scope.eventSources = [];
 
     $scope.eventMouseover = function(date, jsEvent, view) {
-      console.log(date);
+
     };
 
     $scope.eventRender = function(event, element, view) {
-      console.log(event.start.format());
+      event.title = event.replace('\n', ' ').replace('<br>', ' ');
       element.attr({
-        'tooltip': event.title.replace('\n', ' '),
+        'tooltip': event.title,
         'tooltip-append-to-body': true,
         'tooltip-placement': 'left',
         'tooltip-trigger': 'mouseenter',
@@ -21,7 +21,7 @@ angular.module('App').controller('CM_table',
       $compile(element.parent())($scope.$new());
     };
 
-
+ 
 
     $scope.uiConfig = {
       calendar: {
@@ -98,8 +98,8 @@ angular.module('App').controller('CM_table',
           callback(resp.data.data.table);
         });
       })
-
-    })
+      $(window).trigger('resize');
+    });
 
     return ctr;
   }

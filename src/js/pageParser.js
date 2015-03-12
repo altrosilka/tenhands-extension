@@ -41,10 +41,18 @@
     title: document.title,
     description: getDescription(),
     url: document.location.href,
-    imageSrc: getImageFromMeta(),
+    imageSrc: qualifyURL(getImageFromMeta()),
     h1: getByQuery('h1'),
     h2: getByQuery('h2'),
     h3: getByQuery('h3')
+  }
+
+  function qualifyURL(url) {
+    var img = document.createElement('img');
+    img.src = url; // set string url
+    url = img.src; // get qualified url
+    img.src = null; // no server request
+    return url;
   }
 
   function getImageFromMeta() {
@@ -58,7 +66,7 @@
 
     dom = document.querySelector('meta[name="twitter:image"]');
     if (dom !== null) return dom.getAttribute('content');
-
+    debugger
     return dom;
   }
 

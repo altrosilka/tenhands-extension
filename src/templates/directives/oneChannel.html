@@ -1,0 +1,46 @@
+<div class="oneChannel">
+
+
+
+  <div class="clearfix">
+    <div class="area pull-left">
+
+      <div class="ng-hide clearfix">
+        <span channel-logo="channel" ng-repeat="channel in channels" ng-if="!channel.separately"></span>
+      </div>
+
+      <textarea class="ng-hide form-control" autosize-textarea ng-model="ctr.text" ng-keyup="ctr.getMaxTextLength()" ng-keydown="ctr.getMaxTextLength()"></textarea>
+
+      <div class="ng-hide notOneChannel" ng-if="ctr.showDesc()">
+        Отредактируйте текст в каналах ниже:
+      </div>
+
+      <div class="channelsList">
+        <div channel="channel" class="tourFader" data-step="channel" ng-repeat="channel in channels" text="ctr.text" image="image" post-channel-again="ctr.postChannelAgain(channel.id)"></div>
+      </div>
+    </div>
+    <div class="image pull-left tourFader" data-step="image">
+      <div class="addWrap" ng-if="!image.src_big">
+        <div class="addImage" ng-click="ctr.attachImage()">
+          <i class="ion-camera"></i>
+          <span>Добавить изображение</span>
+        </div>
+      </div>
+      <div class="realImage" ng-if="image.src_big">
+        <div class="imageArea">
+          <div class="removeImage ion-close-round" ng-click="ctr.removeImage()"></div>
+          <div class="imgWrap" ng-click="ctr.editImage()">
+            <img ng-src="{{image.src_big}}">
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="edit ib" ng-click="ctr.editImage()">
+            <i class="ion-paintbrush"></i>
+            <span>редактировать</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

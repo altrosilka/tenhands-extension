@@ -1,93 +1,92 @@
 .channel {
   display: block;
-  width: 383px;
-  margin: 15px;
-  float: left;
+  width: 400px;
+  margin: 0 0 30px;
   position: relative;
-  overflow: hidden;
-  transition: 0.5s;
-  max-height:1000px;
-  &.inprogress {
-
-  }
-  header {
-    padding: 10px 15px;
-    position: relative;
-    border-radius: 1px;
-    
-    .screen_name {
-      z-index: 3;
-      position: relative;
-      margin-left: 20px;
-      text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
-    }
-    .socialSign {
-      display: inline-block;
-      font-size: 16px;
-      position: absolute;
-      left: 12px;
-      top: 8px;
-      text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
-      z-index: 2;
-      span {
-        position: relative;
-      }
-      .vk {
-        top: -1px;
-      }
-    }
-    .actions {
-      z-index: 1;
-      position: absolute;
-      right: 0;
-      top: 0;
-      .visibility {
-        cursor: pointer;
-        position: relative;
-        width: 24px;
-        height: 24px;
-        display: inline-block;
-        top: 7px;
-        right: 7px;
-        .fa {
-          opacity: 0;
-          position: absolute;
-          transition: 0.3s;
-          font-size: 17px;
-          left: 3px;
-          top: 4px;
-          text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.4);
-          &.active {
-            opacity: 1;
-          }
-        }
-      }
-    }
-  }
-  .fakeOverlay {
-    display: none;
+  max-height: 1000px;
+  &.inprogress {} .fakeOverlay {
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
     z-index: 2;
     position: absolute;
+    text-align: center;
+    background: rgba(244, 244, 226, 0.52);
+    &.ng-enter, &.ng-leave {
+      -webkit-transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.3s;
+      transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.3s;
+    }
+    &.ng-enter, &.ng-leave.ng-leave-active {
+      opacity: 0;
+    }
+    &.ng-leave, &.ng-enter.ng-enter-active {
+      opacity: 1;
+    }
+    i {
+      position: absolute;
+      top: 5px;
+      right: -21px;
+      font-size: 17px;
+      text-shadow: 0px 3px 1px #FFF;
+      color: #4A5F8C;
+    }
     &.active {
       display: block;
+    }
+  }
+  .avatar {
+    position: absolute;
+    left: -105px;
+    width: 100px;
+    height: 100px;
+    cursor:pointer;
+    .title {
+      margin-top: 60px;
+      font-size: 10px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #999;
+    }
+    .bulka {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      line-height: 18px;
+      left: 59px;
+      top: 33px;
+      text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
+      font-size: 12px;
+    }
+    .photoavatar {
+      position: absolute;
+      left: 26px;
+      right: 0;
+      height: 48px;
+      width: 48px;
+      box-shadow: 0px 0px 0px 1px #EEE!important;
+    }
+    &.not {
+      .photoavatar {
+        background: url(../images/noavatar.jpg) center no-repeat;
+        background-size: 48px;
+      }
     }
   }
   .inner {
     transition: 0.2s;
     position: relative;
-    margin-top: 5px;
     textarea {
-      min-height: 120px;
+      min-height: 100px;
       max-height: 300px;
       padding: 8px 14px;
       border: none;
       resize: none;
       border-radius: 1px;
-      box-shadow: inset 0px 0px 1px rgba(0, 0, 0, 0.3) !important;
+      box-shadow: 0px 0px 0px 1px #EEE!important;
       &.short {
         min-height: 90px;
       }
@@ -146,12 +145,12 @@
     transition: 0.3s;
     position: absolute;
     left: 0;
-    top: 37px;
+    top: 0px;
     bottom: 0;
     right: 0;
-    padding: 25px;
+    padding: 15px;
     color: #555;
-    font-size: 13px;
+    font-size: 12px;
     z-index: 10;
     a {
       color: #000!important;
@@ -166,10 +165,10 @@
     }
   }
   .completeArea {
-    background-color: #FFF;
+    background-color: #E0FFE4;
   }
   .failArea {
-    background-color: #ffcccc;
+    background-color: #FDD;
   }
   &.complete {
     .completeArea {
@@ -187,20 +186,12 @@
       text-decoration: none!important;
     }
   }
-  .attaches {
-    padding: 13px;
-    .attach {
-      float: left;
-      width: 85px;
-      height: 85px;
-      margin: 3px;
-      position: relative;
-      transition: 0.2s;
-      background: #000;
-      cursor: default;
-      .info {
-        display: none;
-      }
+  .buttons {
+    margin-top: 11px;
+    .btn {
+      padding: 0 10px;
+      font-size: 12px;
+      line-height: 20px;
     }
   }
 }

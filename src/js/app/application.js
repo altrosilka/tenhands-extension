@@ -1,14 +1,14 @@
 var App = angular.module('App', [
   'LocalStorageModule',
   'config',
-  'vkTools',
   'chromeTools',
   'ngSanitize',
   'ngAnimate',
   'utilsTools',
+  'colorpicker.module',
   'ui.bootstrap',
   'ui.select',
   'ui.calendar',
   'templates'
-]); 
+]);  
     

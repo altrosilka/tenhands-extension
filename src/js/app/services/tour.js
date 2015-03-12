@@ -1,6 +1,6 @@
 angular.module('App')
   .service('S_tour',
-    function(localStorageService, $timeout) {
+    function(localStorageService, $timeout, S_eventer) {
       var service = {};
 
       var tour;
@@ -11,9 +11,11 @@ angular.module('App')
 
         var q = localStorageService.get(tourKeyName) || {};
 
-        if (!force && q.complete){
+        if (!force && q.complete) {
           return;
         }
+
+        S_eventer.sendEvent('tourStart');
 
         tour = new Shepherd.Tour({
           defaults: {
@@ -22,10 +24,13 @@ angular.module('App')
           }
         });
 
-        tour.on('complete', function(){
+        tour.on('complete', function() {
+          S_eventer.sendEvent('tourEnd');
           localStorageService.set(tourKeyName, {
             complete: 1
           });
+
+          
         });
 
         tour.addStep('step1', {
@@ -76,18 +81,28 @@ angular.module('App')
             }]
           });
         }
-
-        if ($('body').find('[data-step="changeChannelVisibility"]').length) {
-          tour.addStep('changeChannelVisibility', {
-            text: 'Можно не публиковать запись в некоторые каналы',
-            attachTo: '[data-step="changeChannelVisibility"]',
+        if ($('body').find('[data-step="image"]').length) {
+          tour.addStep('step5', {
+            text: 'Это изображение для записи, его можно поменять, отредактировать или написать на нем текст',
+            attachTo: '[data-step="image"] top',
             buttons: [{
               text: 'Дальше',
               action: tour.next
             }]
           });
         }
-
+        /*
+                if ($('body').find('[data-step="changeChannelVisibility"]').length) {
+                  tour.addStep('changeChannelVisibility', {
+                    text: 'Можно не публиковать запись в некоторые каналы',
+                    attachTo: '[data-step="changeChannelVisibility"]',
+                    buttons: [{
+                      text: 'Дальше',
+                      action: tour.next
+                    }]
+                  });
+                }
+        */
         if ($('body').find('[data-step="publicNow"]').length) {
           tour.addStep('step5', {
             text: 'Записи можно разместить сейчас',
@@ -123,7 +138,7 @@ angular.module('App')
           });
         }
 
-         tour.start();
+        tour.start();
       }
 
 

@@ -26,18 +26,4 @@
     </div>
 
   </div>
-  <div class="modal-footer fixed-footer">
-    <button class="btn btn-primary pull-right" ng-click="ctr.closeDialog()" ng-class="{'disabled':!ctr.selectedAttachments.length}">прикрепить
-      <span ng-pluralize count="ctr.selectedAttachments.length" when="ctr.imagesPlurals">
-      </span>
-    </button>
-    <div class="toAllChannels checkboxList controls-list pull-right ng-hide">
-      <label>
-        <input type="checkbox" ng-model="post_ctr.assigned">
-        <span tooltip="добавить изображения во все каналы выбраного набора" tooltip-placement="top" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-popup-delay="300">Во все каналы</span>
-      </label>
-    </div>
-
-    <button class="btn btn-link pull-left dismiss"  ng-click="$dismiss()">отмена</button>
-  </div>
 </section>

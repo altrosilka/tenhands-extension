@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div class="info">
+    <div class="info" ng-hide="!attach.width || attach.clientWidth">
       <span tooltip-placement="left" tooltip="Видимый размер изображения">
               {{attach.clientWidth}}x{{attach.clientHeight}} 
             </span>

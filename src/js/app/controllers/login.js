@@ -1,11 +1,9 @@
-angular.module('App').controller('C_login', [
-  '$scope',
-  'S_selfapi',
-  function($scope, S_selfapi) {
+angular.module('App').controller('C_login',
+  function($scope, S_selfapi, S_eventer) {
     var ctr = this;
 
 
-    
+
 
     ctr.email = ctr.password = '';
 
@@ -15,9 +13,8 @@ angular.module('App').controller('C_login', [
       S_selfapi.signIn(email, password).then(function(resp) {
         ctr.authInProgress = false;
         if (resp.data.success) {
-          $scope.ctr.checkAuth();
+          S_eventer.sendEvent('successLogin');
         }
-
         if (resp.data.error) {
           ctr.error = true;
         }
@@ -26,4 +23,4 @@ angular.module('App').controller('C_login', [
 
     return ctr;
   }
-]);
+);

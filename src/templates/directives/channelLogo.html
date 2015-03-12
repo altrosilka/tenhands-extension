@@ -1,0 +1,10 @@
+<div class="channelLogo" ng-class="{'not':!channel.img, 'disabled':channel.disabled}" tooltip="{{channel.screen_name}}" tooltip-animation="false" tooltip-placement="top" tooltip-append-to-body="true" tooltip-trigger="mouseenter" ng-click="ctr.toggleChannel(channel)">
+  <div class="photoavatar" ng-class="{'background-size':'url('+channel.img+')'}"></div>
+  <div class="bulka social_bg deep" data-network="{{channel.network}}">
+    <span class="vk" ng-if="channel.network === 'vk'"><i class="fa fa-vk"></i></span>
+    <span class="fb" ng-if="channel.network === 'fb'"><i class="fa fa-facebook"></i></span>
+    <span class="tw" ng-if="channel.network === 'tw'"><i class="fa fa-twitter"></i></span>
+    <span class="gp" ng-if="channel.network === 'gp'"><i class="fa fa-google-plus"></i></span>
+    <span class="ok" ng-if="channel.network === 'ok'"><i class="fa fa-ok"></i></span>
+  </div>
+</div>

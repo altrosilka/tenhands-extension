@@ -1,12 +1,5 @@
-angular.module('App').controller('CM_attachPhoto', [
-  '$scope',
-  'S_vk',
-  'S_selfapi',
-  'S_chrome',
-  '$modalInstance',
-  'pageAttachments',
-  'uploadCallbacks',
-  function($scope, S_vk, S_selfapi, S_chrome, $modalInstance, pageAttachments, uploadCallbacks) {
+angular.module('App').controller('CM_attachPhoto', 
+  function($scope, S_selfapi, S_chrome, $modalInstance, pageAttachments, uploadCallbacks) {
     var ctr = this;
 
     ctr.selectedAttachments = [];
@@ -42,4 +35,4 @@ angular.module('App').controller('CM_attachPhoto', [
 
     return ctr;
   }
-]);
+);

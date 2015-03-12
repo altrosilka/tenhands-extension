@@ -2,7 +2,8 @@ angular.module('App').directive('channel', [function() {
   return {
     scope:{
       channel: "=",
-      pageData: "=",
+      text: "=",
+      image: "=",
       postChannelAgain: "&"
     },
     templateUrl: 'templates/directives/channel.html',

@@ -1,0 +1,93 @@
+.custom_select {
+  border: 1px solid #AAA;
+  line-height: 25px;
+  font-size: 12px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+}
+.custom_select > section {
+  padding: 0px 32px 0 10px;
+  position: relative;
+  z-index: 3;
+  background: #fff;
+}
+.custom_select menu {
+  position: absolute;
+  top: 0%;
+  background: #fff;
+  left: 0;
+  padding: 0;
+  z-index: 6;
+  box-shadow: 0px 1px 3px #ccc;
+  margin: 4px 0 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s;
+  max-height: 211px;
+  overflow: auto;
+  min-width: 100%;
+    -webkit-transform: translateY(22px) scale(0.9);
+}
+.custom_select.opened menu {
+  opacity: 1;
+    -webkit-transform: translateY(22px) scale(1);
+  visibility: visible;
+}
+.custom_select menu .option {
+  padding: 0px 10px;
+  margin-top: -1px;
+  line-height: 27px;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  outline: none;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  display: block;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  z-index: 1;
+  color: #555;
+  transition: 0.3s;
+}
+.custom_select menu .option.active {
+  color: #009ee0;
+}
+.custom_select menu .option.active:hover {
+  color: #014d6d;
+}
+.custom_select menu .option[disabled], .custom_select menu .option[disabled]:hover {
+  color: #ccc;
+  background: #f9f9f9 url(../images/stripe.png) center repeat;
+  border-color: #eee;
+  cursor: default;
+}
+.custom_select menu .option:hover {
+  z-index: 2;
+  border-color: #ccc;
+  color: #000;
+  cursor: pointer;
+}
+.custom_select > section:after {
+  content: "\f107";
+  font-family: FontAwesome;
+  position: absolute;
+  right: 6px;
+  top: 1px;
+  font-size: 22px;
+  color: #999;
+  transition: 0.4s;
+}
+.custom_select.opened {
+  color: #333;
+
+}
+.custom_select.opened > section:after {
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  transform: rotate(180deg);
+  color: #333;
+}

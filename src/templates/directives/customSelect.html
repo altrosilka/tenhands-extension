@@ -1,0 +1,10 @@
+<div class="custom_select" ng-class="{'opened':cSCtr.opened}">
+  <section ng-click="cSCtr.open()" ng-bind-html="section"></section>
+  <menu ng-show="customContent" data-role="custom-content"></menu>
+  <menu ng-show="!customContent">
+    <button class="option" ng-repeat="option in options" ng-click="cSCtr.selectOption($event, option)" ng-disabled="cSCtr.isDisabled(option)" ng-class="{'active':cSCtr.isActive(option)}">
+      <span compile="optionFormat"></span>
+    </button>
+  </menu>
+</div> 
+ 
