@@ -10,6 +10,7 @@ angular.module('App').controller('CD_oneChannel',
     ctr.pageAttachments = [];
 
     $scope.$on('loadedDataFromArea', function(event, data) {
+      if (!data) return;
       parseData(data);
     });
 
@@ -82,10 +83,10 @@ angular.module('App').controller('CD_oneChannel',
         S_selfapi.saveBase64Image(resper.url).then(function(resp, id) {
           $timeout(function() {
             $scope.image = angular.extend($scope.image, {
-              src_big: resp.data.data.media_url,
+              src_big: resp.data.media_url,
               src_original: $scope.image.src_original || $scope.image.src_big,
               options: resper.options,
-              media_id: resp.data.data.media_id
+              media_id: resp.data.media_id
             });
           })
 

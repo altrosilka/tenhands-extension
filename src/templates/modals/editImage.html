@@ -1,10 +1,10 @@
 <link href='http://fonts.googleapis.com/css?family=PT+Sans|Ubuntu|Lobster|Open+Sans|Roboto:300|Open+Sans+Condensed:300|Ledger|Cuprum&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
 <script src="/js/fabric.min.js"></script>
-<section class="vm_editImage"> 
+<section class="vm_editImage">
   <div class="modal-header">
     <h3 class="modal-title">Редактирование изображения</h3>
   </div>
-  <div class="modal-body"> 
+  <div class="modal-body">
     <div class="clearfix">
       <div class="image pull-left" style="width:600px">
         <div editing-canvas image="ctr.image" text="ctr.text" options="ctr.options" style="-webkit-transform-origin: 0 0;"></div>
@@ -17,6 +17,25 @@
           <div edit-image-valign-option model="ctr.options.valign" set-value="ctr.setValue" class="valign"></div>
 
         </div>
+        <div class="opt canvas clearfix">
+          <h3>Изображение</h3>
+
+          <span class="ib pull-left" tooltip="Отступ от края" tooltip-animation="false" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-placement="top">
+            <span number-box model="ctr.options.canvas.padding" model-bind="'canvas.padding'" set-value="ctr.setValue" ></span>
+          </span>
+          <div class="ib" tooltip="Цвет заливки" tooltip-animation="false" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-placement="top">
+            <span color-box model="ctr.options.canvas.fillColor" model-bind="'canvas.fillColor'" set-value="ctr.setValue"></span>
+          </div>
+        </div>
+
+        <div class="opt textShadow borders">
+          <h3>Рамки вокруг изображения</h3>
+          <div class="qk" edit-image-border-option model="ctr.options.canvas.border" set-value="ctr.setValue"></div>
+          <span class="qk asd">внутренняя</span>
+          <div class="qk" edit-image-border-option model="ctr.options.canvas.borderInner" set-value="ctr.setValue"></div>
+        </div>
+
+
         <div class="opt font clearfix">
           <h3>Шрифт</h3>
 
@@ -31,12 +50,6 @@
           <div edit-image-text-shadow-option model="ctr.options.textShadow" set-value="ctr.setValue"></div>
         </div>
 
-        <div class="opt textShadow borders">
-          <h3>Рамки вокруг изображения</h3>
-          <div class="qk" edit-image-border-option model="ctr.options.canvas.border" set-value="ctr.setValue"></div>
-          <span class="qk asd">внутренняя</span>
-          <div class="qk" edit-image-border-option model="ctr.options.canvas.borderInner" set-value="ctr.setValue"></div>
-        </div>
 
 
         <div class="opt image">

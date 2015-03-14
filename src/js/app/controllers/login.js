@@ -12,12 +12,10 @@ angular.module('App').controller('C_login',
       ctr.error = false;
       S_selfapi.signIn(email, password).then(function(resp) {
         ctr.authInProgress = false;
-        if (resp.data.success) {
-          S_eventer.sendEvent('successLogin');
-        }
-        if (resp.data.error) {
-          ctr.error = true;
-        }
+        S_eventer.sendEvent('successLogin');
+      }, function() {
+        ctr.authInProgress = false;
+        ctr.error = true;
       });
     }
 

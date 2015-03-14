@@ -12,16 +12,17 @@ var App = angular.module('App', [
   'templates'
 ]);  
     
-App.config([
-  '$httpProvider',
-  function($httpProvider) {
+App.config(
+  ["$httpProvider", "$animateProvider", function($httpProvider, $animateProvider) {
     $httpProvider.defaults.useXDomain = true;
     delete $httpProvider.defaults.headers.common['X-Requested-With'];
-    
+
+
+    $animateProvider.classNameFilter(/angular-animate/);
     //$httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf8';
-  }
-]);
-   
+  }]
+);
+
 angular.module('config', [])
   .constant('__api', {
     baseUrl: 'https://10hands.io/api/',
@@ -37,13 +38,15 @@ angular.module('config', [])
       signIn: 'auth/signIn',
       sets: 'sets',
       getSetChannels: 'sets/getChannels',
-      getTable: 'table'
+      getTable: 'table',
+      start: 'extension/start'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
   .constant('__maxPollVariants', 10)
   .constant('__maxAttachments', 9)
-  .constant('__maxImageWidth', 900)
+  .constant('__maxImageWidth', 800)
+  .constant('__showPaymentRequsetSecs', 24*3600*10)
   .constant('__twitterConstants',{
     maxSymbols: 140,
     linkLen: 22,
@@ -115,12 +118,10 @@ angular.module('App').controller('C_login',
       ctr.error = false;
       S_selfapi.signIn(email, password).then(function(resp) {
         ctr.authInProgress = false;
-        if (resp.data.success) {
-          S_eventer.sendEvent('successLogin');
-        }
-        if (resp.data.error) {
-          ctr.error = true;
-        }
+        S_eventer.sendEvent('successLogin');
+      }, function() {
+        ctr.authInProgress = false;
+        ctr.error = true;
       });
     }
 
@@ -129,7 +130,7 @@ angular.module('App').controller('C_login',
 );
 
 angular.module('App').controller('C_main',
-  ["$scope", "$timeout", "S_utils", "S_selfapi", "S_eventer", "S_tour", "S_transport", function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour, S_transport) {
+  ["$scope", "$timeout", "S_utils", "S_selfapi", "S_eventer", "S_tour", "S_transport", "__showPaymentRequsetSecs", function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour, S_transport, __showPaymentRequsetSecs) {
     var ctr = this;
     var _pushedMenu = false;
 
@@ -165,6 +166,23 @@ angular.module('App').controller('C_main',
     ctr.openTour = function() {
       S_tour.init(true);
     }
+
+
+    $scope.$on('paidUntilRecieved', function(event, time) {
+      var now = +moment().format('X');
+      if (now + __showPaymentRequsetSecs > time){
+        if (now > time){
+          ctr.paidUntilStr = 'истекла '+moment(time, "X").fromNow();
+        } else {
+          ctr.paidUntilStr = 'истечет '+moment(time, "X").fromNow();
+        }
+      }
+    });   
+
+    $scope.$on('paymentRequired', function(event, time) {
+      ctr._state = 'payment';
+      ctr.hideLoader = true;
+    });   
 
 
     $scope.$on('hideLoader', function() {
@@ -210,6 +228,16 @@ angular.module('App').controller('C_main',
   }]
 );
 
+angular.module('App').controller('C_payment',
+  ["$scope", "S_selfapi", "S_eventer", function($scope, S_selfapi, S_eventer) {
+    var ctr = this;
+ 
+
+
+    return ctr;
+  }]
+);
+
 angular.module('App').controller('C_posting',
   ["$scope", "$compile", "$timeout", "S_utils", "S_selfapi", "S_eventer", function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
     var ctr = this;
@@ -228,40 +256,48 @@ angular.module('App').controller('C_posting',
 
     ctr.closeAfterSuccess = false;
 
-    S_selfapi.getAllSets().then(function(resp) {
-      if (resp.data.error) {
-        S_eventer.sendEvent('badLogin');
-        return;
-      }
-      ctr.sets = resp.data.data.own;
+    S_selfapi.getStart().then(function(resp) {
+      ctr.sets = resp.data.sets.own;
 
-      ctr.sets = ctr.sets.concat(_.map(resp.data.data.guest, function(q) {
+      ctr.sets = ctr.sets.concat(_.map(resp.data.sets.guest, function(q) {
         q.guest = true;
         return q;
       }));
 
       ctr.selectedSet = ctr.sets[0];
-    });
+      ctr.channels = resp.data.channels;
 
-    $scope.$watch(function() {
-      return ctr.selectedSet.id;
-    }, function(setId) {
-      if (!setId) return;
+      $scope.$watch(function() {
+        return ctr.selectedSet.id;
+      }, function(setId) {
+        if (!setId) return;
 
-      ctr.channelsIsLoaded = false;
-      ctr.allPostsComplete = false;
-      ctr.postingCount = 0;
-      //ctr.channels = [];
+        ctr.channelsIsLoaded = false;
+        ctr.allPostsComplete = false;
+        ctr.postingCount = 0;
 
-      S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = _.filter(resp.data.data, function(channel) {
-          return !channel.disabled;
+        S_selfapi.getSetInfo(setId).then(function(resp) {
+          ctr.channels = _.filter(resp.data, function(channel) {
+            return !channel.disabled;
+          });
+          ctr.channelsIsLoaded = true;
+
+          S_eventer.sendEvent('loadedDataFromArea', ctr.data);
         });
-        ctr.channelsIsLoaded = true;
-
-        S_eventer.sendEvent('loadedDataFromArea', ctr.data);
       });
+
+      S_eventer.sendEvent('paidUntilRecieved', resp.data.paid_until);
+
+
+    }, function(resp) {
+      if (resp.status === 402) {
+        S_eventer.sendEvent('paymentRequired');
+      } else {
+        S_eventer.sendEvent('badLogin');
+      }
     });
+
+
 
     $scope.$on('emptyChannels', function() {
       ctr.allPostsComplete = false;
@@ -301,8 +337,8 @@ angular.module('App').controller('C_posting',
 
 
       S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? moment(ctr.postingDate).format('X') : undefined)).then(function(resp) {
-        var socketUrl = resp.data.data.socketUrl;
-        _socketListeningId = resp.data.data.hash;
+        var socketUrl = resp.data.socketUrl;
+        _socketListeningId = resp.data.hash;
 
         var socket = io(socketUrl);
 
@@ -343,25 +379,28 @@ angular.module('App').controller('C_posting',
           $scope.$apply(function() {
             ctr.postingInProgress = false;
             ctr.allPostsComplete = true;
-
-            //S_eventer.sendEvent('showSuccessProgress');
           });
         });
+      }, function(resp) {
+        if (resp.status === 402) {
+          S_utils.showPaymentRequestModal(resp.data).then(function() {
+            ctr.postingInProgress = false;
+            S_utils.disableProgress(ctr.channels);
+          });
+        }
       });
 
       function onChannelInfoRecieved() {
         if (ctr.completePostsCount === ctr.postingCount) {
           if (ctr.errorPostCount) {
             ctr.postingInProgress = false;
-            //S_eventer.sendEvent('showSuccessProgress');
           } else {
             ctr.allPostsComplete = true;
             ctr.postingInProgress = false;
-            //S_eventer.sendEvent('showSuccessProgress');
             if (ctr.closeAfterSuccess) {
               $timeout(function() {
                 S_eventer.sayToFrame('close');
-              }, 2000);
+              }, 0);
             }
           }
         }
@@ -497,6 +536,33 @@ angular.module('App').directive('channelLogo', [function() {
   }
 }]);
  
+angular.module('App').directive('colorBox', [function() {
+  return {
+    scope: {
+      setValue: '=',
+      model: '=',
+      modelBind: '='
+    },
+    templateUrl: 'templates/directives/colorBox.html',
+    link: function($scope, $element) {
+
+    }, 
+    controllerAs: 'ctr',
+    controller: ["$scope", function($scope) {
+      var ctr = this;
+ 
+      ctr.value = $scope.model;
+
+      $scope.$watch(function() {
+        return ctr.value;
+      }, function(q) {
+        if (!q) return;
+        $scope.setValue($scope.modelBind, q);
+      });
+    }]
+  }
+}]);
+
 angular.module('App').directive('customSelect', function() {
   return {
     transclude: true,
@@ -661,7 +727,7 @@ angular.module('App').directive('editImageColorOption', [function() {
       model: '='
     },
     templateUrl: 'templates/directives/editImage/colorOption.html',
-    link: function($scope, $element) {
+    link: function($scope, $element) { 
 
     }, 
     controllerAs: 'ctr',
@@ -930,9 +996,7 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
 
             _paper.add(img);
             img.bringForward();
-            paperCollection.text.bringToFront(111);
-            paperCollection.canvasBorder.bringToFront(3111);
-            paperCollection.canvasBorderInner.bringToFront(2111);
+            placeZindex();
 
 
             _paper.renderAll();
@@ -957,7 +1021,7 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
               var ctx = canvas.getContext('2d');
 
               ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              S_eventer.sendEvent('imageDataRecieved', canvas.toDataURL('image/jpeg',1));
+              S_eventer.sendEvent('imageDataRecieved', canvas.toDataURL('image/jpeg', 1));
             }
           });
 
@@ -991,6 +1055,10 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
           drawBorder(opt);
         }
 
+        if (opt.canvas.fillColor !== oldOpt.canvas.fillColor) {
+          drawFill(opt);
+        }
+
 
         if (opt.filter !== oldOpt.filter) {
           drawImage(opt);
@@ -998,6 +1066,9 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
 
         $timeout(function() {
           placeText(opt);
+        });
+        $timeout(function() {
+          placeZindex();
         });
 
         options = opt;
@@ -1017,6 +1088,8 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
           $timeout(function() {
             placeText(options);
             drawBorder(options);
+            drawFill(options);
+                    placeZindex();
           });
 
           var canvas = fx.canvas();
@@ -1026,12 +1099,18 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
 
           window.q = _filteredImage;
 
+          var scale = multiple(1);
+          if (_image.width > __maxImageWidth) {
+            scale /= _image.width / __maxImageWidth;
+          }
+
           DOM.img.html($(canvas)).find('canvas').css({
-            '-webkit-transform': 'scale(' + (1 / _scale / multiple(1)) + ')',
+            '-webkit-transform': 'scale(' + (scale) + ')',
             '-webkit-transform-origin': '0 0'
           });
 
           drawImage(options);
+
         }
         img.src = $scope.image.src_original || $scope.image.src_big;
 
@@ -1039,6 +1118,13 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
 
 
       });
+
+      function placeZindex() {
+        paperCollection.canvasFill.bringToFront(200);
+        paperCollection.text.bringToFront(500);
+        paperCollection.canvasBorder.bringToFront(1000);
+        paperCollection.canvasBorderInner.bringToFront(1000);
+      }
 
       function draw() {
         var imageWidth = originalImageWidth = options.width = multiple(_image.width);
@@ -1050,12 +1136,10 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
           imageWidth = options.width = multiple(__maxImageWidth);
         }
 
-
         _scale = _areaWidth / imageWidth;
         _paper = new fabric.Canvas(IDS.canvas, {
           selection: false
         });
-
 
         DOM.canvas.attr({
           width: imageWidth,
@@ -1068,19 +1152,8 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
         _paper.setHeight(imageHeight);
 
         _imgScale = multiple(1) / (originalImageWidth / options.width);
-        /*fabric.Image.fromURL(_image.src, function(img) {
-          paperCollection.image = img;
 
-          fullLock(img);
-          img.scaleX = multiple(1) / (originalImageWidth / imageWidth);
-          img.scaleY = multiple(1) / (originalImageHeight / imageHeight);
-          _paper.add(img);
-        });
-*/
         setElementScale(_scale);
-
-
-
       }
 
       function drawImage(options) {
@@ -1138,6 +1211,23 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
 
       }
 
+
+      function drawFill(options) {
+        if (paperCollection.canvasFill) {
+          paperCollection.canvasFill.remove();
+        }
+        var bopt = options.canvas.border;
+        paperCollection.canvasFill = new fabric.Rect({
+          fill: options.canvas.fillColor,
+          strokeWidth: 0,
+          width: options.width,
+          height: options.height
+        });
+        fullLock(paperCollection.canvasFill);
+        _paper.add(paperCollection.canvasFill);
+        _paper.renderAll();
+      }
+
       function placeText(options) {
         if (paperCollection.text) {
           paperCollection.text.remove();
@@ -1170,6 +1260,8 @@ angular.module('App').directive('editingCanvas', ["$timeout", "S_eventer", "S_ut
 
         tunePosition(paperCollection.text, textWidth);
         _paper.renderAll();
+
+
       }
 
 
@@ -1469,6 +1561,33 @@ angular.module('App').directive('jcropArea', ['$timeout', function($timeout) {
 
 }]);
 
+angular.module('App').directive('numberBox', [function() {
+  return {
+    scope: {
+      setValue: '=',
+      model: '=',
+      modelBind: '='
+    },
+    templateUrl: 'templates/directives/numberBox.html',
+    link: function($scope, $element) {
+
+    }, 
+    controllerAs: 'ctr',
+    controller: ["$scope", function($scope) {
+      var ctr = this;
+ 
+      ctr.value = $scope.model;
+
+      $scope.$watch(function() {
+        return ctr.value;
+      }, function(q) {
+        if (!q) return;
+        $scope.setValue($scope.modelBind, q);
+      });
+    }]
+  }
+}]);
+  
 angular.module('App').directive('oneChannel', [function() {
   return {
     scope:{
@@ -2054,9 +2173,9 @@ angular.module('App')
         });
       }
 
-      service.getAllSets = function() {
+      service.getStart = function() {
         return $http({
-          url: base + __api.paths.sets,
+          url: base + __api.paths.start,
           method: 'GET',
           withCredentials: true
         });
@@ -2132,8 +2251,8 @@ angular.module('App')
         }).then(function(resp) {
           _uploadStack.shift();
           q.defer.resolve({
-            media_id: resp.data.data.media_id,
-            media_url: resp.data.data.media_url,
+            media_id: resp.data.media_id,
+            media_url: resp.data.media_url,
             id: q.obj.id
           });
 
@@ -2345,13 +2464,31 @@ angular.module('utilsTools', [])
           name: "none",
           title: "Без фильтра"
         }, {
+          name: "bw",
+          title: "ЧБ",
+          info: {
+            hueSaturation: [0, -1]
+          }
+        }, {
+          name: "blur",
+          title: "Blur",
+          info: {
+            triangleBlur: [25]
+          }
+        }, {
+          name: "lensBlur",
+          title: "Линза",
+          info: {
+            lensBlur: [15, 0.54, 3.141592653589793]
+          }
+        }, {
           name: "darkAround",
           title: "Dark Around",
           info: {
-            brightnessContrast: [-0.2,-0.3],
+            brightnessContrast: [-0.2, -0.3],
             vignette: [0.01, 0.6]
           }
-        },{
+        }, {
           name: "dark",
           title: "Dark",
           info: {
@@ -2423,6 +2560,34 @@ angular.module('utilsTools', [])
         return text;
       }
 
+      service.showInfoModal = function(title, html) {
+        return $modal.open({
+          templateUrl: 'templates/modals/infoModal.html',
+          controller: 'CM_infoModal as ctr',
+          size: 'sm',
+          resolve: {
+            html: function() {
+              return html;
+            },
+            title: function() {
+              return title;
+            }
+          }
+        }).result;
+      }
+
+      service.showPaymentRequestModal = function(resp) {
+        return $modal.open({
+          templateUrl: 'templates/modals/paymentRequest.html',
+          controller: 'CM_paymentRequest as ctr',
+          size: 'sm',
+          resolve: {
+            resp: function() {
+              return resp;
+            }
+          }
+        }).result;
+      }
 
       service.showEditImagePopup = function(image) {
         return $modal.open({
@@ -5270,6 +5435,14 @@ angular.module('App').controller('CD_channel',
       $scope.channel.disabled = !$scope.channel.disabled;
     }
 
+    ctr.getAvatarStyle = function() {
+      if ($scope.channel.img) {
+        return {
+          'background-image': 'url(' + $scope.channel.img + ')'
+        }
+      }
+    }
+
     return ctr;
   }]
 );
@@ -5286,7 +5459,7 @@ angular.module('App').controller('CD_channelLogo',
     return ctr;
   }]
 );
-
+ 
 angular.module('App').controller('CD_oneChannel',
   ["$scope", "$interpolate", "$timeout", "S_utils", "S_templater", "S_selfapi", function($scope, $interpolate, $timeout, S_utils, S_templater, S_selfapi) {
     var ctr = this;
@@ -5299,6 +5472,7 @@ angular.module('App').controller('CD_oneChannel',
     ctr.pageAttachments = [];
 
     $scope.$on('loadedDataFromArea', function(event, data) {
+      if (!data) return;
       parseData(data);
     });
 
@@ -5371,10 +5545,10 @@ angular.module('App').controller('CD_oneChannel',
         S_selfapi.saveBase64Image(resper.url).then(function(resp, id) {
           $timeout(function() {
             $scope.image = angular.extend($scope.image, {
-              src_big: resp.data.data.media_url,
+              src_big: resp.data.media_url,
               src_original: $scope.image.src_original || $scope.image.src_big,
               options: resper.options,
-              media_id: resp.data.data.media_id
+              media_id: resp.data.media_id
             });
           })
 
@@ -5544,9 +5718,10 @@ angular.module('App').controller('CM_editImage',
       fontFamily: "Ubuntu",
       fontWeight: 300,
       fontSize: 32,
-      valign: 'middle', 
+      valign: 'middle',
       filter: 'none',
       canvas: {
+        fillColor: 'rgba(111,111,111,0.5)',
         padding: 20,
         border: {
           color: 'rgba(111,111,111,0.5)',
@@ -5556,14 +5731,19 @@ angular.module('App').controller('CM_editImage',
           color: 'rgba(0,0,0,0.5)',
           width: 2
         }
-      } 
+      }
     };
 
     ctr.text = 'Ваш текст здесь';
 
 
     ctr.setValue = function(key, value) {
-      ctr.options[key] = value;
+      var q = key.split('.');
+      if (q.length === 2) {
+        ctr.options[q[0]][q[1]] = value;
+      } else {
+        ctr.options[key] = value;
+      }
     }
 
 
@@ -5585,6 +5765,28 @@ angular.module('App').controller('CM_editImage',
   }]
 );
 
+angular.module('App').controller('CM_infoModal', 
+  ["$scope", "S_selfapi", "S_chrome", "$modalInstance", "html", "title", function($scope, S_selfapi, S_chrome, $modalInstance, html, title) {
+    var ctr = this;
+
+    ctr.title = title;
+    ctr.html = html;
+
+    return ctr;
+  }]
+);
+
+
+
+angular.module('App').controller('CM_paymentRequest', 
+  ["$scope", "S_selfapi", "S_chrome", "$modalInstance", "resp", function($scope, S_selfapi, S_chrome, $modalInstance, resp) {
+    var ctr = this;
+
+    ctr.resp = resp;
+
+    return ctr;
+  }]
+);
 angular.module('App').controller('CM_table',
   ["$scope", "$compile", "$timeout", "$modalInstance", "S_selfapi", "setId", function($scope, $compile, $timeout, $modalInstance, S_selfapi, setId) {
     var ctr = this;
@@ -5682,7 +5884,7 @@ angular.module('App').controller('CM_table',
         var to = end.utc().format('X');
 
         S_selfapi.getTable(from, to, setId).then(function(resp) {
-          callback(resp.data.data.table);
+          callback(resp.data.table);
         });
       })
       $(window).trigger('resize');

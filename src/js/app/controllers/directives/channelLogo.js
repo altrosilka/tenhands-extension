@@ -10,3 +10,4 @@ angular.module('App').controller('CD_channelLogo',
     return ctr;
   }
 );
+ 

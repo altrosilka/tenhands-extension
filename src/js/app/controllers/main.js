@@ -1,5 +1,5 @@
 angular.module('App').controller('C_main',
-  function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour, S_transport) {
+  function($scope, $timeout, S_utils, S_selfapi, S_eventer, S_tour, S_transport, __showPaymentRequsetSecs) {
     var ctr = this;
     var _pushedMenu = false;
 
@@ -35,6 +35,23 @@ angular.module('App').controller('C_main',
     ctr.openTour = function() {
       S_tour.init(true);
     }
+
+
+    $scope.$on('paidUntilRecieved', function(event, time) {
+      var now = +moment().format('X');
+      if (now + __showPaymentRequsetSecs > time){
+        if (now > time){
+          ctr.paidUntilStr = 'истекла '+moment(time, "X").fromNow();
+        } else {
+          ctr.paidUntilStr = 'истечет '+moment(time, "X").fromNow();
+        }
+      }
+    });   
+
+    $scope.$on('paymentRequired', function(event, time) {
+      ctr._state = 'payment';
+      ctr.hideLoader = true;
+    });   
 
 
     $scope.$on('hideLoader', function() {

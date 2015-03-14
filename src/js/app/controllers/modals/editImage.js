@@ -16,9 +16,10 @@ angular.module('App').controller('CM_editImage',
       fontFamily: "Ubuntu",
       fontWeight: 300,
       fontSize: 32,
-      valign: 'middle', 
+      valign: 'middle',
       filter: 'none',
       canvas: {
+        fillColor: 'rgba(111,111,111,0.5)',
         padding: 20,
         border: {
           color: 'rgba(111,111,111,0.5)',
@@ -28,14 +29,19 @@ angular.module('App').controller('CM_editImage',
           color: 'rgba(0,0,0,0.5)',
           width: 2
         }
-      } 
+      }
     };
 
     ctr.text = 'Ваш текст здесь';
 
 
     ctr.setValue = function(key, value) {
-      ctr.options[key] = value;
+      var q = key.split('.');
+      if (q.length === 2) {
+        ctr.options[q[0]][q[1]] = value;
+      } else {
+        ctr.options[key] = value;
+      }
     }
 
 

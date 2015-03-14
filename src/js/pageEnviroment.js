@@ -30,23 +30,6 @@
     layout.appendChild(iframe);
     d.body.appendChild(layout);
 
-    var selectHelper = d.createElement("div");
-    selectHelper.setAttribute("style", "position:fixed; z-index: 99999999999898988899;margin:10px;");
-
-    var button_add_1 = createButton('addParagraph', 'Новый параграф');
-    var button_add_2 = createButton('addString', 'Новая строка');
-    var button_add_3 = createButton('addInstead', 'Вместо текста');
-    var button_add_4 = createButton('addTo', 'Добавить к тексту');
-
-    selectHelper.appendChild(button_add_1);
-    selectHelper.appendChild(button_add_2);
-    selectHelper.appendChild(button_add_3);
-    selectHelper.appendChild(button_add_4);
-
-    layout.appendChild(selectHelper);
-
-
-
     document.body.addEventListener("mousedown", function(e) {
       oldEvent = e;
     });

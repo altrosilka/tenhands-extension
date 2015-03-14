@@ -13,13 +13,15 @@ angular.module('config', [])
       signIn: 'auth/signIn',
       sets: 'sets',
       getSetChannels: 'sets/getChannels',
-      getTable: 'table'
+      getTable: 'table',
+      start: 'extension/start'
     }
   })
   .constant('__postMessagePrepend', 'Ejiw9494WvweejgreWCEGHeeE_FF_')
   .constant('__maxPollVariants', 10)
   .constant('__maxAttachments', 9)
-  .constant('__maxImageWidth', 900)
+  .constant('__maxImageWidth', 800)
+  .constant('__showPaymentRequsetSecs', 24*3600*10)
   .constant('__twitterConstants',{
     maxSymbols: 140,
     linkLen: 22,

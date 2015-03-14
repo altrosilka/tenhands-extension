@@ -3,7 +3,7 @@
 
     <div class="inner" ng-class="{'disabledChannel':channel.disabled}">
       <div class="avatar" ng-class="{'not':!channel.img}" ng-click="channel_ctr.toggleChannel()">
-        <div class="photoavatar" ng-class="{'background-size':'url('+channel.img+')'}"></div>
+        <div class="photoavatar" ng-style="channel_ctr.getAvatarStyle()"></div> 
         <div class="bulka social_bg deep" data-network="{{channel.network}}">
           <span class="vk" ng-if="channel.network === 'vk'"><i class="fa fa-vk"></i></span>
           <span class="fb" ng-if="channel.network === 'fb'"><i class="fa fa-facebook"></i></span>

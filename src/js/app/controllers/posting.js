@@ -16,40 +16,48 @@ angular.module('App').controller('C_posting',
 
     ctr.closeAfterSuccess = false;
 
-    S_selfapi.getAllSets().then(function(resp) {
-      if (resp.data.error) {
-        S_eventer.sendEvent('badLogin');
-        return;
-      }
-      ctr.sets = resp.data.data.own;
+    S_selfapi.getStart().then(function(resp) {
+      ctr.sets = resp.data.sets.own;
 
-      ctr.sets = ctr.sets.concat(_.map(resp.data.data.guest, function(q) {
+      ctr.sets = ctr.sets.concat(_.map(resp.data.sets.guest, function(q) {
         q.guest = true;
         return q;
       }));
 
       ctr.selectedSet = ctr.sets[0];
-    });
+      ctr.channels = resp.data.channels;
 
-    $scope.$watch(function() {
-      return ctr.selectedSet.id;
-    }, function(setId) {
-      if (!setId) return;
+      $scope.$watch(function() {
+        return ctr.selectedSet.id;
+      }, function(setId) {
+        if (!setId) return;
 
-      ctr.channelsIsLoaded = false;
-      ctr.allPostsComplete = false;
-      ctr.postingCount = 0;
-      //ctr.channels = [];
+        ctr.channelsIsLoaded = false;
+        ctr.allPostsComplete = false;
+        ctr.postingCount = 0;
 
-      S_selfapi.getSetInfo(setId).then(function(resp) {
-        ctr.channels = _.filter(resp.data.data, function(channel) {
-          return !channel.disabled;
+        S_selfapi.getSetInfo(setId).then(function(resp) {
+          ctr.channels = _.filter(resp.data, function(channel) {
+            return !channel.disabled;
+          });
+          ctr.channelsIsLoaded = true;
+
+          S_eventer.sendEvent('loadedDataFromArea', ctr.data);
         });
-        ctr.channelsIsLoaded = true;
-
-        S_eventer.sendEvent('loadedDataFromArea', ctr.data);
       });
+
+      S_eventer.sendEvent('paidUntilRecieved', resp.data.paid_until);
+
+
+    }, function(resp) {
+      if (resp.status === 402) {
+        S_eventer.sendEvent('paymentRequired');
+      } else {
+        S_eventer.sendEvent('badLogin');
+      }
     });
+
+
 
     $scope.$on('emptyChannels', function() {
       ctr.allPostsComplete = false;
@@ -89,8 +97,8 @@ angular.module('App').controller('C_posting',
 
 
       S_selfapi.createPost(ctr.selectedSet.id, postInfo, _socketListeningId, ((!ctr.postingNow) ? moment(ctr.postingDate).format('X') : undefined)).then(function(resp) {
-        var socketUrl = resp.data.data.socketUrl;
-        _socketListeningId = resp.data.data.hash;
+        var socketUrl = resp.data.socketUrl;
+        _socketListeningId = resp.data.hash;
 
         var socket = io(socketUrl);
 
@@ -131,25 +139,28 @@ angular.module('App').controller('C_posting',
           $scope.$apply(function() {
             ctr.postingInProgress = false;
             ctr.allPostsComplete = true;
-
-            //S_eventer.sendEvent('showSuccessProgress');
           });
         });
+      }, function(resp) {
+        if (resp.status === 402) {
+          S_utils.showPaymentRequestModal(resp.data).then(function() {
+            ctr.postingInProgress = false;
+            S_utils.disableProgress(ctr.channels);
+          });
+        }
       });
 
       function onChannelInfoRecieved() {
         if (ctr.completePostsCount === ctr.postingCount) {
           if (ctr.errorPostCount) {
             ctr.postingInProgress = false;
-            //S_eventer.sendEvent('showSuccessProgress');
           } else {
             ctr.allPostsComplete = true;
             ctr.postingInProgress = false;
-            //S_eventer.sendEvent('showSuccessProgress');
             if (ctr.closeAfterSuccess) {
               $timeout(function() {
                 S_eventer.sayToFrame('close');
-              }, 2000);
+              }, 0);
             }
           }
         }

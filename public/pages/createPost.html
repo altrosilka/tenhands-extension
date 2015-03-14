@@ -62,6 +62,9 @@
         </ul>
 
         <ul class="topMenu right">
+          <a href="https://10hands.io/cabinet/account/plan/" target="_blank" class="tourFader paidEnd" ng-show="ctr.paidUntilStr" tooltip="{{ctr.paidUntilStr}}" tooltip-placement="bottom" tooltip-trigger="mouseenter" tooltip-append-to-body="true" tooltip-animation="false"> 
+            Продлить подписку
+          </a>
           <li class="tourFader" ng-click="ctr.openTour()">
             <i class="ion-help-buoy"></i><span>Тур</span>
           </li>
@@ -88,7 +91,7 @@
         </section>
         <section class="v_channels">
 
-          <div one-channel channels="post_ctr.channels" image="post_ctr.image" page-data="post_ctr.data" post-channel-again="post_ctr.createPost(channel_id)"></div>
+          <div ng-if="!post_ctr.channelsIsLoaded || post_ctr.channels.length" one-channel channels="post_ctr.channels" image="post_ctr.image" page-data="post_ctr.data" post-channel-again="post_ctr.createPost(channel_id)"></div>
 
 
 
@@ -173,6 +176,10 @@
 
     <section ng-if="ctr._state === 'login'" ng-include="'templates/views/login.html'">
 
+    </section>
+    
+    <section ng-if="ctr._state === 'payment'" ng-include="'templates/views/payment.html'">
+      
     </section>
 
   </div>

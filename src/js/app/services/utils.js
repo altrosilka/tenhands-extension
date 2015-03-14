@@ -17,13 +17,31 @@ angular.module('utilsTools', [])
           name: "none",
           title: "Без фильтра"
         }, {
+          name: "bw",
+          title: "ЧБ",
+          info: {
+            hueSaturation: [0, -1]
+          }
+        }, {
+          name: "blur",
+          title: "Blur",
+          info: {
+            triangleBlur: [25]
+          }
+        }, {
+          name: "lensBlur",
+          title: "Линза",
+          info: {
+            lensBlur: [15, 0.54, 3.141592653589793]
+          }
+        }, {
           name: "darkAround",
           title: "Dark Around",
           info: {
-            brightnessContrast: [-0.2,-0.3],
+            brightnessContrast: [-0.2, -0.3],
             vignette: [0.01, 0.6]
           }
-        },{
+        }, {
           name: "dark",
           title: "Dark",
           info: {
@@ -95,6 +113,34 @@ angular.module('utilsTools', [])
         return text;
       }
 
+      service.showInfoModal = function(title, html) {
+        return $modal.open({
+          templateUrl: 'templates/modals/infoModal.html',
+          controller: 'CM_infoModal as ctr',
+          size: 'sm',
+          resolve: {
+            html: function() {
+              return html;
+            },
+            title: function() {
+              return title;
+            }
+          }
+        }).result;
+      }
+
+      service.showPaymentRequestModal = function(resp) {
+        return $modal.open({
+          templateUrl: 'templates/modals/paymentRequest.html',
+          controller: 'CM_paymentRequest as ctr',
+          size: 'sm',
+          resolve: {
+            resp: function() {
+              return resp;
+            }
+          }
+        }).result;
+      }
 
       service.showEditImagePopup = function(image) {
         return $modal.open({

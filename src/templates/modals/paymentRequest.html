@@ -1,0 +1,19 @@
+<section class="vm_infoModal">
+  <div class="modal-header">
+    <h3 class="modal-title">Публикация невозможна</h3>
+  </div>
+  <div class="modal-body">
+    <div ng-show="ctr.resp === 'owner'">
+      В данный набор невозможно опубликовать запись, так как Ваш оплаченный период закончился
+    </div>
+    <div ng-show="ctr.resp === 'guest'">
+      В данный набор невозможно опубликовать запись, так как оплаченый период владельца набора закончился
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-default" ng-click="$close()">Закрыть</button>
+    <a ng-show="ctr.resp === 'owner'" class="btn btn-primary" href="https://10hands.io/cabinet/account/plan/" target="_blank" ng-click="$close()">Оплатить</a>
+  </div>
+
+  </div>
+</section>

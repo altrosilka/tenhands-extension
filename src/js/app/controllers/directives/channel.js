@@ -47,6 +47,14 @@ angular.module('App').controller('CD_channel',
       $scope.channel.disabled = !$scope.channel.disabled;
     }
 
+    ctr.getAvatarStyle = function() {
+      if ($scope.channel.img) {
+        return {
+          'background-image': 'url(' + $scope.channel.img + ')'
+        }
+      }
+    }
+
     return ctr;
   }
 );

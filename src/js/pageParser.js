@@ -47,13 +47,16 @@
     h3: getByQuery('h3')
   }
 
-  function qualifyURL(url) {
-    var img = document.createElement('img');
-    img.src = url; // set string url
-    url = img.src; // get qualified url
-    img.src = null; // no server request
-    return url;
+  function escapeHTML(s) {
+    return s.split('&').join('&amp;').split('<').join('&lt;').split('"').join('&quot;');
   }
+
+  function qualifyURL(url) {
+    var el = document.createElement('div');
+    el.innerHTML = '<a href="' + escapeHTML(url) + '">x</a>';
+    return el.firstChild.href;
+  }
+
 
   function getImageFromMeta() {
     var dom;
@@ -66,7 +69,7 @@
 
     dom = document.querySelector('meta[name="twitter:image"]');
     if (dom !== null) return dom.getAttribute('content');
-    debugger
+
     return dom;
   }
 

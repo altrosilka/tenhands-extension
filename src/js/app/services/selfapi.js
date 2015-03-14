@@ -63,9 +63,9 @@ angular.module('App')
         });
       }
 
-      service.getAllSets = function() {
+      service.getStart = function() {
         return $http({
-          url: base + __api.paths.sets,
+          url: base + __api.paths.start,
           method: 'GET',
           withCredentials: true
         });
@@ -141,8 +141,8 @@ angular.module('App')
         }).then(function(resp) {
           _uploadStack.shift();
           q.defer.resolve({
-            media_id: resp.data.data.media_id,
-            media_url: resp.data.data.media_url,
+            media_id: resp.data.media_id,
+            media_url: resp.data.media_url,
             id: q.obj.id
           });
 

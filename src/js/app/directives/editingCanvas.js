@@ -43,9 +43,7 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
 
             _paper.add(img);
             img.bringForward();
-            paperCollection.text.bringToFront(111);
-            paperCollection.canvasBorder.bringToFront(3111);
-            paperCollection.canvasBorderInner.bringToFront(2111);
+            placeZindex();
 
 
             _paper.renderAll();
@@ -70,7 +68,7 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
               var ctx = canvas.getContext('2d');
 
               ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              S_eventer.sendEvent('imageDataRecieved', canvas.toDataURL('image/jpeg',1));
+              S_eventer.sendEvent('imageDataRecieved', canvas.toDataURL('image/jpeg', 1));
             }
           });
 
@@ -104,6 +102,10 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
           drawBorder(opt);
         }
 
+        if (opt.canvas.fillColor !== oldOpt.canvas.fillColor) {
+          drawFill(opt);
+        }
+
 
         if (opt.filter !== oldOpt.filter) {
           drawImage(opt);
@@ -111,6 +113,9 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
 
         $timeout(function() {
           placeText(opt);
+        });
+        $timeout(function() {
+          placeZindex();
         });
 
         options = opt;
@@ -130,6 +135,8 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
           $timeout(function() {
             placeText(options);
             drawBorder(options);
+            drawFill(options);
+                    placeZindex();
           });
 
           var canvas = fx.canvas();
@@ -139,12 +146,18 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
 
           window.q = _filteredImage;
 
+          var scale = multiple(1);
+          if (_image.width > __maxImageWidth) {
+            scale /= _image.width / __maxImageWidth;
+          }
+
           DOM.img.html($(canvas)).find('canvas').css({
-            '-webkit-transform': 'scale(' + (1 / _scale / multiple(1)) + ')',
+            '-webkit-transform': 'scale(' + (scale) + ')',
             '-webkit-transform-origin': '0 0'
           });
 
           drawImage(options);
+
         }
         img.src = $scope.image.src_original || $scope.image.src_big;
 
@@ -152,6 +165,13 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
 
 
       });
+
+      function placeZindex() {
+        paperCollection.canvasFill.bringToFront(200);
+        paperCollection.text.bringToFront(500);
+        paperCollection.canvasBorder.bringToFront(1000);
+        paperCollection.canvasBorderInner.bringToFront(1000);
+      }
 
       function draw() {
         var imageWidth = originalImageWidth = options.width = multiple(_image.width);
@@ -163,12 +183,10 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
           imageWidth = options.width = multiple(__maxImageWidth);
         }
 
-
         _scale = _areaWidth / imageWidth;
         _paper = new fabric.Canvas(IDS.canvas, {
           selection: false
         });
-
 
         DOM.canvas.attr({
           width: imageWidth,
@@ -181,19 +199,8 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
         _paper.setHeight(imageHeight);
 
         _imgScale = multiple(1) / (originalImageWidth / options.width);
-        /*fabric.Image.fromURL(_image.src, function(img) {
-          paperCollection.image = img;
 
-          fullLock(img);
-          img.scaleX = multiple(1) / (originalImageWidth / imageWidth);
-          img.scaleY = multiple(1) / (originalImageHeight / imageHeight);
-          _paper.add(img);
-        });
-*/
         setElementScale(_scale);
-
-
-
       }
 
       function drawImage(options) {
@@ -251,6 +258,23 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
 
       }
 
+
+      function drawFill(options) {
+        if (paperCollection.canvasFill) {
+          paperCollection.canvasFill.remove();
+        }
+        var bopt = options.canvas.border;
+        paperCollection.canvasFill = new fabric.Rect({
+          fill: options.canvas.fillColor,
+          strokeWidth: 0,
+          width: options.width,
+          height: options.height
+        });
+        fullLock(paperCollection.canvasFill);
+        _paper.add(paperCollection.canvasFill);
+        _paper.renderAll();
+      }
+
       function placeText(options) {
         if (paperCollection.text) {
           paperCollection.text.remove();
@@ -283,6 +307,8 @@ angular.module('App').directive('editingCanvas', function($timeout, S_eventer, S
 
         tunePosition(paperCollection.text, textWidth);
         _paper.renderAll();
+
+
       }
 
 

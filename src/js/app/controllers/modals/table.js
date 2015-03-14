@@ -95,7 +95,7 @@ angular.module('App').controller('CM_table',
         var to = end.utc().format('X');
 
         S_selfapi.getTable(from, to, setId).then(function(resp) {
-          callback(resp.data.data.table);
+          callback(resp.data.table);
         });
       })
       $(window).trigger('resize');
