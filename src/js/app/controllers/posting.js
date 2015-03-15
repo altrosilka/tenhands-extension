@@ -2,7 +2,8 @@ angular.module('App').controller('C_posting',
   function($scope, $compile, $timeout, S_utils, S_selfapi, S_eventer) {
     var ctr = this;
 
-    var _socketListeningId, skipPostingNowChange = false;
+    var _socketListeningId, skipPostingNowChange = false,
+      started;
 
 
 
@@ -22,17 +23,21 @@ angular.module('App').controller('C_posting',
       ctr.sets = ctr.sets.concat(_.map(resp.data.sets.guest, function(q) {
         q.guest = true;
         return q;
-      }));
+      })); 
 
       ctr.selectedSet = ctr.sets[0];
       ctr.channels = resp.data.channels;
 
+      ctr.channelsIsLoaded = true;
+
       $scope.$watch(function() {
         return ctr.selectedSet.id;
       }, function(setId) {
-        if (!setId) return;
-
-        ctr.channelsIsLoaded = false;
+        if (!setId || !started) {
+          started = true;
+          return;
+        }
+        ctr.channelsIsLoaded = false; 
         ctr.allPostsComplete = false;
         ctr.postingCount = 0;
 

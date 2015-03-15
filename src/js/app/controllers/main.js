@@ -38,6 +38,9 @@ angular.module('App').controller('C_main',
 
 
     $scope.$on('paidUntilRecieved', function(event, time) {
+      if (time === 0){
+        return;
+      }
       var now = +moment().format('X');
       if (now + __showPaymentRequsetSecs > time){
         if (now > time){

@@ -148,7 +148,7 @@
               <label data-step="publicLater" class="tourFader">
                 <input type="radio" ng-model="post_ctr.postingNow" ng-value="false">
                 <span>Выбрать время</span>
-              </label>
+              </label> 
               <div class="clearfix"></div>
               <a class="tourFader viewCalendar ib link" ng-click="post_ctr.viewTable()">
                 Посмотреть расписание
@@ -177,9 +177,9 @@
     <section ng-if="ctr._state === 'login'" ng-include="'templates/views/login.html'">
 
     </section>
-    
+
     <section ng-if="ctr._state === 'payment'" ng-include="'templates/views/payment.html'">
-      
+
     </section>
 
   </div>
